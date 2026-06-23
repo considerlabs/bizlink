@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>장바구니 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:1280px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px">
+      <a href="order.html" style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#9ca3af;text-decoration:none;font-weight:500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        주문으로
+      </a>
+      <span style="color:#e5e7eb">/</span>
+      <span style="font-size:1.125rem;font-weight:800;color:#1a2260">장바구니</span>
+    </div>
+    <div id="basket-content"></div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+
+const state = {
+  items: [],
+  vendors: [],
+  activeTab: '',
+  ordering: false,
+  clearing: false,
+};
+
+function vendorMap() {
+  const m = {};
+  state.vendors.forEach(v => { m[v.VENDOR_CD] = v; });
+  return m;
+}
+
+function vendorGroups() {
+  const g = {};
+  state.items.forEach(it => {
+    if (!g[it.VENDOR_CD]) g[it.VENDOR_CD] = [];
+    g[it.VENDOR_CD].push(it);
+  });
+  return g;
+}
+
+async function loadData() {
+  [state.items, state.vendors] = await Promise.all([api.getBasketList(), api.getVendors()]);
+  const ids = Object.keys(vendorGroups());
+  if (ids.length > 0 && !ids.includes(state.activeTab)) state.activeTab = ids[0];
+  render();
+}
+
+function render() {
+  const content = document.getElementById('basket-content');
+  const groups = vendorGroups();
+  const ids = Object.keys(groups);
+  const vm = vendorMap();
+
+  if (state.items.length === 0) {
+    content.innerHTML = `
+      <div class="surface-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6rem 1rem;text-align:center">
+        <span style="font-size:2.5rem;margin-bottom:1rem">🛒</span>
+        <p style="font-size:1rem;font-weight:600;color:#9ca3af;margin-bottom:1.25rem">장바구니가 비어있습니다</p>
+        <a href="order.html" class="btn-primary px-6 py-2.5 text-sm">상품 보러가기</a>
+      </div>`;
+    return;
+  }
+
+  const activeItems = groups[state.activeTab] ?? [];
+  const activeVendor = vm[state.activeTab];
+  const subtotal = activeItems.reduce((s, it) => s + it.TOTAL_PRICE, 0);
+  const platformFee = Math.round(subtotal * PLATFORM_FEE_RATE);
+  const paymentTotal = subtotal + platformFee;
+
+  const tabsHtml = ids.map(cd => {
+    const v = vm[cd];
+    const vItems = groups[cd];
+    const vTotal = vItems.reduce((s, it) => s + it.TOTAL_PRICE, 0);
+    const active = state.activeTab === cd;
+    return `
+      <button class="tab-btn" data-cd="${cd}" style="display:flex;flex-direction:column;align-items:flex-start;padding:12px 20px;border-bottom:2px solid ${active ? '#2B3990' : 'transparent'};background:${active ? '#eef0f9' : 'transparent'};border-top:none;border-left:none;border-right:none;cursor:pointer;white-space:nowrap;min-width:140px;transition:background 0.15s">
+        <span style="font-size:0.875rem;font-weight:700;color:${active ? '#24307a' : '#1a2260'}">${escapeHtml(v?.VENDOR_NM ?? cd)}</span>
+        <span style="font-size:0.75rem;font-weight:600;color:${active ? '#5a6abf' : '#9ca3af'}">${comma(vTotal)}원 · ${vItems.length}품목</span>
+      </button>`;
+  }).join('');
+
+  const rowsHtml = activeItems.map(item => `
+    <tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:16px;font-size:0.75rem;color:#9ca3af;font-family:monospace">${escapeHtml(item.GOODS_CD)}</td>
+      <td style="padding:16px"><p style="font-weight:800;color:#2B3990">${escapeHtml(item.GOODS_NM)}</p></td>
+      <td style="padding:16px;text-align:right;color:#4b5563">${comma(item.UNIT_PRICE)}</td>
+      <td style="padding:16px;text-align:right;color:#4b5563">${comma(item.UNIT_PRICE)}</td>
+      <td style="padding:16px;text-align:center"><span style="background:#eff6ff;color:#3b82f6;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px">포함</span></td>
+      <td style="padding:16px;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:0">
+          <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="-1" style="width:28px;height:28px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4b5563">−</button>
+          <span style="margin:0 4px;width:40px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:6px;font-size:0.875rem;font-weight:700;color:#1a2260">${item.ORDER_QTY}</span>
+          <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="1" style="width:28px;height:28px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4b5563">+</button>
+        </div>
+      </td>
+      <td style="padding:16px;text-align:center;font-weight:700;color:#1a2260">${item.ORDER_QTY}</td>
+      <td style="padding:16px;text-align:right;font-weight:800;color:#1a2260">${comma(item.TOTAL_PRICE)}</td>
+      <td style="padding:16px;text-align:center">
+        <button class="del-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" style="background:#fef2f2;color:#f87171;font-size:11px;font-weight:700;padding:4px 8px;border:none;border-radius:4px;cursor:pointer">삭제</button>
+      </td>
+    </tr>`).join('');
+
+  content.innerHTML = `
+    <div class="surface-card">
+      <div style="display:flex;border-bottom:1px solid #e5e7eb;overflow-x:auto">${tabsHtml}</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;gap:8px">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:0.875rem;flex-wrap:wrap;text-align:right">
+          <span style="color:#6b7280">주문금액: <strong style="color:#1a2260">${comma(subtotal)}원</strong></span>
+          <span style="color:#9ca3af">+</span>
+          <span style="color:#6b7280">플랫폼수수료(5.5%) <strong style="color:#1a2260">${comma(platformFee)}원</strong></span>
+          <span style="color:#9ca3af">=</span>
+          <span style="background:#eef0f9;border-radius:8px;padding:4px 10px;color:#2B3990">결제금액: <strong>${comma(paymentTotal)}원</strong></span>
+        </div>
+        <button id="clear-btn" style="background:#fef2f2;color:#f87171;font-size:0.875rem;font-weight:700;padding:6px 14px;border:none;border-radius:10px;cursor:pointer">장바구니 비우기</button>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:920px">
+          <thead>
+            <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
+              <th style="text-align:left;padding:10px 16px;width:120px">상품코드</th>
+              <th style="text-align:left;padding:10px 16px;min-width:260px">상품명</th>
+              <th style="text-align:right;padding:10px 16px;width:90px">단가</th>
+              <th style="text-align:right;padding:10px 16px;width:90px">할인가</th>
+              <th style="text-align:center;padding:10px 16px;width:80px">부가세</th>
+              <th style="text-align:center;padding:10px 16px;width:120px">주문수량</th>
+              <th style="text-align:center;padding:10px 16px;width:70px">수량</th>
+              <th style="text-align:right;padding:10px 16px;width:110px">주문금액</th>
+              <th style="text-align:center;padding:10px 16px;width:60px">삭제</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid #f3f4f6">
+        <a href="order.html" class="btn-secondary px-5 py-2.5">돌아가기</a>
+        <button id="checkout-btn" class="btn-primary px-6 py-2.5 text-sm">결제하기</button>
+      </div>
+    </div>`;
+
+  // Tab events
+  content.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => { state.activeTab = btn.dataset.cd; render(); });
+  });
+
+  // Qty buttons
+  content.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const seq = btn.dataset.seq;
+      const delta = parseInt(btn.dataset.delta);
+      const item = state.items.find(it => it.BASKET_SEQ === seq);
+      if (!item) return;
+      const newQty = item.ORDER_QTY + delta;
+      if (newQty < 1) return;
+      item.ORDER_QTY = newQty;
+      item.TOTAL_PRICE = item.UNIT_PRICE * newQty;
+      saveBasket(state.items);
+      await api.updateBasketQty(seq, newQty);
+      render();
+    });
+  });
+
+  // Delete buttons
+  content.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await api.deleteBasketItem(btn.dataset.seq);
+      state.items = state.items.filter(it => it.BASKET_SEQ !== btn.dataset.seq);
+      const ids = Object.keys(vendorGroups());
+      if (!ids.includes(state.activeTab)) state.activeTab = ids[0] ?? '';
+      render();
+    });
+  });
+
+  // Clear vendor basket
+  document.getElementById('clear-btn').addEventListener('click', async () => {
+    if (state.clearing) return;
+    state.clearing = true;
+    const toDelete = (vendorGroups()[state.activeTab] ?? []);
+    await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
+    state.items = state.items.filter(it => it.VENDOR_CD !== state.activeTab);
+    const remaining = Object.keys(vendorGroups());
+    state.activeTab = remaining[0] ?? '';
+    state.clearing = false;
+    render();
+    showAlert(`${activeVendor?.VENDOR_NM ?? '선택한 공급처'} 장바구니를 비웠습니다.`);
+  });
+
+  // Checkout
+  document.getElementById('checkout-btn').addEventListener('click', () => {
+    const storeInfo = getStoreInfo();
+    if (!storeInfo.RESIST_CARD) {
+      showCardModal();
+      return;
+    }
+    showPaymentModal({
+      vendor: activeVendor,
+      subtotal, platformFee, paymentTotal,
+      storeInfo,
+      onClose: () => {},
+      onConfirm: async () => {
+        state.ordering = true;
+        await new Promise(r => setTimeout(r, 800));
+        const res = await api.submitOrder(state.activeTab);
+        state.items = await api.getBasketList();
+        const ids = Object.keys(vendorGroups());
+        state.activeTab = ids[0] ?? '';
+        state.ordering = false;
+        render();
+        showAlert(`주문이 완료되었습니다.\n주문번호: ${res.ORDER_NO}`);
+      },
+    });
+  });
+}
+
+renderHeader();
+loadData();
+</script>
+</body>
+</html>

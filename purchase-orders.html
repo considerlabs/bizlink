@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>발주서주문 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+
+  <!-- Desktop layout -->
+  <div id="desktop-layout" style="display:flex;padding-top:58px;height:calc(100vh - 58px)">
+    <aside style="width:208px;flex-shrink:0;background:#fff;border-right:1px solid #e5e7eb;overflow-y:auto">
+      <div style="padding:12px 16px;border-bottom:1px solid #f3f4f6">
+        <p style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em">공급처 목록</p>
+      </div>
+      <div id="vendor-list"></div>
+    </aside>
+
+    <main style="flex:1;display:flex;flex-direction:column;overflow:hidden;background:#f9fafb">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button style="display:flex;align-items:center;gap:6px;border-radius:8px;background:#1a2260;color:#fff;padding:6px 12px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/></svg>
+            투게디포스 발주서
+          </button>
+          <span id="active-vendor-name" style="font-size:0.875rem;font-weight:600;color:#1a2260"></span>
+        </div>
+        <button id="clipboard-load-btn" style="display:flex;align-items:center;gap:6px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+          클립보드 불러오기
+        </button>
+      </div>
+
+      <div id="content-area" style="flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column"></div>
+
+      <div id="bottom-bar" style="padding:16px 20px;border-top:1px solid #f3f4f6;background:#fff;flex-shrink:0;display:flex;justify-content:flex-end"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+renderHeader();
+
+let vendors = [];
+let activeVendor = '';
+let clipImage = null;
+let ordering = false;
+
+async function init() {
+  vendors = await api.getVendors();
+  if (vendors.length > 0) activeVendor = vendors[0].VENDOR_CD;
+  renderVendorList();
+  renderContent();
+}
+
+function renderVendorList() {
+  document.getElementById('vendor-list').innerHTML = vendors.map(v => `
+    <button class="vendor-btn" data-cd="${v.VENDOR_CD}" onclick="selectVendor('${v.VENDOR_CD}')" style="width:100%;display:flex;align-items:flex-start;gap:12px;padding:12px 16px;text-align:left;border:none;border-right:${activeVendor === v.VENDOR_CD ? '2px solid #2B3990' : '2px solid transparent'};background:${activeVendor === v.VENDOR_CD ? '#eef0f9' : '#fff'};cursor:pointer;transition:background 0.15s">
+      <div style="width:32px;height:32px;border-radius:8px;background:${activeVendor === v.VENDOR_CD ? '#d4d8f0' : '#eef0f9'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${activeVendor === v.VENDOR_CD ? '#2B3990' : '#5a6abf'}" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/></svg>
+      </div>
+      <div style="min-width:0">
+        <p style="font-size:0.75rem;font-weight:700;color:${activeVendor === v.VENDOR_CD ? '#2B3990' : '#1a2260'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.VENDOR_NM)}</p>
+        <p style="font-size:10px;color:#9ca3af;margin-top:2px;font-family:monospace">${escapeHtml(v.BIZ_NUM ?? '-')}</p>
+      </div>
+    </button>`).join('');
+
+  const activeVendorObj = vendors.find(v => v.VENDOR_CD === activeVendor);
+  document.getElementById('active-vendor-name').textContent = activeVendorObj?.VENDOR_NM ?? '';
+}
+
+function selectVendor(cd) {
+  activeVendor = cd;
+  clipImage = null;
+  renderVendorList();
+  renderContent();
+}
+
+function renderContent() {
+  const area = document.getElementById('content-area');
+  const bar  = document.getElementById('bottom-bar');
+
+  if (clipImage) {
+    area.innerHTML = `
+      <div style="flex:1;border-radius:12px;border:1px solid #e5e7eb;overflow:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+        <img src="${clipImage}" alt="발주서 이미지" style="max-width:100%">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-shrink:0">
+        <button onclick="removeImage()" style="border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 16px;font-size:0.875rem;font-weight:700;color:#6b7280;cursor:pointer">이미지 제거</button>
+        <button onclick="handleOrder()" id="order-btn" class="btn-primary" style="display:flex;align-items:center;gap:6px;padding:10px 24px;font-size:0.875rem">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          결제하기
+        </button>
+      </div>`;
+    bar.innerHTML = '';
+  } else {
+    area.innerHTML = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;border:2px dashed #e5e7eb;background:#fff;min-height:400px">
+        <div style="width:64px;height:64px;border-radius:16px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+        </div>
+        <p style="font-size:0.875rem;font-weight:600;color:#9ca3af;margin-bottom:4px">이미지를 복사(Ctrl+C)한 뒤</p>
+        <p style="font-size:0.875rem;font-weight:600;color:#9ca3af">Ctrl+V를 눌러주세요</p>
+        <button id="clip-load-inline" style="margin-top:20px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:700;color:#6b7280;background:#fff;cursor:pointer">클립보드에서 불러오기</button>
+      </div>`;
+    document.getElementById('clip-load-inline')?.addEventListener('click', loadClipboard);
+    bar.innerHTML = `
+      <button onclick="handleOrder()" class="btn-primary" style="display:flex;align-items:center;gap:6px;padding:10px 24px;font-size:0.875rem">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        결제하기
+      </button>`;
+  }
+}
+
+function removeImage() { clipImage = null; renderContent(); }
+
+async function loadClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if (imgType) {
+        const blob = await item.getType(imgType);
+        const reader = new FileReader();
+        reader.onload = ev => { clipImage = ev.target.result; renderContent(); };
+        reader.readAsDataURL(blob);
+        return;
+      }
+    }
+    showAlert('클립보드에 이미지가 없습니다.');
+  } catch {
+    showAlert('클립보드 접근 권한이 없습니다. 페이지에서 Ctrl+V를 눌러주세요.');
+  }
+}
+
+function handleOrder() {
+  if (!clipImage) { showAlert('발주서 이미지를 먼저 붙여넣어 주세요.'); return; }
+  const vendor = vendors.find(v => v.VENDOR_CD === activeVendor);
+  const storeInfo = getStoreInfo();
+  showPaymentModal({
+    vendor, subtotal: 0, platformFee: 0, paymentTotal: 0,
+    storeInfo,
+    onClose: () => {},
+    onConfirm: async () => {
+      ordering = true;
+      await new Promise(r => setTimeout(r, 800));
+      ordering = false;
+      clipImage = null;
+      renderContent();
+      showAlert('발주서 주문이 완료되었습니다.');
+    },
+  });
+}
+
+document.getElementById('clipboard-load-btn').addEventListener('click', loadClipboard);
+
+window.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of Array.from(items)) {
+    if (item.type.startsWith('image/')) {
+      const blob = item.getAsFile();
+      if (!blob) continue;
+      const reader = new FileReader();
+      reader.onload = ev => { clipImage = ev.target.result; renderContent(); };
+      reader.readAsDataURL(blob);
+      break;
+    }
+  }
+});
+
+init();
+</script>
+</body>
+</html>

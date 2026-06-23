@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주문 상세 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:1000px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <a href="history.html" style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#9ca3af;text-decoration:none;font-weight:500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        주문 내역
+      </a>
+      <span style="color:#e5e7eb">/</span>
+      <span style="font-size:0.875rem;font-weight:700;color:#1a2260">주문 상세</span>
+    </div>
+    <div id="detail-content" class="surface-card">
+      <div style="text-align:center;padding:5rem"><div class="loading-spinner-md" style="margin:0 auto"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+
+const STAT_STYLE = {
+  COMPLETED:  'background:#eef0f9;color:#5a6abf',
+  DELIVERING: 'background:#eef0f9;color:#5a6abf',
+  RECEIVED:   'background:#fef9c3;color:#a16207',
+  CANCELLED:  'background:#fef2f2;color:#dc2626',
+};
+
+renderHeader();
+
+const params = new URLSearchParams(location.search);
+const orderNo = params.get('no') ?? '';
+const storeInfo = getStoreInfo();
+
+if (!orderNo) {
+  document.getElementById('detail-content').innerHTML = '<div style="text-align:center;padding:4rem;color:#9ca3af">주문번호가 없습니다.</div>';
+} else {
+  const order = [...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].find(o => o.ORDER_NO === orderNo) ?? null;
+
+  api.getOrderDetail(orderNo).then(items => {
+    const totalAmount = items.reduce((s, it) => s + it.TOTAL_PRICE, 0);
+    const totalQty    = items.reduce((s, it) => s + it.ORDER_QTY, 0);
+    const statStyle   = order ? (STAT_STYLE[order.ORDER_STAT_CD] ?? 'background:#f3f4f6;color:#6b7280') : '';
+
+    const tableRows = items.map(item => `
+      <tr style="border-bottom:1px solid #f3f4f6" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+        <td style="padding:12px 20px;font-family:monospace;font-size:0.75rem;color:#9ca3af">${escapeHtml(item.GOODS_CD)}</td>
+        <td style="padding:12px 20px;font-weight:500;color:#1a2260">${escapeHtml(item.GOODS_NM)}</td>
+        <td style="padding:12px 20px;text-align:right;color:#4b5563">${item.WEIGHT_KG}</td>
+        <td style="padding:12px 20px;text-align:right;color:#4b5563">${comma(item.UNIT_PRICE)}</td>
+        <td style="padding:12px 20px;text-align:center">
+          <span style="font-size:0.75rem;padding:2px 8px;border-radius:9999px;${item.TAX_TYPE === '과세' ? 'background:#fff7ed;color:#ea580c' : 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(item.TAX_TYPE)}</span>
+        </td>
+        <td style="padding:12px 20px;text-align:center;font-weight:600;color:#1a2260">${item.ORDER_QTY}</td>
+        <td style="padding:12px 20px;text-align:right;font-weight:800;color:#1a2260">${comma(item.TOTAL_PRICE)}</td>
+      </tr>`).join('');
+
+    document.getElementById('detail-content').innerHTML = `
+      <div style="padding:24px;border-bottom:1px solid #f3f4f6;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <h1 style="font-size:1rem;font-weight:800;color:#1a2260">${escapeHtml(orderNo)}</h1>
+            ${order ? `<span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;${statStyle}">${escapeHtml(order.ORDER_STAT_NM)}</span>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:20px;font-size:0.875rem;color:#6b7280;flex-wrap:wrap">
+            <span>주문일: <strong style="color:#1a2260">${order?.ORDER_DT?.slice(0,10) ?? '-'}</strong></span>
+            ${order?.DELIVERY_DT ? `<span>배송완료: <strong style="color:#1a2260">${order.DELIVERY_DT}</strong></span>` : ''}
+            <span>공급처: <strong style="color:#1a2260">${escapeHtml(order?.STORE_NM ?? '-')}</strong></span>
+            <span>주문자: <strong style="color:#1a2260">${escapeHtml(storeInfo?.BIZ_NAME ?? '-')}</strong></span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:2px">총 주문금액</p>
+          <p style="font-size:1.5rem;font-weight:800;color:#2B3990">${comma(order?.TOTAL_PRICE ?? totalAmount)}원</p>
+          <p style="font-size:0.75rem;color:#9ca3af;margin-top:2px">${items.length}품목 · ${totalQty}개</p>
+        </div>
+      </div>
+
+      ${items.length === 0 ? `<div style="text-align:center;padding:5rem;color:#9ca3af">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin:0 auto 12px;opacity:0.3"><path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <p style="font-size:0.875rem;font-weight:500">상세 내역이 없습니다.</p>
+      </div>` : `
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:700px">
+          <thead>
+            <tr style="border-bottom:1px solid #e5e7eb;background:#f9fafb;font-size:0.75rem;font-weight:600;color:#6b7280">
+              <th style="text-align:left;padding:12px 20px;width:130px">상품코드</th>
+              <th style="text-align:left;padding:12px 20px">상품명</th>
+              <th style="text-align:right;padding:12px 20px;width:80px">중량(kg)</th>
+              <th style="text-align:right;padding:12px 20px;width:100px">단가</th>
+              <th style="text-align:center;padding:12px 20px;width:80px">부가세</th>
+              <th style="text-align:center;padding:12px 20px;width:70px">수량</th>
+              <th style="text-align:right;padding:12px 20px;width:110px">주문금액</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+          <tfoot>
+            <tr style="border-top:2px solid #e5e7eb;background:#f9fafb">
+              <td colspan="6" style="padding:12px 20px;font-size:0.875rem;font-weight:600;color:#6b7280;text-align:right">합계</td>
+              <td style="padding:12px 20px;text-align:right;font-weight:800;color:#2B3990;font-size:1rem">${comma(totalAmount)}원</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>`}
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid #f3f4f6">
+        <a href="history.html" class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          목록으로
+        </a>
+        <button onclick="showAlert('재주문 요청이 완료되었습니다.')" class="btn-primary" style="padding:10px 20px;font-size:0.875rem">재주문하기</button>
+      </div>
+    `;
+  });
+}
+</script>
+</body>
+</html>

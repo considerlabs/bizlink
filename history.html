@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>구매내역 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:1280px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px">
+      <a href="order.html" style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#9ca3af;text-decoration:none;font-weight:500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        주문으로
+      </a>
+      <span style="color:#e5e7eb">/</span>
+      <span style="font-size:1.125rem;font-weight:800;color:#1a2260">구매내역</span>
+    </div>
+
+    <div class="surface-card">
+      <!-- Filters -->
+      <div style="background:#f3f4f6;padding:20px;border-radius:1rem 1rem 0 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:0.75rem;font-weight:700;color:#6b7280">주문일</span>
+            <div class="form-field" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <input type="date" id="start-dt" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:130px">
+            </div>
+            <span style="font-size:0.75rem;color:#d1d5db">~</span>
+            <div class="form-field" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <input type="date" id="end-dt" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:130px">
+            </div>
+            <button onclick="setRange(3)" class="range-btn" data-days="3" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">3일</button>
+            <button onclick="setRange(7)" class="range-btn" data-days="7" style="border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#fff;background:#5a6abf;border:none;cursor:pointer">7일</button>
+            <button onclick="setRange(30)" class="range-btn" data-days="30" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">1개월</button>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select id="vendor-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
+              <option value="ALL">공급처</option>
+            </select>
+            <form id="search-form" style="display:flex;align-items:center;gap:4px">
+              <div class="form-field" style="width:auto;gap:6px;padding:0 10px;height:36px">
+                <input type="text" id="keyword-input" placeholder="주문번호, 공급처" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:200px">
+              </div>
+              <button type="submit" style="display:flex;align-items:center;gap:4px;height:36px;border-radius:8px;padding:0 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;border:none;cursor:pointer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                검색
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:920px">
+          <thead>
+            <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
+              <th style="text-align:left;padding:12px 20px;width:130px">주문일</th>
+              <th style="text-align:left;padding:12px 20px;width:190px">주문번호</th>
+              <th style="text-align:left;padding:12px 20px;min-width:150px">공급처</th>
+              <th style="text-align:center;padding:12px 20px;width:120px">주문상태</th>
+              <th style="text-align:right;padding:12px 20px;width:130px">상품금액</th>
+              <th style="text-align:right;padding:12px 20px;width:150px">플랫폼수수료(5.5%)</th>
+              <th style="text-align:right;padding:12px 20px;width:130px">결제금액</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+
+const STAT_STYLE = {
+  COMPLETED:  'background:#eef0f9;color:#5a6abf',
+  DELIVERING: 'background:#eef0f9;color:#5a6abf',
+  RECEIVED:   'background:#fef9c3;color:#a16207',
+  CANCELLED:  'background:#fef2f2;color:#dc2626',
+};
+
+let allOrders = [], keyword = '', vendorFilter = 'ALL';
+
+function toDateStr(d) { return d.toISOString().slice(0, 10); }
+
+function setRange(days) {
+  const end = new Date(), start = new Date();
+  start.setDate(end.getDate() - days);
+  document.getElementById('start-dt').value = toDateStr(start);
+  document.getElementById('end-dt').value = toDateStr(end);
+  loadOrders();
+}
+
+async function loadOrders() {
+  const start = document.getElementById('start-dt').value;
+  const end = document.getElementById('end-dt').value;
+  const [ing, done] = await Promise.all([api.getIngOrders(start, end), api.getEndOrders(start, end)]);
+  allOrders = [...ing, ...done].sort((a, b) => b.ORDER_DT.localeCompare(a.ORDER_DT));
+  renderTable();
+}
+
+function filteredOrders() {
+  return allOrders.filter(o => {
+    const matchV = vendorFilter === 'ALL' || o.STORE_NM === vendorFilter;
+    const kw = keyword.toLowerCase();
+    const matchK = !kw || o.ORDER_NO.toLowerCase().includes(kw) || o.STORE_NM.toLowerCase().includes(kw);
+    return matchV && matchK;
+  });
+}
+
+function renderTable() {
+  const orders = filteredOrders();
+  const tbody = document.getElementById('history-tbody');
+  if (orders.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:6rem 0;color:#9ca3af">
+      <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
+      <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.map(o => {
+    const fee = Math.round(o.TOTAL_PRICE * PLATFORM_FEE_RATE);
+    const total = o.TOTAL_PRICE + fee;
+    const statStyle = STAT_STYLE[o.ORDER_STAT_CD] ?? 'background:#f3f4f6;color:#6b7280';
+    return `
+      <tr onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="border-bottom:1px solid #f3f4f6;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+        <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280">${o.ORDER_DT.slice(0,10)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;font-family:monospace;color:#1a2260;font-weight:600">${escapeHtml(o.ORDER_NO)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;color:#1a2260">${escapeHtml(o.STORE_NM)}</td>
+        <td style="padding:16px 20px;text-align:center">
+          <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
+        </td>
+        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(o.TOTAL_PRICE)}</td>
+        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(fee)}</td>
+        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;font-weight:800;color:#1a2260">${comma(total)}</td>
+      </tr>`;
+  }).join('');
+}
+
+// Init
+renderHeader();
+
+// Populate vendor filter
+MOCK_VENDORS.forEach(v => {
+  const opt = document.createElement('option');
+  opt.value = v.VENDOR_NM;
+  opt.textContent = v.VENDOR_NM;
+  document.getElementById('vendor-filter').appendChild(opt);
+});
+
+document.getElementById('vendor-filter').addEventListener('change', e => { vendorFilter = e.target.value; renderTable(); });
+document.getElementById('search-form').addEventListener('submit', e => {
+  e.preventDefault();
+  keyword = document.getElementById('keyword-input').value.trim();
+  renderTable();
+});
+
+setRange(7);
+</script>
+</body>
+</html>

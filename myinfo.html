@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내정보 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:720px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;margin-top:8px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h1 style="font-size:1.125rem;font-weight:800;color:#2B3990">내정보</h1>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- 상점 정보 -->
+      <section class="surface-card" style="padding:24px 32px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">상점 정보</h2>
+          <span style="font-size:0.75rem;color:#9ca3af">상점주</span>
+        </div>
+        <div id="store-info-grid" style="display:grid;grid-template-columns:150px 1fr;gap:12px 0"></div>
+      </section>
+
+      <!-- 페이 정보 -->
+      <section class="surface-card" style="padding:24px 32px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">페이 정보</h2>
+        </div>
+
+        <!-- 잔액 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
+          <div>
+            <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:4px">페이 잔액</p>
+            <p id="pay-balance" style="font-size:1.5rem;font-weight:800;color:#2B3990"></p>
+          </div>
+          <button id="pay-history-btn" style="border:1px solid #a9b1e1;border-radius:8px;padding:8px 16px;font-size:0.875rem;font-weight:700;color:#24307a;background:#fff;cursor:pointer">페이내역</button>
+        </div>
+
+        <!-- 충전카드 -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <p style="font-size:0.75rem;font-weight:800;color:#1a2260">충전카드 관리</p>
+            <button onclick="showAlert('카드 등록 및 이체 기능은 준비 중입니다.')" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">카드 등록&이체</button>
+          </div>
+          <div id="card-display"></div>
+        </div>
+
+        <!-- 공급자계정 -->
+        <div>
+          <p style="font-size:0.75rem;font-weight:800;color:#1a2260;margin-bottom:12px">공급자계정</p>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:0.875rem;color:#6b7280">첫 공급자계정</span>
+            <span id="cybank-type" style="border-radius:9999px;background:#eef0f9;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#2B3990"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" placeholder="변경할 공급자계정 입력" class="form-field" style="flex:1;height:36px;font-size:0.875rem">
+            <button onclick="showAlert('공급자계정 변경 기능은 준비 중입니다.')" style="border-radius:8px;background:#2B3990;padding:0 16px;height:36px;font-size:0.75rem;font-weight:700;color:#fff;border:none;cursor:pointer;flex-shrink:0">변경</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 계정 정보 -->
+      <section class="surface-card" style="padding:24px 32px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">계정 정보</h2>
+        </div>
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:16px 0;align-items:start">
+          <span style="font-size:0.75rem;font-weight:700;color:#9ca3af;padding-top:4px">아이디</span>
+          <span style="font-size:0.875rem;font-weight:600;color:#1a2260">user@bizlink</span>
+
+          <span style="font-size:0.75rem;font-weight:700;color:#9ca3af;padding-top:8px">비밀번호 변경</span>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${['현재 비밀번호 입력', '새 비밀번호 입력 (8자 이상)', '새 비밀번호 확인'].map((ph, i) => `
+              <div class="form-field" style="padding:0 4px 0 12px">
+                <input type="password" id="pw-${i}" placeholder="${ph}" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
+                <button type="button" onclick="togglePw(${i})" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+                  <svg id="eye-${i}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6">
+          <button id="change-pw-btn" class="btn-primary" style="padding:8px 20px;font-size:0.875rem">비밀번호 변경</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- 페이 내역 모달 -->
+<div id="pay-history-modal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:1rem">
+  <div style="width:100%;max-width:480px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #f3f4f6">
+      <h3 style="font-size:0.875rem;font-weight:800;color:#1a2260">페이 내역</h3>
+      <button id="pay-modal-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.25rem;line-height:1">×</button>
+    </div>
+    <div id="pay-modal-balance" style="padding:12px 24px;border-bottom:1px solid #d4d8f0;background:#eef0f9"></div>
+    <div style="max-height:256px;overflow-y:auto">
+      <table style="width:100%;font-size:0.875rem">
+        <thead style="position:sticky;top:0;background:#f9fafb">
+          <tr style="border-bottom:1px solid #e5e7eb">
+            <th style="text-align:left;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">일자</th>
+            <th style="text-align:left;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">내용</th>
+            <th style="text-align:right;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">금액</th>
+            <th style="text-align:right;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">잔액</th>
+          </tr>
+        </thead>
+        <tbody id="pay-history-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:16px 24px;display:flex;justify-content:flex-end;border-top:1px solid #f3f4f6">
+      <button id="pay-modal-close2" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 20px;font-size:0.875rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+renderHeader();
+
+const info = getStoreInfo();
+
+// Populate store info
+document.getElementById('store-info-grid').innerHTML = [
+  ['상점명', info.BIZ_NAME], ['사업자명', info.BIZ_NAME],
+  ['사업자번호', info.BIZ_NUM], ['대표자명', info.BIZ_OWNER],
+  ['인증 휴대번호', info.BIZ_TEL],
+].map(([k, v]) => `
+  <span style="font-size:0.75rem;font-weight:700;color:#9ca3af">${k}</span>
+  <span style="font-size:0.875rem;font-weight:600;color:#1a2260">${escapeHtml(v ?? '-')}</span>
+`).join('');
+
+document.getElementById('pay-balance').textContent = comma(info.UABLE_PAY) + '원';
+document.getElementById('cybank-type').textContent = info.CYBANK_TYPE_NAME ?? '한국유통';
+
+if (info.CARD_NO) {
+  document.getElementById('card-display').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:80px;height:48px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:6px 10px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.15);flex-shrink:0">
+        <span style="font-size:8px;font-weight:700;font-style:italic;color:rgba(255,255,255,0.7)">VISA</span>
+        <span style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.08em">${escapeHtml(info.CARD_NO)}</span>
+      </div>
+      <span style="font-size:0.875rem;color:#4b5563">${escapeHtml(info.CARD_NO)}</span>
+    </div>`;
+}
+
+// Pay history modal
+const modal = document.getElementById('pay-history-modal');
+document.getElementById('pay-modal-balance').innerHTML = `
+  <p style="font-size:0.75rem;color:#6b7280;margin-bottom:2px">전체 페이 잔액</p>
+  <p style="font-size:1.25rem;font-weight:800;color:#2B3990">${comma(info.UABLE_PAY)}원</p>`;
+
+document.getElementById('pay-history-tbody').innerHTML = MOCK_PAY_HISTORY.map(row => `
+  <tr style="border-bottom:1px solid #f3f4f6">
+    <td style="padding:12px 16px;font-size:0.75rem;color:#6b7280;white-space:nowrap">${escapeHtml(row.date)}</td>
+    <td style="padding:12px 16px;font-weight:500;color:#1a2260">${escapeHtml(row.desc)}</td>
+    <td style="padding:12px 16px;text-align:right;font-weight:700;color:${row.amount > 0 ? '#2B3990' : '#ef4444'}">${row.amount > 0 ? '+' : ''}${comma(row.amount)}원</td>
+    <td style="padding:12px 16px;text-align:right;font-weight:600;color:#1a2260;white-space:nowrap">${comma(row.balance)}원</td>
+  </tr>`).join('');
+
+document.getElementById('pay-history-btn').addEventListener('click', () => { modal.style.display = 'flex'; });
+document.getElementById('pay-modal-close').addEventListener('click', () => { modal.style.display = 'none'; });
+document.getElementById('pay-modal-close2').addEventListener('click', () => { modal.style.display = 'none'; });
+modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+
+// Password toggle
+function togglePw(i) {
+  const input = document.getElementById('pw-' + i);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// Password change
+document.getElementById('change-pw-btn').addEventListener('click', () => {
+  const cur = document.getElementById('pw-0').value;
+  const nw  = document.getElementById('pw-1').value;
+  const cf  = document.getElementById('pw-2').value;
+  if (!cur || !nw || !cf) { showAlert('모든 비밀번호 필드를 입력해주세요.'); return; }
+  if (nw.length < 8) { showAlert('새 비밀번호는 8자 이상이어야 합니다.'); return; }
+  if (nw !== cf) { showAlert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.'); return; }
+  showAlert('비밀번호가 변경되었습니다.', () => {
+    document.getElementById('pw-0').value = '';
+    document.getElementById('pw-1').value = '';
+    document.getElementById('pw-2').value = '';
+  });
+});
+</script>
+</body>
+</html>

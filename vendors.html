@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공급자관리 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:1280px">
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid #e5e7eb;background:#fff;border-radius:1rem 1rem 0 0;overflow:hidden">
+      <button id="tab-register" onclick="setTab('register')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid #2B3990;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#24307a;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        공급자 등록
+      </button>
+      <button id="tab-approval" onclick="setTab('approval')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid transparent;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#6b7280;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        공급자 승인내역
+      </button>
+    </div>
+
+    <div id="tab-content"></div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+renderHeader();
+
+let activeTab = 'register';
+
+function setTab(tab) {
+  activeTab = tab;
+  const btnR = document.getElementById('tab-register');
+  const btnA = document.getElementById('tab-approval');
+  btnR.style.borderBottomColor = tab === 'register' ? '#2B3990' : 'transparent';
+  btnR.style.color = tab === 'register' ? '#24307a' : '#6b7280';
+  btnA.style.borderBottomColor = tab === 'approval' ? '#2B3990' : 'transparent';
+  btnA.style.color = tab === 'approval' ? '#24307a' : '#6b7280';
+  renderTab();
+}
+
+const BANKS = ['국민은행', '신한은행', '하나은행', '우리은행', '농협은행', '기업은행'];
+
+function renderTab() {
+  const content = document.getElementById('tab-content');
+  if (activeTab === 'register') {
+    content.innerHTML = `
+      <div style="margin-top:20px;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <h1 style="font-size:1rem;font-weight:800;color:#24307a">신규 공급자 등록</h1>
+        </div>
+        <form id="register-form">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px 24px">
+            ${[
+              ['공급자명', 'vendor-name', 'text', '공급자명을 입력하세요', true],
+              ['사업자등록번호', 'biz-num', 'text', '000-00-00000', true],
+              ['대표자명', 'rep-name', 'text', '대표자명을 입력하세요', false],
+              ['연락처', 'contact', 'text', '연락처를 입력하세요', false],
+              ['이메일', 'email', 'email', 'example@email.com', false],
+              ['주소', 'address', 'text', '사업자 주소를 입력하세요', false],
+            ].map(([label, id, type, placeholder, required]) => `
+              <div>
+                <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}</label>
+                <input id="${id}" type="${type}" placeholder="${placeholder}" class="form-field" style="height:40px">
+              </div>
+            `).join('')}
+            <div>
+              <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">결제은행</label>
+              <select class="form-field" style="height:40px;appearance:auto">
+                ${BANKS.map(b => `<option>${b}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">계좌번호</label>
+              <input type="text" placeholder="계좌번호를 입력하세요" class="form-field" style="height:40px">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">비고</label>
+              <textarea placeholder="추가 정보를 입력하세요" rows="3" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.875rem;color:#1a2260;outline:none;resize:vertical"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid #f3f4f6">
+            <button type="button" onclick="document.getElementById('register-form').reset()" class="btn-secondary" style="padding:10px 20px">초기화</button>
+            <button type="submit" class="btn-primary" style="padding:10px 20px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              등록 신청
+            </button>
+          </div>
+        </form>
+      </div>`;
+
+    document.getElementById('register-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('vendor-name').value.trim();
+      const biz = document.getElementById('biz-num').value.trim();
+      if (!name || !biz) { showAlert('공급자명과 사업자등록번호는 필수입니다.'); return; }
+      showAlert('공급자 등록 신청이 완료되었습니다.', () => { document.getElementById('register-form').reset(); });
+    });
+
+  } else {
+    const STAT_STYLE = {
+      APPROVED:  'background:#eef0f9;color:#2B3990',
+      REVIEWING: 'background:#fef9c3;color:#a16207',
+      REJECTED:  'background:#fef2f2;color:#dc2626',
+    };
+    const rows = MOCK_VENDOR_APPROVALS.map(v => `
+      <tr style="border-bottom:1px solid #f3f4f6" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+        <td style="padding:16px 20px;font-size:0.875rem;font-weight:700;color:#1a2260">${escapeHtml(v.name)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.biz_num)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.rep)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280">${escapeHtml(v.applied)}</td>
+        <td style="padding:16px 20px;text-align:center">
+          <span style="font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:9999px;${STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(v.status)}</span>
+        </td>
+      </tr>`).join('');
+
+    content.innerHTML = `
+      <div class="surface-card" style="margin-top:20px;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table style="width:100%;min-width:600px">
+            <thead>
+              <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
+                <th style="text-align:left;padding:12px 20px">공급자명</th>
+                <th style="text-align:left;padding:12px 20px">사업자번호</th>
+                <th style="text-align:left;padding:12px 20px">대표자</th>
+                <th style="text-align:left;padding:12px 20px">신청일</th>
+                <th style="text-align:center;padding:12px 20px">승인상태</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+}
+
+setTab('register');
+</script>
+</body>
+</html>

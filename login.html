@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',200:'#a9b1e1',300:'#7e8ad2',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+</head>
+<body>
+  <div class="min-h-screen bg-gradient-to-br from-blue-900 via-primary-700 to-blue-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl shadow-popup overflow-hidden">
+      <div class="px-8 pt-10 pb-8">
+        <div class="flex justify-center mb-8">
+          <img src="img/logo.jpg" alt="BIZLINK" style="height:48px;width:auto;object-fit:contain">
+        </div>
+        <h2 class="text-center text-sm font-semibold text-gray-500 mb-6">B2B 상품권 주문 플랫폼</h2>
+
+        <form id="login-form" class="space-y-3">
+          <div>
+            <label class="text-xs font-bold text-gray-500 mb-1 block">아이디</label>
+            <input id="login-id" type="text" placeholder="아이디를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="username">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-gray-500 mb-1 block">비밀번호</label>
+            <input id="login-pw" type="password" placeholder="비밀번호를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="current-password">
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+              <input type="checkbox" id="save-id" class="rounded"> 아이디 저장
+            </label>
+            <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+              <input type="checkbox" id="auto-login" class="rounded"> 자동 로그인
+            </label>
+          </div>
+
+          <button type="submit" class="btn-primary w-full h-11 text-sm mt-2" style="border-radius:0.75rem">
+            로그인
+          </button>
+        </form>
+
+        <div class="flex justify-center gap-4 mt-4">
+          <button onclick="showAlert('아이디 찾기 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">아이디 찾기</button>
+          <span class="text-gray-200">|</span>
+          <button onclick="showAlert('비밀번호 재설정 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">비밀번호 재설정</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auto-fill saved id
+    if (localStorage.getItem('ID_SAVE_YN') === 'Y') {
+      document.getElementById('login-id').value = localStorage.getItem('LOGIN_ID') || '';
+      document.getElementById('save-id').checked = true;
+    }
+    if (localStorage.getItem('AUTO_LOGIN_YN') === 'Y') {
+      document.getElementById('auto-login').checked = true;
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('login-id').value.trim();
+      const pw = document.getElementById('login-pw').value;
+      const saveId = document.getElementById('save-id').checked;
+      const autoLogin = document.getElementById('auto-login').checked;
+
+      if (!id || !pw) { showAlert('아이디와 비밀번호를 입력해주세요.'); return; }
+
+      try {
+        await api.login(id, pw);
+        if (saveId) { localStorage.setItem('ID_SAVE_YN', 'Y'); localStorage.setItem('LOGIN_ID', id); }
+        else { localStorage.removeItem('ID_SAVE_YN'); localStorage.removeItem('LOGIN_ID'); }
+        if (autoLogin) localStorage.setItem('AUTO_LOGIN_YN', 'Y');
+        else localStorage.removeItem('AUTO_LOGIN_YN');
+        window.location.href = 'order.html';
+      } catch (err) {
+        showAlert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

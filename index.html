@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>BIZLINK</title>
+  <script>
+    window.location.replace(
+      localStorage.getItem('MOCK_LOGGED_IN') === 'true' ? 'order.html' : 'login.html'
+    );
+  </script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주문 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          primary: { 50:'#eef0f9',100:'#d4d8f0',200:'#a9b1e1',300:'#7e8ad2',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' },
+          navy: '#1a2260'
+        },
+        boxShadow: {
+          card: '0 2px 8px rgba(0,0,0,0.08)',
+          header: '0 1px 4px rgba(0,0,0,0.08)',
+          popup: '0 8px 32px rgba(0,0,0,0.18)',
+          md: '0 4px 12px rgba(0,0,0,0.12)'
+        }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+  <style>
+    /* toggle switch */
+    .toggle-wrap { position:relative; display:inline-block; width:28px; height:16px; flex-shrink:0; }
+    .toggle-wrap input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-slider { position:absolute; inset:0; background:#d1d5db; border-radius:9999px; cursor:pointer; transition:background .2s; }
+    .toggle-slider::before { content:''; position:absolute; width:12px; height:12px; left:2px; top:2px; background:#fff; border-radius:50%; transition:transform .2s; }
+    .toggle-wrap input:checked + .toggle-slider { background:#5a6abf; }
+    .toggle-wrap input:checked + .toggle-slider::before { transform:translateX(12px); }
+
+    /* product grid */
+    #product-grid { display:grid; gap:12px; grid-template-columns:repeat(2,1fr); }
+    @media(min-width:640px)  { #product-grid { grid-template-columns:repeat(3,1fr); } }
+    @media(min-width:1024px) { #product-grid { grid-template-columns:repeat(4,1fr); } }
+    @media(min-width:1280px) { #product-grid { grid-template-columns:repeat(5,1fr); } }
+    #product-grid-mobile { display:grid; gap:10px; grid-template-columns:repeat(2,1fr); }
+
+    /* product card hover */
+    .product-card { transition:transform .15s, box-shadow .15s; }
+    .product-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+    .product-card.selected { outline:2px solid #5a6abf; outline-offset:0; box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+    .product-card.out-of-stock { opacity:.6; }
+
+    /* qty buttons */
+    .qty-opt { height:24px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer; transition:background .1s; background:#f3f4f6; color:#4b5563; }
+    .qty-opt:hover:not(.active) { background:#e5e7eb; }
+    .qty-opt.active { background:#5a6abf; color:#fff; }
+    .qty-opt:disabled { cursor:not-allowed; color:#d1d5db; background:#f9fafb; }
+  </style>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+
+  <!-- ── Mobile vendor bar ── -->
+  <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6;overflow-x:auto">
+    <div id="mobile-vendor-pills" style="display:flex;gap:6px;padding:8px 12px;min-width:max-content;align-items:center">
+      <span style="font-size:10px;font-weight:700;color:#9ca3af;margin-right:4px;flex-shrink:0">유통사</span>
+    </div>
+  </div>
+
+  <!-- ── Desktop layout ── -->
+  <div class="hidden md:flex" style="gap:1rem;padding:1rem;max-width:1400px;margin:0 auto;padding-top:74px">
+
+    <!-- Sidebar -->
+    <aside style="width:220px;flex-shrink:0;align-self:flex-start;position:sticky;top:74px;max-height:calc(100vh - 90px);overflow-y:auto">
+      <div class="surface-card" style="padding:10px">
+
+        <!-- Header row -->
+        <div style="display:flex;align-items:center;gap:8px;padding:0 6px 10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2" style="flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span style="font-size:0.875rem;font-weight:800;color:#1a2260;white-space:nowrap">공급처목록</span>
+          <select id="sidebar-sort" style="margin-left:auto;height:28px;max-width:90px;border:1px solid #e5e7eb;border-radius:8px;padding:0 6px;font-size:11px;font-weight:600;color:#6b7280;background:#fff;outline:none">
+            <option value="name">이름순</option>
+            <option value="bizNum">사업자번호순</option>
+          </select>
+        </div>
+
+        <!-- Favorites toggle -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <label style="display:flex;flex:1;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer">
+            <span class="toggle-wrap">
+              <input type="checkbox" id="fav-only-toggle">
+              <span class="toggle-slider"></span>
+            </span>
+            즐겨찾기만
+          </label>
+        </div>
+
+        <!-- All vendors button -->
+        <button id="all-vendors-btn" style="margin-bottom:8px;width:100%;border-radius:12px;border:1px solid #e5e7eb;padding:8px 12px;text-align:left;background:#fff;cursor:pointer;transition:all .15s">
+          <span id="all-label" style="font-size:0.75rem;font-weight:800;color:#1a2260;display:block">전체 공급처</span>
+          <span id="all-sub" style="font-size:10px;font-weight:600;color:#9ca3af;margin-top:2px;display:block"></span>
+        </button>
+
+        <!-- Vendor cards -->
+        <div id="vendor-cards" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- Total footer -->
+      <div id="total-footer" style="display:none;margin-top:8px;border-radius:12px;background:#5a6abf;padding:12px 16px">
+        <p style="font-size:11px;color:#d4d8f0;font-weight:500;margin-bottom:2px">총 주문금액</p>
+        <p id="total-amount" style="font-size:1rem;font-weight:800;color:#fff"></p>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main style="flex:1;min-width:0">
+      <!-- Search + Sort -->
+      <div class="panel-card" style="padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <form id="search-form" style="flex:1;display:flex;align-items:center;gap:8px">
+          <div class="search-field" style="flex:1">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="search-input" type="text" placeholder="상품명으로 검색">
+          </div>
+          <button type="submit" class="btn-primary" style="padding:8px 16px;font-size:0.875rem">검색</button>
+        </form>
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="9" y1="12" y2="12"/><line x1="17" x2="7" y1="18" y2="18"/></svg>
+          <select id="sort-select" style="font-size:0.875rem;color:#4b5563;background:transparent;border:none;outline:none;cursor:pointer">
+            <option value="default">기본 정렬</option>
+            <option value="price_asc">가격 낮은 순</option>
+            <option value="price_desc">가격 높은 순</option>
+            <option value="name">이름 순</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Count + refresh -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 4px">
+        <p id="product-count" style="font-size:0.875rem;color:#6b7280"></p>
+        <button id="refresh-btn" style="display:flex;align-items:center;gap:4px;font-size:0.75rem;color:#9ca3af;background:none;border:none;cursor:pointer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          새로고침
+        </button>
+      </div>
+
+      <div id="product-grid"></div>
+    </main>
+  </div>
+
+  <!-- ── Mobile main ── -->
+  <div class="md:hidden" style="padding:12px">
+    <form id="search-form-mobile" style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="search-field" style="flex:1;height:36px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="search-input-mobile" type="text" placeholder="상품명으로 검색" style="font-size:0.875rem">
+      </div>
+      <button type="submit" class="btn-primary" style="padding:8px 12px;font-size:0.75rem">검색</button>
+    </form>
+    <p id="product-count-mobile" style="font-size:0.75rem;color:#6b7280;margin-bottom:8px;padding:0 4px"></p>
+    <div id="product-grid-mobile"></div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+
+/* ── State ── */
+const S = {
+  vendors: [],
+  products: [],
+  basket: [],
+  activeVendor: 'ALL',
+  keyword: '',
+  sort: 'default',
+  favorites: getFavoriteVendors(),
+  sidebarSort: 'name',
+  favOnly: false,
+  productQty: {},   // GOODS_CD → selected qty
+  adding: new Set(),// GOODS_CD currently being added
+};
+
+const CATE_STYLE = {
+  VEG:    { gradient:'from-green-500 to-emerald-700',  bg:'bg-green-50',  text:'text-green-700',  emoji:'🥬' },
+  MEAT:   { gradient:'from-red-400 to-rose-700',       bg:'bg-red-50',    text:'text-red-700',    emoji:'🥩' },
+  FISH:   { gradient:'from-blue-400 to-blue-700',      bg:'bg-blue-50',   text:'text-blue-700',   emoji:'🐟' },
+  DAIRY:  { gradient:'from-amber-300 to-yellow-500',   bg:'bg-yellow-50', text:'text-yellow-700', emoji:'🥚' },
+  GRAIN:  { gradient:'from-amber-500 to-orange-600',   bg:'bg-amber-50',  text:'text-amber-700',  emoji:'🌾' },
+  SAUCE:  { gradient:'from-orange-400 to-red-600',     bg:'bg-orange-50', text:'text-orange-700', emoji:'🌶️' },
+  FROZEN: { gradient:'from-sky-400 to-blue-600',       bg:'bg-sky-50',    text:'text-sky-700',    emoji:'🧊' },
+  GIFT:   { gradient:'from-primary-400 to-primary-600',bg:'bg-primary-50',text:'text-primary-700',emoji:'🎁' },
+  DEFAULT:{ gradient:'from-gray-400 to-gray-600',      bg:'bg-gray-100',  text:'text-gray-700',   emoji:'📦' },
+};
+const TAG_STYLE = { '인기':'bg-orange-100 text-orange-600', '특가':'bg-red-100 text-red-600', '신선':'bg-green-100 text-green-600' };
+const QUICK_QTYS = [5, 10, 50];
+
+/* ── Init ── */
+async function init() {
+  renderHeader();
+  [S.vendors, S.basket] = await Promise.all([api.getVendors(), api.getBasketList()]);
+  QUICK_QTYS.forEach(() => {}); // noop – ensure const available
+  S.vendors.forEach(v => { if (!S.productQty[v.VENDOR_CD]) {} }); // init later per product
+  renderSidebar();
+  renderMobileVendorBar();
+  await loadProducts();
+  bindEvents();
+}
+
+function bindEvents() {
+  document.getElementById('search-form').addEventListener('submit', e => {
+    e.preventDefault();
+    S.keyword = document.getElementById('search-input').value.trim();
+    renderProducts();
+  });
+  document.getElementById('search-form-mobile').addEventListener('submit', e => {
+    e.preventDefault();
+    S.keyword = document.getElementById('search-input-mobile').value.trim();
+    renderProducts();
+  });
+  document.getElementById('sort-select').addEventListener('change', e => { S.sort = e.target.value; renderProducts(); });
+  document.getElementById('refresh-btn').addEventListener('click', loadProducts);
+  document.getElementById('sidebar-sort').addEventListener('change', e => { S.sidebarSort = e.target.value; renderSidebar(); });
+  document.getElementById('fav-only-toggle').addEventListener('change', e => { S.favOnly = e.target.checked; renderSidebar(); });
+  document.getElementById('all-vendors-btn').addEventListener('click', () => selectVendor('ALL'));
+}
+
+async function loadProducts() {
+  S.products = await api.getProducts({ vendorCd: S.activeVendor, keyword: S.keyword });
+  renderProducts();
+}
+
+/* ── Helpers ── */
+function getVendorTotals() {
+  const t = {};
+  S.basket.forEach(it => { t[it.VENDOR_CD] = (t[it.VENDOR_CD] ?? 0) + it.TOTAL_PRICE; });
+  return t;
+}
+function getCartQtyMap() {
+  const m = {};
+  S.basket.forEach(it => { m[it.GOODS_CD] = (m[it.GOODS_CD] ?? 0) + it.ORDER_QTY; });
+  return m;
+}
+function getSortedProducts() {
+  const list = [...S.products];
+  if (S.sort === 'price_asc')  list.sort((a,b) => a.UNIT_PRICE - b.UNIT_PRICE);
+  else if (S.sort === 'price_desc') list.sort((a,b) => b.UNIT_PRICE - a.UNIT_PRICE);
+  else if (S.sort === 'name')  list.sort((a,b) => a.GOODS_NM.localeCompare(b.GOODS_NM,'ko'));
+  return list;
+}
+function getSortedVisibleVendors() {
+  let list = S.favOnly ? S.vendors.filter(v => S.favorites.includes(v.VENDOR_CD)) : [...S.vendors];
+  if (S.sidebarSort === 'bizNum') list.sort((a,b) => (a.BIZ_NUM ?? a.VENDOR_CD).localeCompare(b.BIZ_NUM ?? b.VENDOR_CD,'ko'));
+  else list.sort((a,b) => a.VENDOR_NM.localeCompare(b.VENDOR_NM,'ko'));
+  return list;
+}
+
+async function selectVendor(cd) {
+  S.activeVendor = cd;
+  S.keyword = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-input-mobile').value = '';
+  renderSidebar();
+  renderMobileVendorBar();
+  await loadProducts();
+}
+
+function toggleFavorite(cd) {
+  const idx = S.favorites.indexOf(cd);
+  if (idx >= 0) S.favorites.splice(idx,1); else S.favorites.push(cd);
+  saveFavoriteVendors(S.favorites);
+  renderSidebar();
+}
+
+async function handleReAdd(vendor) {
+  S.activeVendor = vendor.VENDOR_CD;
+  S.keyword = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-input-mobile').value = '';
+  const toDelete = S.basket.filter(it => it.VENDOR_CD === vendor.VENDOR_CD);
+  if (toDelete.length > 0) {
+    await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
+  }
+  S.basket = await api.getBasketList();
+  renderSidebar();
+  renderMobileVendorBar();
+  renderProducts();
+  showAlert(`${vendor.VENDOR_NM} 장바구니를 비웠습니다.`);
+}
+
+async function handleAddToCart(goodsCd) {
+  if (S.adding.has(goodsCd)) return;
+  const product = S.products.find(p => p.GOODS_CD === goodsCd);
+  if (!product || product.STOCK_YN !== 'Y') return;
+  const qty = S.productQty[goodsCd] ?? 1;
+  S.adding.add(goodsCd);
+  updateCardAddBtn(goodsCd, true);
+  try {
+    await api.addToBasket(goodsCd, qty);
+    S.basket = await api.getBasketList();
+    renderSidebar();
+    renderMobileVendorBar();
+    renderProducts();
+    showAlert(`"${product.GOODS_NM}" ${qty}개를 담았습니다.`);
+  } catch(e) { showAlert(e.message); }
+  setTimeout(() => { S.adding.delete(goodsCd); }, 800);
+}
+
+async function handleResetCart(goodsCd) {
+  const toDelete = S.basket.filter(it => it.GOODS_CD === goodsCd);
+  if (!toDelete.length) return;
+  await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
+  S.basket = await api.getBasketList();
+  renderSidebar();
+  renderMobileVendorBar();
+  renderProducts();
+}
+
+function updateCardAddBtn(goodsCd, isAdding) {
+  document.querySelectorAll(`[data-add-btn="${goodsCd}"]`).forEach(btn => {
+    btn.disabled = isAdding;
+    btn.innerHTML = isAdding
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>담는 중...`
+      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>담기`;
+    btn.style.background = isAdding ? '#7e8ad2' : '#5a6abf';
+  });
+}
+
+/* ── Sidebar render ── */
+function renderSidebar() {
+  const totals = getVendorTotals();
+  const totalAll = Object.values(totals).reduce((s,v)=>s+v,0);
+  const visibleVendors = getSortedVisibleVendors();
+  const isAllActive = S.activeVendor === 'ALL';
+
+  // all button
+  const allBtn = document.getElementById('all-vendors-btn');
+  allBtn.style.borderColor = isAllActive ? '#7e8ad2' : '#e5e7eb';
+  allBtn.style.background  = isAllActive ? '#eef0f9' : '#fff';
+  document.getElementById('all-label').style.color = isAllActive ? '#24307a' : '#1a2260';
+  document.getElementById('all-sub').textContent = `${S.vendors.length}개 공급처 상품 보기`;
+
+  // total footer
+  const footer = document.getElementById('total-footer');
+  if (totalAll > 0) {
+    footer.style.display = 'block';
+    document.getElementById('total-amount').textContent = comma(totalAll) + '원';
+  } else {
+    footer.style.display = 'none';
+  }
+
+  // vendor cards
+  const cardsEl = document.getElementById('vendor-cards');
+  if (visibleVendors.length === 0) {
+    cardsEl.innerHTML = `<div style="padding:20px 12px;text-align:center;font-size:0.75rem;font-weight:600;color:#9ca3af">즐겨찾기한 공급처가 없습니다.</div>`;
+    return;
+  }
+
+  cardsEl.innerHTML = visibleVendors.map(v => {
+    const total = totals[v.VENDOR_CD] ?? 0;
+    const hasItems = total > 0;
+    const isActive = S.activeVendor === v.VENDOR_CD;
+    const isFav = S.favorites.includes(v.VENDOR_CD);
+    const freeShipping = v.SHIPPING_FEE === 0 || total >= v.FREE_SHIPPING_MIN;
+    const shippingLabel = freeShipping ? '무료 배송' : `배송비 ${comma(v.SHIPPING_FEE)}원`;
+    const freeLabel = v.FREE_SHIPPING_MIN > 0 ? `${comma(v.FREE_SHIPPING_MIN)}원 이상 무료` : '상시 무료 배송';
+
+    return `
+      <div class="vendor-card-item" style="position:relative;border-radius:12px;border:1px solid ${isActive?'#7e8ad2':'#e5e7eb'};background:${isActive?'#eef0f9':'#fff'};padding:12px;transition:all .15s;cursor:pointer" data-vcd="${v.VENDOR_CD}">
+        <button class="star-btn" data-vcd="${v.VENDOR_CD}" style="position:absolute;top:10px;right:10px;border:none;background:none;cursor:pointer;padding:4px;border-radius:6px;color:${isFav?'#f59e0b':'#d1d5db'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${isFav?'currentColor':'none'}" stroke="${isFav?'#f59e0b':'#d1d5db'}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </button>
+        <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="padding-right:24px">
+          <p style="font-size:0.875rem;font-weight:800;color:${isActive?'#24307a':'#1a2260'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.VENDOR_NM)}</p>
+          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:4px">사업자번호 ${escapeHtml(v.BIZ_NUM ?? v.VENDOR_CD)}</p>
+          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:2px">${shippingLabel}</p>
+          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:2px">${freeLabel}</p>
+        </div>
+        <div style="margin-top:12px;padding-top:8px;border-top:1px solid #f3f4f6">
+          <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-bottom:8px">
+            <span style="font-size:10px;font-weight:700;color:#6b7280">주문금액</span>
+            <span style="font-size:0.875rem;font-weight:800;color:${hasItems?'#1a2260':'#9ca3af'}">${comma(total)}원</span>
+          </div>
+          <button class="readd-btn" data-vcd="${v.VENDOR_CD}" style="display:flex;width:100%;height:32px;align-items:center;justify-content:center;gap:4px;border-radius:8px;font-size:0.75rem;font-weight:800;border:none;cursor:pointer;background:${isActive?'#2B3990':'#5a6abf'};color:#fff">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            다시담기
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // bind sidebar events
+  cardsEl.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(btn.dataset.vcd); });
+  });
+  cardsEl.querySelectorAll('.vendor-select-area').forEach(el => {
+    el.addEventListener('click', () => selectVendor(el.dataset.vcd));
+  });
+  cardsEl.querySelectorAll('.readd-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const vendor = S.vendors.find(v => v.VENDOR_CD === btn.dataset.vcd);
+      if (vendor) handleReAdd(vendor);
+    });
+  });
+}
+
+/* ── Mobile vendor bar ── */
+function renderMobileVendorBar() {
+  const totals = getVendorTotals();
+  const pills = document.getElementById('mobile-vendor-pills');
+  const header = pills.querySelector('span');
+  pills.innerHTML = '';
+  if (header) pills.appendChild(header);
+
+  const makeBtn = (cd, nm, total) => {
+    const active = S.activeVendor === cd;
+    const btn = document.createElement('button');
+    btn.style.cssText = `display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:9999px;font-size:11px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;background:${active?'#2B3990':'#f3f4f6'};color:${active?'#fff':'#4b5563'}`;
+    btn.innerHTML = escapeHtml(nm) + (total > 0 ? `<span style="font-size:10px;font-weight:700;color:${active?'#d4d8f0':'#2B3990'}">${Math.round(total/1000)}k</span>` : '');
+    btn.addEventListener('click', () => selectVendor(cd));
+    return btn;
+  };
+
+  pills.appendChild(makeBtn('ALL', '전체', 0));
+  S.vendors.forEach(v => pills.appendChild(makeBtn(v.VENDOR_CD, v.VENDOR_NM, totals[v.VENDOR_CD] ?? 0)));
+}
+
+/* ── Product card HTML ── */
+function buildProductCardHtml(p, cartQty) {
+  const isSelected = cartQty > 0;
+  const outOfStock = p.STOCK_YN !== 'Y';
+  const style = CATE_STYLE[p.CATE_CD] ?? CATE_STYLE.DEFAULT;
+  const qty = S.productQty[p.GOODS_CD] ?? 1;
+  const adding = S.adding.has(p.GOODS_CD);
+
+  // Tag badge HTML (hidden when selected)
+  const tagBadge = p.TAG && !isSelected
+    ? `<span style="position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px" class="${TAG_STYLE[p.TAG] ?? 'bg-gray-100 text-gray-600'}">${escapeHtml(p.TAG)}</span>`
+    : '';
+
+  // Cart badge (shown when selected)
+  const cartBadge = isSelected ? `
+    <div style="position:absolute;top:8px;right:8px;display:flex;align-items:center;gap:4px">
+      <span style="border-radius:9999px;background:#fff;padding:2px 8px;font-size:10px;font-weight:800;color:#2B3990;box-shadow:0 1px 4px rgba(0,0,0,0.1)">담김 ${cartQty}</span>
+      <button class="reset-btn" data-cd="${p.GOODS_CD}" style="display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:9999px;background:#fff;border:none;cursor:pointer;color:#9ca3af;box-shadow:0 1px 4px rgba(0,0,0,0.1)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      </button>
+    </div>` : '';
+
+  // Image area
+  const imgHtml = p.IMG_URL
+    ? `<img src="${p.IMG_URL}" alt="${escapeHtml(p.GOODS_NM)}" style="width:100%;height:100%;object-fit:cover;opacity:${isSelected?'0.8':'1'}">`
+    : `<div class="w-full h-full bg-gradient-to-br ${isSelected?'from-primary-400 to-primary-600':style.gradient} relative flex items-center justify-center">
+        <div style="position:absolute;top:-24px;left:-24px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1)"></div>
+        <div style="position:absolute;bottom:-16px;right:-16px;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.1)"></div>
+        <div style="position:absolute;top:10px;left:12px"><p style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:rgba(255,255,255,0.6);text-transform:uppercase">BIZLINK</p></div>
+        <span style="font-size:44px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.2))">${style.emoji}</span>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.2);padding:6px 12px">
+          <p style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.CATE_NM)}</p>
+        </div>
+      </div>`;
+
+  // Out of stock overlay
+  const stockOverlay = outOfStock
+    ? `<div style="position:absolute;inset:0;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center"><span style="font-size:0.875rem;font-weight:700;color:#9ca3af">품절</span></div>`
+    : '';
+
+  // Qty quick buttons
+  const qtyBtns = QUICK_QTYS.map(n => `
+    <button class="qty-opt${qty===n?' active':''}" data-cd="${p.GOODS_CD}" data-qty="${n}" ${outOfStock?'disabled':''}>${n}</button>
+  `).join('');
+
+  // Add button
+  const addBtnStyle = adding ? 'background:#7e8ad2' : outOfStock ? 'background:#f3f4f6;color:#9ca3af;cursor:not-allowed' : 'background:#5a6abf';
+  const addBtnContent = adding
+    ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>담는 중...`
+    : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>담기`;
+
+  return `
+    <div class="product-card surface-card flex flex-col${isSelected?' selected':''}${outOfStock?' out-of-stock':''}" data-goods-cd="${p.GOODS_CD}">
+      <div style="position:relative;height:144px;overflow:hidden;background:#f9fafb;flex-shrink:0">
+        ${imgHtml}
+        ${tagBadge}
+        ${cartBadge}
+        ${stockOverlay}
+      </div>
+      <div style="display:flex;flex-direction:column;flex:1;padding:12px;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:600;padding:2px 6px;border-radius:9999px" class="${style.bg} ${style.text}">${escapeHtml(p.CATE_NM)}</span>
+          <span style="font-size:10px;color:#9ca3af">${escapeHtml(p.ORIGIN ?? '')}</span>
+        </div>
+        <p style="font-size:10px;color:#9ca3af;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(p.VENDOR_NM)}</p>
+        <p style="font-size:0.875rem;font-weight:600;color:#1a2260;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1">${escapeHtml(p.GOODS_NM)}</p>
+        <div>
+          <span style="font-size:1rem;font-weight:800;color:#1a2260">${comma(p.UNIT_PRICE)}</span>
+          <span style="font-size:0.75rem;color:#9ca3af;margin-left:4px">원/${escapeHtml(p.UNIT_NM)}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px">
+          ${qtyBtns}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+            <button class="minus-btn" data-cd="${p.GOODS_CD}" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:#fff;cursor:pointer;color:#6b7280" ${outOfStock?'disabled':''}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            </button>
+            <span class="qty-display" data-cd="${p.GOODS_CD}" style="width:24px;text-align:center;font-size:0.75rem;font-weight:700;color:#1a2260">${qty}</span>
+            <button class="plus-btn" data-cd="${p.GOODS_CD}" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:#fff;cursor:pointer;color:#6b7280" ${outOfStock?'disabled':''}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            </button>
+          </div>
+          <button class="add-btn" data-add-btn="${p.GOODS_CD}" data-cd="${p.GOODS_CD}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:28px;border-radius:8px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;color:#fff;transition:background .15s;${addBtnStyle}" ${outOfStock||adding?'disabled':''}>
+            ${addBtnContent}
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── Render products ── */
+function renderProducts() {
+  const sorted = getSortedProducts();
+  const cartMap = getCartQtyMap();
+
+  const countHtml = () => {
+    let parts = [];
+    if (S.activeVendor !== 'ALL') {
+      const v = S.vendors.find(v => v.VENDOR_CD === S.activeVendor);
+      if (v) parts.push(`<span style="font-weight:600;color:#2B3990">${escapeHtml(v.VENDOR_NM)}</span>`);
+    }
+    if (S.keyword) parts.push(`<span style="font-weight:600;color:#1a2260">"${escapeHtml(S.keyword)}" </span>`);
+    parts.push(`<span style="font-weight:700;color:#1a2260">${sorted.length}</span>건`);
+    return parts.join('');
+  };
+  document.getElementById('product-count').innerHTML = countHtml();
+  document.getElementById('product-count-mobile').innerHTML = `검색결과 ${countHtml()}`;
+
+  const emptyHtml = `
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;color:#9ca3af">
+      <span style="font-size:2.5rem;margin-bottom:12px">🔍</span>
+      <p style="font-size:0.875rem;font-weight:500">검색 결과가 없습니다.</p>
+      <button id="show-all-btn" style="margin-top:16px;font-size:0.875rem;color:#2B3990;font-weight:600;background:none;border:none;cursor:pointer;text-decoration:underline">전체 상품 보기</button>
+    </div>`;
+
+  const gridHtml = sorted.length === 0 ? emptyHtml : sorted.map(p => buildProductCardHtml(p, cartMap[p.GOODS_CD] ?? 0)).join('');
+
+  ['product-grid','product-grid-mobile'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = gridHtml;
+  });
+
+  // bind card events
+  bindCardEvents();
+}
+
+function bindCardEvents() {
+  document.querySelectorAll('.qty-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cd = btn.dataset.cd;
+      const n = parseInt(btn.dataset.qty);
+      S.productQty[cd] = n;
+      // update all cards for this product
+      document.querySelectorAll(`[data-goods-cd="${cd}"] .qty-opt`).forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.qty) === n);
+      });
+      document.querySelectorAll(`.qty-display[data-cd="${cd}"]`).forEach(el => { el.textContent = n; });
+    });
+  });
+
+  document.querySelectorAll('.minus-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cd = btn.dataset.cd;
+      const cur = S.productQty[cd] ?? 1;
+      if (cur <= 1) return;
+      S.productQty[cd] = cur - 1;
+      document.querySelectorAll(`[data-goods-cd="${cd}"] .qty-opt`).forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(`.qty-display[data-cd="${cd}"]`).forEach(el => { el.textContent = S.productQty[cd]; });
+    });
+  });
+
+  document.querySelectorAll('.plus-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cd = btn.dataset.cd;
+      S.productQty[cd] = (S.productQty[cd] ?? 1) + 1;
+      document.querySelectorAll(`[data-goods-cd="${cd}"] .qty-opt`).forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(`.qty-display[data-cd="${cd}"]`).forEach(el => { el.textContent = S.productQty[cd]; });
+    });
+  });
+
+  document.querySelectorAll('.add-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleAddToCart(btn.dataset.cd));
+  });
+
+  document.querySelectorAll('.reset-btn').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); handleResetCart(btn.dataset.cd); });
+  });
+
+  document.getElementById('show-all-btn')?.addEventListener('click', () => selectVendor('ALL'));
+}
+
+init();
+</script>
+</body>
+</html>
