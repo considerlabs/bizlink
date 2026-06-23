@@ -22,6 +22,8 @@
     #nav .nav-label{font-size:9px;font-weight:800;letter-spacing:0.12em;color:rgba(255,255,255,0.3);text-transform:uppercase;padding:0 20px 8px;display:block}
     #nav a{display:flex;align-items:center;gap:10px;padding:8px 20px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);transition:all .15s;border-left:3px solid transparent}
     #nav a:hover{background:rgba(255,255,255,0.07);color:#fff;border-left-color:rgba(255,255,255,0.3)}
+    #nav a.active{background:rgba(255,255,255,0.12);color:#fff;border-left-color:#5a6abf}
+    #nav a.active .num{background:#5a6abf;color:#fff}
     #nav .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:rgba(255,255,255,0.1);font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);flex-shrink:0}
 
     /* Main */
@@ -161,7 +163,6 @@
   </div>
   <div class="nav-group">
     <span class="nav-label">Overview</span>
-    <a href="#overview"><span class="num">-</span>시스템 개요</a>
     <a href="#flow"><span class="num">-</span>화면 흐름도</a>
     <a href="#common"><span class="num">-</span>공통 컴포넌트</a>
   </div>
@@ -200,36 +201,6 @@
     <div class="mi"><p>기술 스택</p><p>Next.js 14 · HTML/JS</p></div>
   </div>
 </div>
-
-<!-- ── Overview ── -->
-<span id="overview" class="anchor"></span>
-<section>
-  <div class="card">
-    <p class="card-title">시스템 개요</p>
-    <div class="stats">
-      <div class="stat"><div class="n">8</div><div class="l">페이지</div></div>
-      <div class="stat"><div class="n">4</div><div class="l">공통 모달</div></div>
-      <div class="stat"><div class="n">15</div><div class="l">Mock 상품</div></div>
-      <div class="stat"><div class="n">5.5%</div><div class="l">플랫폼 수수료율</div></div>
-    </div>
-    <table>
-      <thead><tr><th>항목</th><th>내용</th><th>비고</th></tr></thead>
-      <tbody>
-        <tr><td>서비스명</td><td>BIZLINK (비즈링크)</td><td>B2B 기프트카드 주문 플랫폼</td></tr>
-        <tr><td>프레임워크</td><td>Next.js 14 (App Router) / 순수 HTML+JS</td><td>양쪽 구현 제공</td></tr>
-        <tr><td>스타일링</td><td>Tailwind CSS + 커스텀 색상</td><td>primary: #2B3990, navy: #1a2260</td></tr>
-        <tr><td>폰트</td><td>Pretendard</td><td>다국어 최적화 한글 폰트</td></tr>
-        <tr><td>데이터 모드</td><td>Mock 모드 (NEXT_PUBLIC_USE_MOCK=true)</td><td>실서버 연동 시 api.ts 분기 처리</td></tr>
-        <tr><td>인증 방식</td><td>localStorage 기반 Mock 인증</td><td>Key: MOCK_LOGGED_IN</td></tr>
-        <tr><td>장바구니 저장</td><td>localStorage: MOCK_BASKET_V2</td><td>새로고침 유지, 브라우저 범위</td></tr>
-        <tr><td>즐겨찾기 저장</td><td>localStorage: ONIONON_FAVORITE_VENDORS</td><td>공급처 즐겨찾기 배열</td></tr>
-        <tr><td>플랫폼 수수료</td><td>5.5% (PLATFORM_FEE_RATE = 0.055)</td><td>결제금액 = 상품금액 × 1.055</td></tr>
-        <tr><td>Mock 공급처</td><td>V001 · V002 · V003 (3개)</td><td>각 공급처별 배송비/무료기준 상이</td></tr>
-        <tr><td>Mock 상품</td><td>15개 기프트카드 (단위: 장)</td><td>10원~100,000원 권종</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
 
 <!-- ── Flow ── -->
 <span id="flow" class="anchor"></span>
@@ -823,5 +794,41 @@
 
 </main>
 </div>
+<script>
+(function () {
+  const navLinks = Array.from(document.querySelectorAll('#nav a[href^="#"]'));
+  const sections = navLinks
+    .map(a => ({ link: a, id: a.getAttribute('href').slice(1) }))
+    .map(o => ({ ...o, el: document.getElementById(o.id) }))
+    .filter(o => o.el);
+
+  function setActive(id) {
+    navLinks.forEach(a => a.classList.remove('active'));
+    const found = sections.find(s => s.id === id);
+    if (found) {
+      found.link.classList.add('active');
+      /* scroll nav item into view if out of viewport */
+      const nav = document.getElementById('nav');
+      const linkTop = found.link.offsetTop;
+      const navH = nav.clientHeight;
+      if (linkTop < nav.scrollTop || linkTop > nav.scrollTop + navH - 60) {
+        nav.scrollTo({ top: linkTop - navH / 2, behavior: 'smooth' });
+      }
+    }
+  }
+
+  function onScroll() {
+    const threshold = 140;
+    let current = sections[0]?.id;
+    for (const { id, el } of sections) {
+      if (el.getBoundingClientRect().top <= threshold) current = id;
+    }
+    setActive(current);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
 </body>
 </html>
