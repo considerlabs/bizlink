@@ -94,9 +94,9 @@ const MOCK_PAY_HISTORY = [
 ];
 
 const MOCK_VENDOR_APPROVALS = [
-  { id: 1, name: '프레시마트',   biz_num: '111-22-33333', rep: '이순신', applied: '2026-06-01', status: '승인완료', status_cd: 'APPROVED'  },
-  { id: 2, name: '대성유통',     biz_num: '222-33-44444', rep: '강감찬', applied: '2026-06-03', status: '검토중',   status_cd: 'REVIEWING' },
-  { id: 3, name: '하나식품',     biz_num: '333-44-55555', rep: '장보고', applied: '2026-06-05', status: '반려',     status_cd: 'REJECTED'  },
-  { id: 4, name: '서울식자재',   biz_num: '444-55-66666', rep: '세종대왕', applied: '2026-06-08', status: '승인완료', status_cd: 'APPROVED'  },
-  { id: 5, name: '글로벌푸드',   biz_num: '555-66-77777', rep: '유관순', applied: '2026-06-10', status: '검토중',   status_cd: 'REVIEWING' },
+  { id: 1, name: '프레시마트',  biz_num: '111-22-33333', rep: '이순신',   contact: '02-111-2222',  email: 'fresh@mart.co.kr',    address: '서울특별시 마포구 양화로 123',         bank: '국민은행', account: '123-456789-01234', memo: '신선식품 전문 유통사', applied: '2026-06-01', status: '승인완료', status_cd: 'APPROVED',  reviewed: '2026-06-03', reviewer: '관리자', reject_reason: null,                     docs: ['사업자등록증.pdf', '통장사본.jpg'] },
+  { id: 2, name: '대성유통',    biz_num: '222-33-44444', rep: '강감찬',   contact: '031-222-3333', email: 'daesung@dist.co.kr',   address: '경기도 수원시 영통구 광교로 45',       bank: '신한은행', account: '234-567890-12345', memo: '',             applied: '2026-06-03', status: '검토중',   status_cd: 'REVIEWING', reviewed: null,         reviewer: null,   reject_reason: null,                     docs: ['사업자등록증.pdf', '통장사본.pdf', '거래명세서.pdf'] },
+  { id: 3, name: '하나식품',    biz_num: '333-44-55555', rep: '장보고',   contact: '032-333-4444', email: 'hana@food.co.kr',      address: '인천광역시 남동구 논현로 78',          bank: '하나은행', account: '345-678901-23456', memo: '냉동식품 전문', applied: '2026-06-05', status: '반려',     status_cd: 'REJECTED',  reviewed: '2026-06-07', reviewer: '관리자', reject_reason: '제출 서류 내용이 사업자등록증과 일치하지 않습니다.', docs: ['사업자등록증.pdf'] },
+  { id: 4, name: '서울식자재',  biz_num: '444-55-66666', rep: '세종대왕', contact: '02-444-5555',  email: 'seoul@food.co.kr',    address: '서울특별시 강서구 마곡중앙로 10',      bank: '우리은행', account: '456-789012-34567', memo: '식자재 대량 공급', applied: '2026-06-08', status: '승인완료', status_cd: 'APPROVED',  reviewed: '2026-06-10', reviewer: '관리자', reject_reason: null,                     docs: ['사업자등록증.pdf', '통장사본.jpg'] },
+  { id: 5, name: '글로벌푸드',  biz_num: '555-66-77777', rep: '유관순',   contact: '033-555-6666', email: 'global@food.co.kr',    address: '강원도 춘천시 후평로 33',              bank: '농협은행', account: '567-890123-45678', memo: '',             applied: '2026-06-10', status: '검토중',   status_cd: 'REVIEWING', reviewed: null,         reviewer: null,   reject_reason: null,                     docs: ['사업자등록증.pdf', '통장사본.pdf'] },
 ];
