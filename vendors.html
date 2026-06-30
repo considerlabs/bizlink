@@ -283,7 +283,7 @@ function submitVendor() {
   showAlert('공급자 등록 신청이 완료되었습니다.\n검토 후 승인 처리됩니다.', () => {
     currentStep = 1;
     step1Data = {};
-    renderTab();
+    setTab('approval');
   });
 }
 
