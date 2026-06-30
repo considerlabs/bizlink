@@ -97,6 +97,22 @@ function renderTab() {
               <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">비고</label>
               <textarea placeholder="추가 정보를 입력하세요" rows="3" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.875rem;color:#1a2260;outline:none;resize:vertical"></textarea>
             </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:10px">첨부서류</label>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                ${[
+                  ['사업자등록증', 'biz-license-file', true],
+                  ['공급자 통장사본', 'bankbook-file', true],
+                  ['공급자거래명세서', 'statement-file', false],
+                ].map(([label, id, required]) => `
+                  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb">
+                    <label for="${id}" style="font-size:0.75rem;font-weight:700;color:#1a2260;display:block;margin-bottom:8px">${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}</label>
+                    <input id="${id}" type="file" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:0.75rem;color:#4b5563">
+                    <p style="font-size:10px;color:#9ca3af;margin-top:6px">PDF, JPG, PNG 첨부 가능</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
           </div>
           <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid #f3f4f6">
             <button type="button" onclick="document.getElementById('register-form').reset()" class="btn-secondary" style="padding:10px 20px">초기화</button>
@@ -113,6 +129,8 @@ function renderTab() {
       const name = document.getElementById('vendor-name').value.trim();
       const biz = document.getElementById('biz-num').value.trim();
       if (!name || !biz) { showAlert('공급자명과 사업자등록번호는 필수입니다.'); return; }
+      if (!document.getElementById('biz-license-file').files.length) { showAlert('사업자등록증을 첨부해주세요.'); return; }
+      if (!document.getElementById('bankbook-file').files.length) { showAlert('공급자 통장사본을 첨부해주세요.'); return; }
       showAlert('공급자 등록 신청이 완료되었습니다.', () => { document.getElementById('register-form').reset(); });
     });
 
