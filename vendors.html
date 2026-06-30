@@ -105,8 +105,11 @@ function renderTab() {
                   ['공급자 통장사본', 'bankbook-file', true],
                   ['공급자거래명세서', 'statement-file', false],
                 ].map(([label, id, required]) => `
-                  <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb">
-                    <label for="${id}" style="font-size:0.75rem;font-weight:700;color:#1a2260;display:block;margin-bottom:8px">${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}</label>
+                  <div style="border:1px solid ${required ? '#fca5a5' : '#e5e7eb'};border-radius:8px;padding:12px;background:${required ? '#fff8f8' : '#f9fafb'}">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                      <label for="${id}" style="font-size:0.75rem;font-weight:700;color:#1a2260">${label}</label>
+                      <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;${required ? 'background:#fef2f2;color:#ef4444' : 'background:#f3f4f6;color:#6b7280'}">${required ? '필수' : '선택'}</span>
+                    </div>
                     <input id="${id}" type="file" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:0.75rem;color:#4b5563">
                     <p style="font-size:10px;color:#9ca3af;margin-top:6px">PDF, JPG, PNG 첨부 가능</p>
                   </div>
