@@ -18,6 +18,12 @@
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/header.js"></script>
+  <style>
+    @media (max-width: 767px) {
+      .mi-section { padding: 18px 16px !important; }
+      .mi-grid { grid-template-columns: 110px 1fr !important; }
+    }
+  </style>
 </head>
 <body>
 <div class="app-page">
@@ -31,17 +37,17 @@
     <div style="display:flex;flex-direction:column;gap:16px">
 
       <!-- 상점 정보 -->
-      <section class="surface-card" style="padding:24px 32px">
+      <section class="surface-card mi-section" style="padding:24px 32px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
           <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">상점 정보</h2>
           <span style="font-size:0.75rem;color:#9ca3af">상점주</span>
         </div>
-        <div id="store-info-grid" style="display:grid;grid-template-columns:150px 1fr;gap:12px 0"></div>
+        <div id="store-info-grid" class="mi-grid" style="display:grid;grid-template-columns:150px 1fr;gap:12px 0"></div>
       </section>
 
       <!-- 페이 정보 -->
-      <section class="surface-card" style="padding:24px 32px">
+      <section class="surface-card mi-section" style="padding:24px 32px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
           <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">페이 정보</h2>
@@ -80,24 +86,35 @@
       </section>
 
       <!-- 계정 정보 -->
-      <section class="surface-card" style="padding:24px 32px">
+      <section class="surface-card mi-section" style="padding:24px 32px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">계정 정보</h2>
         </div>
-        <div style="display:grid;grid-template-columns:150px 1fr;gap:16px 0;align-items:start">
+        <div class="mi-grid" style="display:grid;grid-template-columns:150px 1fr;gap:16px 0;align-items:start">
           <span style="font-size:0.75rem;font-weight:700;color:#9ca3af;padding-top:4px">아이디</span>
           <span style="font-size:0.875rem;font-weight:600;color:#1a2260">user@bizlink</span>
 
           <span style="font-size:0.75rem;font-weight:700;color:#9ca3af;padding-top:8px">비밀번호 변경</span>
           <div style="display:flex;flex-direction:column;gap:8px">
-            ${['현재 비밀번호 입력', '새 비밀번호 입력 (8자 이상)', '새 비밀번호 확인'].map((ph, i) => `
-              <div class="form-field" style="padding:0 4px 0 12px">
-                <input type="password" id="pw-${i}" placeholder="${ph}" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
-                <button type="button" onclick="togglePw(${i})" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
-                  <svg id="eye-${i}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-              </div>`).join('')}
+            <div class="form-field" style="padding:0 4px 0 12px">
+              <input type="password" id="pw-0" placeholder="현재 비밀번호 입력" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
+              <button type="button" onclick="togglePw(0)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+                <svg id="eye-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="form-field" style="padding:0 4px 0 12px">
+              <input type="password" id="pw-1" placeholder="새 비밀번호 입력 (8자 이상)" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
+              <button type="button" onclick="togglePw(1)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+                <svg id="eye-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="form-field" style="padding:0 4px 0 12px">
+              <input type="password" id="pw-2" placeholder="새 비밀번호 확인" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
+              <button type="button" onclick="togglePw(2)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+                <svg id="eye-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6">
@@ -116,8 +133,8 @@
       <button id="pay-modal-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.25rem;line-height:1">×</button>
     </div>
     <div id="pay-modal-balance" style="padding:12px 24px;border-bottom:1px solid #d4d8f0;background:#eef0f9"></div>
-    <div style="max-height:256px;overflow-y:auto">
-      <table style="width:100%;font-size:0.875rem">
+    <div style="max-height:256px;overflow:auto">
+      <table style="width:100%;min-width:420px;font-size:0.875rem">
         <thead style="position:sticky;top:0;background:#f9fafb">
           <tr style="border-bottom:1px solid #e5e7eb">
             <th style="text-align:left;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">일자</th>

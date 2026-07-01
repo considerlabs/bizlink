@@ -18,6 +18,13 @@
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/header.js"></script>
+  <style>
+    @media (max-width: 767px) {
+      .vr-tab-btn { padding: 10px 12px !important; font-size: 0.75rem !important; }
+      .vr-card { padding: 20px 16px !important; }
+      .vr-grid-2, .vr-docs-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+    }
+  </style>
 </head>
 <body>
 <div class="app-page">
@@ -26,11 +33,11 @@
 
     <!-- Tabs -->
     <div style="display:flex;border-bottom:1px solid #e5e7eb;background:#fff;border-radius:1rem 1rem 0 0;overflow:hidden">
-      <button id="tab-register" onclick="setTab('register')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid #2B3990;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#24307a;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
+      <button id="tab-register" class="vr-tab-btn" onclick="setTab('register')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid #2B3990;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#24307a;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         공급자 등록
       </button>
-      <button id="tab-approval" onclick="setTab('approval')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid transparent;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#6b7280;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
+      <button id="tab-approval" class="vr-tab-btn" onclick="setTab('approval')" style="display:flex;align-items:center;gap:6px;border-bottom:2px solid transparent;padding:12px 24px;font-size:0.875rem;font-weight:800;color:#6b7280;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         공급자 승인내역
       </button>
@@ -113,10 +120,10 @@ function renderStep1(content) {
   ];
 
   content.innerHTML = `
-    <div style="margin-top:20px;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+    <div class="vr-card" style="margin-top:20px;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
       ${stepIndicatorHtml(1)}
       <form id="step1-form">
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
+        <div class="vr-grid-2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
           ${fields.map(([label, id, type, placeholder, required, value]) => `
             <div>
               <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">
@@ -196,7 +203,7 @@ function renderStep2(content) {
   ];
 
   content.innerHTML = `
-    <div style="margin-top:20px;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+    <div class="vr-card" style="margin-top:20px;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
       ${stepIndicatorHtml(2)}
 
       <!-- Step 1 summary -->
@@ -210,7 +217,7 @@ function renderStep2(content) {
           </div>
           <button onclick="goStep1()" style="font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:4px 10px;cursor:pointer">수정</button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px">
+        <div class="vr-grid-2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px">
           ${summaryItems.map(([label, value]) => `
             <div style="display:flex;gap:8px;font-size:0.8125rem">
               <span style="color:#9ca3af;min-width:90px;font-weight:600;flex-shrink:0">${label}</span>
@@ -227,7 +234,7 @@ function renderStep2(content) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           <span style="font-size:0.875rem;font-weight:700;color:#1a2260">첨부서류 등록</span>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div class="vr-docs-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           ${docItems.map(([label, id, required]) => `
             <div style="border:1px solid ${required ? '#fca5a5' : '#e5e7eb'};border-radius:8px;padding:14px;background:${required ? '#fff8f8' : '#f9fafb'}">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -312,6 +319,7 @@ function renderApproval(content) {
 
   content.innerHTML = `
     <div class="surface-card" style="margin-top:20px;overflow:hidden">
+      <div class="mobile-scroll-hint">← 좌우로 스크롤하면 전체 항목을 볼 수 있어요 →</div>
       <div style="overflow-x:auto">
         <table style="width:100%;min-width:600px">
           <thead>

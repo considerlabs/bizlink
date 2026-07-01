@@ -23,8 +23,31 @@
 <div class="app-page">
   <div id="app-header"></div>
 
+  <!-- Mobile vendor bar -->
+  <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6;overflow-x:auto">
+    <div id="mobile-vendor-pills" style="display:flex;gap:6px;padding:8px 12px;min-width:max-content;align-items:center">
+      <span style="font-size:10px;font-weight:700;color:#9ca3af;margin-right:4px;flex-shrink:0">공급처</span>
+    </div>
+  </div>
+
+  <!-- Mobile layout -->
+  <div id="mobile-layout" class="md:hidden" style="padding:12px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button style="display:flex;align-items:center;gap:6px;border-radius:8px;background:#1a2260;color:#fff;padding:8px 12px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/></svg>
+        투게더포스 발주서
+      </button>
+      <button id="clipboard-load-btn-mobile" style="display:flex;align-items:center;gap:6px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+        클립보드 불러오기
+      </button>
+    </div>
+    <div id="content-area-mobile" style="display:flex;flex-direction:column"></div>
+    <div id="bottom-bar-mobile" style="margin-top:16px;display:flex;justify-content:center"></div>
+  </div>
+
   <!-- Desktop layout -->
-  <div id="desktop-layout" style="display:flex;padding-top:58px;height:calc(100vh - 58px)">
+  <div id="desktop-layout" class="hidden md:flex" style="padding-top:58px;height:calc(100vh - 58px)">
     <aside style="width:208px;flex-shrink:0;background:#fff;border-right:1px solid #e5e7eb;overflow-y:auto">
       <div style="padding:12px 16px;border-bottom:1px solid #f3f4f6">
         <p style="font-size:10px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em">공급처 목록</p>
@@ -67,6 +90,7 @@ async function init() {
   vendors = await api.getVendors();
   if (vendors.length > 0) activeVendor = vendors[0].VENDOR_CD;
   renderVendorList();
+  renderMobileVendorPills();
   renderContent();
 }
 
@@ -86,47 +110,67 @@ function renderVendorList() {
   document.getElementById('active-vendor-name').textContent = activeVendorObj?.VENDOR_NM ?? '';
 }
 
+function renderMobileVendorPills() {
+  const pills = document.getElementById('mobile-vendor-pills');
+  const header = pills.querySelector('span');
+  pills.innerHTML = '';
+  if (header) pills.appendChild(header);
+
+  vendors.forEach(v => {
+    const active = activeVendor === v.VENDOR_CD;
+    const btn = document.createElement('button');
+    btn.style.cssText = `display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:9999px;font-size:11px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;background:${active?'#2B3990':'#f3f4f6'};color:${active?'#fff':'#4b5563'}`;
+    btn.textContent = v.VENDOR_NM;
+    btn.addEventListener('click', () => selectVendor(v.VENDOR_CD));
+    pills.appendChild(btn);
+  });
+}
+
 function selectVendor(cd) {
   activeVendor = cd;
   clipImage = null;
   renderVendorList();
+  renderMobileVendorPills();
   renderContent();
 }
 
 function renderContent() {
-  const area = document.getElementById('content-area');
-  const bar  = document.getElementById('bottom-bar');
+  let areaHtml, barHtml;
 
   if (clipImage) {
-    area.innerHTML = `
+    areaHtml = `
       <div style="flex:1;border-radius:12px;border:1px solid #e5e7eb;overflow:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
         <img src="${clipImage}" alt="발주서 이미지" style="max-width:100%">
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-shrink:0;gap:8px">
         <button onclick="removeImage()" style="border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px 16px;font-size:0.875rem;font-weight:700;color:#6b7280;cursor:pointer">이미지 제거</button>
-        <button onclick="handleOrder()" id="order-btn" class="btn-primary" style="display:flex;align-items:center;gap:6px;padding:10px 24px;font-size:0.875rem">
+        <button onclick="handleOrder()" class="btn-primary" style="display:flex;align-items:center;gap:6px;padding:10px 24px;font-size:0.875rem">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
           결제하기
         </button>
       </div>`;
-    bar.innerHTML = '';
+    barHtml = '';
   } else {
-    area.innerHTML = `
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;border:2px dashed #e5e7eb;background:#fff;min-height:400px">
+    areaHtml = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;border:2px dashed #e5e7eb;background:#fff;min-height:280px;padding:24px 16px;text-align:center">
         <div style="width:64px;height:64px;border-radius:16px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
         </div>
         <p style="font-size:0.875rem;font-weight:600;color:#9ca3af;margin-bottom:4px">발주서 양식에서 복사(Ctrl+C)한 뒤</p>
         <p style="font-size:0.875rem;font-weight:600;color:#9ca3af">클립보드 불러오기 버튼을 클릭하세요.</p>
-        <button id="clip-load-inline" style="margin-top:20px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:700;color:#6b7280;background:#fff;cursor:pointer">클립보드에서 불러오기</button>
+        <button onclick="loadClipboard()" style="margin-top:20px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 16px;font-size:0.75rem;font-weight:700;color:#6b7280;background:#fff;cursor:pointer">클립보드에서 불러오기</button>
       </div>`;
-    document.getElementById('clip-load-inline')?.addEventListener('click', loadClipboard);
-    bar.innerHTML = `
+    barHtml = `
       <button onclick="handleOrder()" class="btn-primary" style="display:flex;align-items:center;gap:6px;padding:10px 24px;font-size:0.875rem">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
         결제하기
       </button>`;
   }
+
+  document.getElementById('content-area').innerHTML = areaHtml;
+  document.getElementById('bottom-bar').innerHTML = barHtml;
+  document.getElementById('content-area-mobile').innerHTML = areaHtml;
+  document.getElementById('bottom-bar-mobile').innerHTML = barHtml;
 }
 
 function removeImage() { clipImage = null; renderContent(); }
@@ -170,6 +214,7 @@ function handleOrder() {
 }
 
 document.getElementById('clipboard-load-btn').addEventListener('click', loadClipboard);
+document.getElementById('clipboard-load-btn-mobile').addEventListener('click', loadClipboard);
 
 window.addEventListener('paste', e => {
   const items = e.clipboardData?.items;

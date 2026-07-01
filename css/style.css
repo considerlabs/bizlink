@@ -5,6 +5,10 @@ body { font-family: 'PretendardVariable', -apple-system, BlinkMacSystemFont, 'Se
 
 .app-page { min-height: 100vh; background: #e5e7eb; }
 .app-main { padding-top: 74px; padding-left: 1rem; padding-right: 1rem; padding-bottom: 1.25rem; margin: 0 auto; }
+
+@media (max-width: 767px) {
+  .app-page { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+}
 .center-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
 .surface-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
@@ -71,3 +75,9 @@ select.form-field { appearance: none; cursor: pointer; outline: none; }
 /* Table */
 table { border-collapse: collapse; width: 100%; }
 th { font-weight: 700; }
+
+/* Mobile scroll hint for wide tables */
+.mobile-scroll-hint { display: none; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; font-size: 11px; color: #9ca3af; font-weight: 600; }
+@media (max-width: 767px) {
+  .mobile-scroll-hint { display: flex; }
+}
