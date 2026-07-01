@@ -98,7 +98,7 @@
 
       <!-- Desktop table -->
       <div class="hidden md:block" style="overflow-x:auto">
-        <table style="width:100%;min-width:920px">
+        <table style="width:100%;min-width:1400px">
           <thead>
             <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
               <th style="text-align:left;padding:12px 20px;width:150px">주문일</th>
@@ -108,10 +108,14 @@
               <th style="text-align:right;padding:12px 20px;width:130px">상품금액</th>
               <th style="text-align:right;padding:12px 20px;width:150px">플랫폼수수료(5.5%)</th>
               <th style="text-align:right;padding:12px 20px;width:130px">결제금액</th>
+              <th style="text-align:center;padding:12px 20px;width:110px">송금방식</th>
+              <th style="text-align:left;padding:12px 20px;width:130px">송금일</th>
+              <th style="text-align:right;padding:12px 20px;width:130px">송금액</th>
+              <th style="text-align:left;padding:12px 20px;width:120px">송금은행</th>
             </tr>
           </thead>
           <tbody id="history-tbody">
-            <tr><td colspan="7" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
+            <tr><td colspan="11" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -188,7 +192,7 @@ function renderTable() {
   const cardsWrap = document.getElementById('history-cards-mobile');
 
   if (orders.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:6rem 0;color:#9ca3af">
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:6rem 0;color:#9ca3af">
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
       <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
     </td></tr>`;
@@ -214,6 +218,10 @@ function renderTable() {
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(o.TOTAL_PRICE)}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(fee)}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;font-weight:800;color:#1a2260">${comma(total)}</td>
+        <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMIT_TYPE ?? '-')}</td>
+        <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#6b7280;white-space:nowrap">${escapeHtml(o.REMIT_DT ?? '-')}</td>
+        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${o.REMIT_AMOUNT != null ? comma(o.REMIT_AMOUNT) : '-'}</td>
+        <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMIT_BANK ?? '-')}</td>
       </tr>`;
   }).join('');
 
@@ -231,6 +239,12 @@ function renderTable() {
         <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f3f4f6">
           <span style="font-size:0.75rem;color:#9ca3af">상품 ${comma(o.TOTAL_PRICE)}원 + 수수료 ${comma(fee)}원</span>
           <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${comma(total)}원</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:10px;padding-top:10px;border-top:1px solid #f3f4f6">
+          <div style="font-size:0.6875rem;color:#9ca3af">송금방식 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_TYPE ?? '-')}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">송금일 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_DT ?? '-')}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">송금액 <span style="color:#4b5563;font-weight:600">${o.REMIT_AMOUNT != null ? comma(o.REMIT_AMOUNT) + '원' : '-'}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">송금은행 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_BANK ?? '-')}</span></div>
         </div>
       </div>`;
   }).join('');
