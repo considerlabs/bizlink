@@ -21,12 +21,18 @@
   <style>
     @media (max-width: 767px) {
       .hist-filter-wrap { padding: 12px !important; }
-      .hist-filter-box { padding: 10px 12px !important; }
-      .hist-date-input { width: 108px !important; }
-      .hist-keyword-input { width: 130px !important; }
+      .hist-filter-box { padding: 10px 12px !important; flex-direction: column !important; align-items: stretch !important; }
+      .hist-row-dates { flex: 1 1 100%; }
+      .hist-date-wrap { flex: 1; min-width: 0; }
+      .hist-date-input { width: 100% !important; }
+      .hist-row-ranges { flex: 1 1 100%; width: 100%; }
+      .hist-row-ranges .range-btn { flex: 1; text-align: center; }
+      .hist-row-filters { flex: 1 1 100%; margin-left: 0 !important; width: 100%; }
+      .hist-row-filters select { flex: 1; min-width: 0; }
+      .hist-search-form { flex: 1 1 100%; }
+      .hist-keyword-input { width: 100% !important; }
     }
-    .hist-mobile-list { display: flex; flex-direction: column; }
-    .hist-mobile-list > *:last-child { border-bottom: none !important; }
+    .hist-mobile-list { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
     @media (min-width: 768px) {
       .hist-mobile-list { display: none; }
     }
@@ -49,22 +55,24 @@
       <!-- Filters -->
       <div class="hist-filter-wrap" style="background:#f3f4f6;padding:20px;border-radius:1rem 1rem 0 0">
         <div class="hist-filter-box" style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 16px;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:0.75rem;font-weight:700;color:#6b7280">주문일</span>
-            <div class="form-field" style="width:auto;gap:6px">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <div class="hist-row-dates" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:0.75rem;font-weight:700;color:#6b7280;flex-shrink:0">주문일</span>
+            <div class="form-field hist-date-wrap" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               <input type="date" id="start-dt" class="hist-date-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:130px">
             </div>
-            <span style="font-size:0.75rem;color:#d1d5db">~</span>
-            <div class="form-field" style="width:auto;gap:6px">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <span style="font-size:0.75rem;color:#d1d5db;flex-shrink:0">~</span>
+            <div class="form-field hist-date-wrap" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               <input type="date" id="end-dt" class="hist-date-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:130px">
             </div>
+          </div>
+          <div class="hist-row-ranges" style="display:flex;gap:8px">
             <button onclick="setRange(3)" class="range-btn" data-days="3" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">3일</button>
-            <button onclick="setRange(7)" class="range-btn" data-days="7" style="border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#fff;background:#5a6abf;border:none;cursor:pointer">7일</button>
+            <button onclick="setRange(7)" class="range-btn" data-days="7" style="border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;border:1px solid #e5e7eb;cursor:pointer">7일</button>
             <button onclick="setRange(30)" class="range-btn" data-days="30" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">1개월</button>
           </div>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="hist-row-filters" style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <select id="status-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
               <option value="ALL">주문상태</option>
               <option value="RECEIVED">주문접수</option>
@@ -75,11 +83,11 @@
             <select id="vendor-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
               <option value="ALL">공급처</option>
             </select>
-            <form id="search-form" style="display:flex;align-items:center;gap:4px">
-              <div class="form-field" style="width:auto;gap:6px;padding:0 10px;height:36px">
+            <form id="search-form" class="hist-search-form" style="display:flex;align-items:center;gap:4px">
+              <div class="form-field" style="width:auto;flex:1;gap:6px;padding:0 10px;height:36px">
                 <input type="text" id="keyword-input" placeholder="주문번호, 공급처" class="hist-keyword-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:200px">
               </div>
-              <button type="submit" style="display:flex;align-items:center;gap:4px;height:36px;border-radius:8px;padding:0 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;border:none;cursor:pointer">
+              <button type="submit" style="display:flex;align-items:center;gap:4px;height:36px;border-radius:8px;padding:0 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 검색
               </button>
@@ -130,11 +138,29 @@ let allOrders = [], keyword = '', vendorFilter = 'ALL', statusFilter = 'ALL';
 
 function toDateStr(d) { return d.toISOString().slice(0, 10); }
 
+// Mock order dates are fixed in the past, so anchor range presets to the
+// latest mock order date rather than the real "today" (which would show
+// nothing once real time passes the mock data's date range).
+function getLatestOrderDate() {
+  const dates = [...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].map(o => o.ORDER_DT.slice(0, 10));
+  return new Date(dates.sort().pop());
+}
+
+function setActiveRangeBtn(days) {
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.days) === days;
+    btn.style.background = active ? '#5a6abf' : '#fff';
+    btn.style.color = active ? '#fff' : '#4b5563';
+    btn.style.borderColor = active ? '#5a6abf' : '#e5e7eb';
+  });
+}
+
 function setRange(days) {
-  const end = new Date(), start = new Date();
+  const end = getLatestOrderDate(), start = new Date(end);
   start.setDate(end.getDate() - days);
   document.getElementById('start-dt').value = toDateStr(start);
   document.getElementById('end-dt').value = toDateStr(end);
+  setActiveRangeBtn(days);
   loadOrders();
 }
 
@@ -196,17 +222,15 @@ function renderTable() {
     const total = o.TOTAL_PRICE + fee;
     const statStyle = STAT_STYLE[o.ORDER_STAT_CD] ?? 'background:#f3f4f6;color:#6b7280';
     return `
-      <div onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;border-bottom:1px solid #f3f4f6;cursor:pointer">
-        <div style="min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-            <span style="font-size:0.8125rem;font-family:monospace;font-weight:700;color:#1a2260">${escapeHtml(o.ORDER_NO)}</span>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;white-space:nowrap;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
-          </div>
-          <div style="font-size:0.75rem;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.ORDER_DT.slice(0,10)} · ${escapeHtml(o.STORE_NM)}</div>
+      <div onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;cursor:pointer;background:#fff">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+          <span style="font-size:0.875rem;font-family:monospace;font-weight:700;color:#1a2260">${escapeHtml(o.ORDER_NO)}</span>
+          <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          <span style="font-size:0.9375rem;font-weight:800;color:#1a2260;white-space:nowrap">${comma(total)}원</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <div style="font-size:0.8125rem;color:#6b7280;margin-bottom:12px">${o.ORDER_DT.slice(0,10)} · ${escapeHtml(o.STORE_NM)}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f3f4f6">
+          <span style="font-size:0.75rem;color:#9ca3af">상품 ${comma(o.TOTAL_PRICE)}원 + 수수료 ${comma(fee)}원</span>
+          <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${comma(total)}원</span>
         </div>
       </div>`;
   }).join('');
@@ -230,6 +254,8 @@ document.getElementById('search-form').addEventListener('submit', e => {
   keyword = document.getElementById('keyword-input').value.trim();
   renderTable();
 });
+document.getElementById('start-dt').addEventListener('change', () => { setActiveRangeBtn(null); loadOrders(); });
+document.getElementById('end-dt').addEventListener('change', () => { setActiveRangeBtn(null); loadOrders(); });
 
 setRange(7);
 </script>

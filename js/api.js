@@ -77,12 +77,18 @@ const api = {
     return Promise.resolve({ ORDER_NO: no });
   },
 
-  getIngOrders() {
-    return Promise.resolve(JSON.parse(JSON.stringify(MOCK_ING_ORDERS)));
+  getIngOrders(start, end) {
+    let list = JSON.parse(JSON.stringify(MOCK_ING_ORDERS));
+    if (start) list = list.filter(o => o.ORDER_DT.slice(0, 10) >= start);
+    if (end) list = list.filter(o => o.ORDER_DT.slice(0, 10) <= end);
+    return Promise.resolve(list);
   },
 
-  getEndOrders() {
-    return Promise.resolve(JSON.parse(JSON.stringify(MOCK_END_ORDERS)));
+  getEndOrders(start, end) {
+    let list = JSON.parse(JSON.stringify(MOCK_END_ORDERS));
+    if (start) list = list.filter(o => o.ORDER_DT.slice(0, 10) >= start);
+    if (end) list = list.filter(o => o.ORDER_DT.slice(0, 10) <= end);
+    return Promise.resolve(list);
   },
 
   getOrderDetail(orderNo) {
