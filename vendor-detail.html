@@ -49,6 +49,115 @@ const STAT_CONFIG = {
 };
 
 const BACK_URL = 'vendors.html?tab=approval';
+const docIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+let editingField = null;
+
+function fieldRowHtml(label, key) {
+  const canEdit = vendor.status_cd === 'REJECTED';
+  const value = vendor[key];
+
+  if (editingField === key) {
+    return `
+      <div>
+        <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input id="edit-input-${key}" type="text" value="${escapeHtml(value ?? '')}" class="form-field" style="height:32px;font-size:0.8125rem">
+          <button onclick="saveEditField('${key}')" style="flex-shrink:0;width:28px;height:28px;border-radius:6px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center" title="저장">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button onclick="cancelEditField()" style="flex-shrink:0;width:28px;height:28px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#9ca3af;cursor:pointer;display:flex;align-items:center;justify-content:center" title="취소">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
+      <div style="min-width:0">
+        <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
+        <div style="font-size:0.875rem;color:#1a2260;font-weight:500;word-break:break-all">${escapeHtml(value || '-')}</div>
+      </div>
+      ${canEdit ? `<button onclick="startEditField('${key}')" style="flex-shrink:0;font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer">수정</button>` : ''}
+    </div>`;
+}
+
+function startEditField(key) {
+  editingField = key;
+  renderDetail();
+  document.getElementById('edit-input-' + key)?.focus();
+}
+
+function cancelEditField() {
+  editingField = null;
+  renderDetail();
+}
+
+function saveEditField(key) {
+  const input = document.getElementById('edit-input-' + key);
+  const value = input.value.trim();
+  if (!value) { showAlert('값을 입력해주세요.'); return; }
+  vendor[key] = value;
+  editingField = null;
+  renderDetail();
+}
+
+function docsHtml() {
+  const canEdit = vendor.status_cd === 'REJECTED';
+  const docs = vendor.docs || [];
+  const list = docs.length
+    ? `<div style="display:flex;flex-direction:column;gap:8px">
+        ${docs.map((doc, i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#f8f9ff;border:1px solid #d4d8f0;border-radius:8px">
+            <div style="display:flex;align-items:center;gap:8px;color:#1a2260;min-width:0">
+              ${docIcon}
+              <span style="font-size:0.875rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(doc)}</span>
+            </div>
+            ${canEdit
+              ? `<button onclick="deleteDoc(${i})" style="flex-shrink:0;width:26px;height:26px;border-radius:6px;border:1px solid #fecaca;background:#fff;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center" title="삭제">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                </button>`
+              : `<button onclick="showAlert('다운로드 기능은 준비 중입니다.')" style="font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0">다운로드</button>`}
+          </div>
+        `).join('')}
+       </div>`
+    : `<p style="font-size:0.875rem;color:#9ca3af;text-align:center;padding:20px 0">첨부된 서류가 없습니다.</p>`;
+
+  const addBtn = canEdit ? `
+    <label style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:10px;border:1.5px dashed #d4d8f0;border-radius:8px;color:#2B3990;font-size:0.8125rem;font-weight:700;cursor:pointer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      서류 추가
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="addDoc(this)">
+    </label>` : '';
+
+  return list + addBtn;
+}
+
+function deleteDoc(index) {
+  vendor.docs.splice(index, 1);
+  renderDetail();
+}
+
+function addDoc(input) {
+  if (!input.files.length) return;
+  if (!vendor.docs) vendor.docs = [];
+  vendor.docs.push(input.files[0].name);
+  renderDetail();
+}
+
+function requestReapproval() {
+  showConfirm('재승인 요청 하시겠습니까?', () => {
+    vendor.status_cd = 'REVIEWING';
+    vendor.status = '검토중';
+    vendor.reject_reason = null;
+    vendor.reviewed = null;
+    vendor.reviewer = null;
+    vendor.applied = toDateStr(new Date());
+    editingField = null;
+    renderDetail();
+    showAlert('재승인 요청이 완료되었습니다.\n검토 후 승인 처리됩니다.');
+  });
+}
 
 function renderDetail() {
   const content = document.getElementById('detail-content');
@@ -65,17 +174,15 @@ function renderDetail() {
   const st = STAT_CONFIG[vendor.status_cd] || { bg: '#f3f4f6', color: '#6b7280', label: vendor.status };
 
   const infoItems = [
-    ['공급자명',      vendor.name],
-    ['사업자등록번호', vendor.biz_num],
-    ['대표자명',      vendor.rep      || '-'],
-    ['연락처',        vendor.contact  || '-'],
-    ['이메일',        vendor.email    || '-'],
-    ['주소',          vendor.address  || '-'],
-    ['결제은행',      vendor.bank     || '-'],
-    ['계좌번호',      vendor.account  || '-'],
+    ['공급자명',      'name'],
+    ['사업자등록번호', 'biz_num'],
+    ['대표자명',      'rep'],
+    ['연락처',        'contact'],
+    ['이메일',        'email'],
+    ['주소',          'address'],
+    ['결제은행',      'bank'],
+    ['계좌번호',      'account'],
   ];
-
-  const docIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
   content.innerHTML = `
     <!-- Page header -->
@@ -105,12 +212,7 @@ function renderDetail() {
             기본 정보
           </h2>
           <div class="vd-info-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px 24px">
-            ${infoItems.map(([label, value]) => `
-              <div>
-                <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
-                <div style="font-size:0.875rem;color:#1a2260;font-weight:500">${escapeHtml(value)}</div>
-              </div>
-            `).join('')}
+            ${infoItems.map(([label, key]) => fieldRowHtml(label, key)).join('')}
             ${vendor.memo ? `
               <div style="grid-column:1/-1">
                 <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">비고</div>
@@ -127,23 +229,7 @@ function renderDetail() {
             첨부서류
             <span style="font-size:0.75rem;font-weight:600;color:#9ca3af;margin-left:4px">${(vendor.docs || []).length}건</span>
           </h2>
-          ${vendor.docs && vendor.docs.length
-            ? `<div style="display:flex;flex-direction:column;gap:8px">
-                ${vendor.docs.map(doc => `
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8f9ff;border:1px solid #d4d8f0;border-radius:8px">
-                    <div style="display:flex;align-items:center;gap:8px;color:#1a2260">
-                      ${docIcon}
-                      <span style="font-size:0.875rem;font-weight:500">${escapeHtml(doc)}</span>
-                    </div>
-                    <button onclick="showAlert('다운로드 기능은 준비 중입니다.')"
-                            style="font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap">
-                      다운로드
-                    </button>
-                  </div>
-                `).join('')}
-               </div>`
-            : `<p style="font-size:0.875rem;color:#9ca3af;text-align:center;padding:20px 0">첨부된 서류가 없습니다.</p>`
-          }
+          ${docsHtml()}
         </div>
       </div>
 
@@ -179,16 +265,15 @@ function renderDetail() {
                 <div style="font-size:0.8125rem;color:#b91c1c;line-height:1.5">${escapeHtml(vendor.reject_reason)}</div>
               </div>
             ` : ''}
+            ${vendor.status_cd === 'REJECTED' ? `
+              <button onclick="requestReapproval()"
+                      style="width:100%;padding:12px;background:#2B3990;color:#fff;border:none;border-radius:10px;font-size:0.875rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                재승인 요청
+              </button>
+            ` : ''}
           </div>
         </div>
-
-        ${vendor.status_cd === 'REJECTED' ? `
-          <button onclick="location.href='vendors.html'"
-                  style="width:100%;padding:12px;background:#2B3990;color:#fff;border:none;border-radius:10px;font-size:0.875rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            재신청하기
-          </button>
-        ` : ''}
       </div>
     </div>
   `;

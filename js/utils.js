@@ -79,6 +79,28 @@ function showAlert(message, onClose) {
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
 }
 
+function showConfirm(message, onYes) {
+  document.getElementById('confirm-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'confirm-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
+  modal.innerHTML = `
+    <div style="width:100%;max-width:360px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
+      <div style="padding:1.5rem 1.5rem 1rem">
+        <p style="font-size:0.875rem;color:#1a2260;line-height:1.6;white-space:pre-line;text-align:center">${escapeHtml(message)}</p>
+      </div>
+      <div style="display:flex;gap:0.625rem;padding:0 1.5rem 1.25rem">
+        <button id="confirm-no-btn" class="btn-secondary" style="flex:1;padding:0.625rem 0;font-size:0.875rem">아니오</button>
+        <button id="confirm-yes-btn" class="btn-primary" style="flex:1;padding:0.625rem 0;font-size:0.875rem">예</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  document.getElementById('confirm-no-btn').addEventListener('click', close);
+  document.getElementById('confirm-yes-btn').addEventListener('click', () => { modal.remove(); onYes?.(); });
+}
+
 function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeInfo, onClose, onConfirm }) {
   document.getElementById('payment-modal')?.remove();
   const modal = document.createElement('div');
