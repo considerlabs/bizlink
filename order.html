@@ -61,20 +61,20 @@
 
   <!-- ── Mobile vendor bar ── -->
   <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;gap:8px">
-      <p style="font-size:0.9375rem;font-weight:800;color:#1a2260">공급처 목록</p>
-      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer;flex-shrink:0">
-        <span class="toggle-wrap">
-          <input type="checkbox" id="fav-only-toggle-mobile">
-          <span class="toggle-slider"></span>
-        </span>
-        즐겨찾기만
-      </label>
-    </div>
-    <div style="padding:0 12px 8px">
-      <select id="vendor-select-mobile" class="form-field" style="height:34px;font-size:0.8125rem">
-        <option value="ALL">전체공급처</option>
-      </select>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;gap:8px;flex-wrap:wrap">
+      <p style="font-size:0.9375rem;font-weight:800;color:#1a2260;flex-shrink:0">공급처 목록</p>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer;flex-shrink:0">
+          <span class="toggle-wrap">
+            <input type="checkbox" id="fav-only-toggle-mobile">
+            <span class="toggle-slider"></span>
+          </span>
+          즐겨찾기만
+        </label>
+        <select id="vendor-select-mobile" class="form-field" style="height:30px;width:104px;flex-shrink:0;font-size:11px;padding:0 8px">
+          <option value="ALL">전체공급처</option>
+        </select>
+      </div>
     </div>
     <div id="mobile-vendor-cards" style="display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto"></div>
   </div>
