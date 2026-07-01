@@ -413,7 +413,7 @@ function renderSidebar() {
 
   // mobile vendor cards (card format, same info as desktop, horizontally scrollable)
   const allCardMobileHtml = `
-    <div id="all-vendors-btn-mobile" style="flex-shrink:0;width:112px;height:110px;display:flex;flex-direction:column;border-radius:12px;border:1px solid ${isAllActive?'#7e8ad2':'#e5e7eb'};background:${isAllActive?'#eef0f9':'#fff'};cursor:pointer;overflow:hidden">
+    <div id="all-vendors-btn-mobile" style="flex-shrink:0;width:112px;align-self:stretch;display:flex;flex-direction:column;border-radius:12px;border:1px solid ${isAllActive?'#7e8ad2':'#e5e7eb'};background:${isAllActive?'#eef0f9':'#fff'};cursor:pointer;overflow:hidden">
       <div style="height:40%;display:flex;flex-direction:column;justify-content:center;padding:0 10px">
         <p style="font-size:0.75rem;font-weight:700;color:${isAllActive?'#24307a':'#6b7280'}">전체</p>
         <p style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:2px">${S.vendors.length}개 공급자</p>
