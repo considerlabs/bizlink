@@ -65,6 +65,13 @@
             <button onclick="setRange(30)" class="range-btn" data-days="30" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">1개월</button>
           </div>
           <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select id="status-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
+              <option value="ALL">주문상태</option>
+              <option value="RECEIVED">주문접수</option>
+              <option value="DELIVERING">배송중</option>
+              <option value="COMPLETED">배송완료</option>
+              <option value="CANCELLED">취소</option>
+            </select>
             <select id="vendor-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
               <option value="ALL">공급처</option>
             </select>
@@ -119,7 +126,7 @@ const STAT_STYLE = {
   CANCELLED:  'background:#fef2f2;color:#dc2626',
 };
 
-let allOrders = [], keyword = '', vendorFilter = 'ALL';
+let allOrders = [], keyword = '', vendorFilter = 'ALL', statusFilter = 'ALL';
 
 function toDateStr(d) { return d.toISOString().slice(0, 10); }
 
@@ -142,9 +149,10 @@ async function loadOrders() {
 function filteredOrders() {
   return allOrders.filter(o => {
     const matchV = vendorFilter === 'ALL' || o.STORE_NM === vendorFilter;
+    const matchS = statusFilter === 'ALL' || o.ORDER_STAT_CD === statusFilter;
     const kw = keyword.toLowerCase();
     const matchK = !kw || o.ORDER_NO.toLowerCase().includes(kw) || o.STORE_NM.toLowerCase().includes(kw);
-    return matchV && matchK;
+    return matchV && matchS && matchK;
   });
 }
 
@@ -216,6 +224,7 @@ MOCK_VENDORS.forEach(v => {
 });
 
 document.getElementById('vendor-filter').addEventListener('change', e => { vendorFilter = e.target.value; renderTable(); });
+document.getElementById('status-filter').addEventListener('change', e => { statusFilter = e.target.value; renderTable(); });
 document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
   keyword = document.getElementById('keyword-input').value.trim();

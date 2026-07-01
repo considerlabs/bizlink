@@ -413,10 +413,16 @@ function renderSidebar() {
 
   // mobile vendor cards (card format, same info as desktop, horizontally scrollable)
   const allCardMobileHtml = `
-    <button id="all-vendors-btn-mobile" style="flex-shrink:0;width:104px;border-radius:12px;border:1px solid ${isAllActive?'#7e8ad2':'#e5e7eb'};background:${isAllActive?'#eef0f9':'#fff'};padding:10px;text-align:left;cursor:pointer">
-      <span style="font-size:0.8125rem;font-weight:800;color:${isAllActive?'#24307a':'#1a2260'};display:block">전체</span>
-      <span style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:4px;display:block">${S.vendors.length}개 공급자</span>
-    </button>`;
+    <div id="all-vendors-btn-mobile" style="flex-shrink:0;width:112px;display:flex;flex-direction:column;border-radius:12px;border:1px solid ${isAllActive?'#7e8ad2':'#e5e7eb'};background:${isAllActive?'#eef0f9':'#fff'};cursor:pointer;overflow:hidden">
+      <div style="flex:1;padding:10px 10px 8px">
+        <p style="font-size:0.8125rem;font-weight:800;color:${isAllActive?'#24307a':'#1a2260'}">전체</p>
+        <p style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:4px">${S.vendors.length}개 공급자</p>
+      </div>
+      <div style="padding:8px 10px;border-top:1px solid ${isAllActive?'#d4d8f0':'#f3f4f6'}">
+        <p style="font-size:8px;font-weight:700;color:#9ca3af">총주문금액</p>
+        <p style="font-size:0.75rem;font-weight:800;color:${totalAll>0?'#1a2260':'#9ca3af'};margin-top:1px">${comma(totalAll)}원</p>
+      </div>
+    </div>`;
 
   mobileCardsEl.innerHTML = allCardMobileHtml + visibleVendors.map(v => {
     const total = totals[v.VENDOR_CD] ?? 0;
