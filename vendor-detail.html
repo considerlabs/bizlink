@@ -154,8 +154,9 @@ function requestReapproval() {
     vendor.reviewer = null;
     vendor.applied = toDateStr(new Date());
     editingField = null;
-    renderDetail();
-    showAlert('재승인 요청이 완료되었습니다.\n검토 후 승인 처리됩니다.');
+    showAlert('재승인 요청이 완료되었습니다.\n검토 후 승인 처리됩니다.', () => {
+      location.href = BACK_URL;
+    });
   });
 }
 
