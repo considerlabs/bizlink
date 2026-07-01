@@ -152,6 +152,28 @@
   </div>
 </div>
 
+<!-- 인증번호 확인 모달 -->
+<div id="verify-code-modal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:1rem">
+  <div style="width:100%;max-width:360px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #f3f4f6">
+      <h3 style="font-size:0.875rem;font-weight:800;color:#1a2260">인증번호 확인</h3>
+      <button id="verify-modal-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.25rem;line-height:1">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <p id="verify-desc" style="font-size:0.8125rem;color:#6b7280;line-height:1.5;margin-bottom:16px"></p>
+      <div class="form-field" style="padding:0 12px;margin-bottom:8px">
+        <input type="text" id="verify-code-input" inputmode="numeric" maxlength="6" placeholder="인증번호 6자리 입력" style="flex:1;border:none;background:transparent;font-size:0.9375rem;letter-spacing:0.2em;color:#1a2260;outline:none;height:38px">
+      </div>
+      <p id="verify-error" style="font-size:0.75rem;color:#ef4444;min-height:1rem;margin-bottom:4px"></p>
+      <button id="verify-resend-btn" style="background:none;border:none;color:#2B3990;font-size:0.75rem;font-weight:700;cursor:pointer;padding:0">인증번호 재발송</button>
+    </div>
+    <div style="display:flex;gap:8px;padding:0 24px 20px">
+      <button id="verify-cancel-btn" class="btn-secondary" style="flex:1;padding:10px 0;font-size:0.875rem">취소</button>
+      <button id="verify-confirm-btn" class="btn-primary" style="flex:1;padding:10px 0;font-size:0.875rem">확인</button>
+    </div>
+  </div>
+</div>
+
 <script>
 if (!requireAuth()) throw new Error();
 renderHeader();
@@ -207,6 +229,71 @@ function togglePw(i) {
   input.type = input.type === 'password' ? 'text' : 'password';
 }
 
+// Verification code modal
+const verifyModal = document.getElementById('verify-code-modal');
+let verifyCode = null;
+let resendTimer = null;
+
+function maskPhone(tel) {
+  if (!tel) return '등록된 휴대전화';
+  return tel.replace(/(\d{2,3})-?(\d{3,4})-?(\d{4})$/, (m, a, b, c) => `${a}-****-${c}`);
+}
+
+function sendVerifyCode() {
+  verifyCode = String(Math.floor(100000 + Math.random() * 900000));
+  showAlert(`인증번호가 발송되었습니다.\n(테스트 환경 인증번호: ${verifyCode})`);
+  startResendCooldown();
+}
+
+function startResendCooldown() {
+  const btn = document.getElementById('verify-resend-btn');
+  let sec = 60;
+  btn.disabled = true;
+  btn.style.color = '#9ca3af';
+  btn.textContent = `재발송 (${sec}초)`;
+  clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    sec -= 1;
+    if (sec <= 0) {
+      clearInterval(resendTimer);
+      btn.disabled = false;
+      btn.style.color = '#2B3990';
+      btn.textContent = '인증번호 재발송';
+    } else {
+      btn.textContent = `재발송 (${sec}초)`;
+    }
+  }, 1000);
+}
+
+function openVerifyModal() {
+  document.getElementById('verify-desc').textContent = `${maskPhone(info.BIZ_TEL)}로 발송된 인증번호를 입력해주세요.`;
+  document.getElementById('verify-code-input').value = '';
+  document.getElementById('verify-error').textContent = '';
+  verifyModal.style.display = 'flex';
+  sendVerifyCode();
+}
+
+function closeVerifyModal() {
+  clearInterval(resendTimer);
+  verifyModal.style.display = 'none';
+}
+
+document.getElementById('verify-modal-close').addEventListener('click', closeVerifyModal);
+document.getElementById('verify-cancel-btn').addEventListener('click', closeVerifyModal);
+document.getElementById('verify-resend-btn').addEventListener('click', sendVerifyCode);
+verifyModal.addEventListener('click', e => { if (e.target === verifyModal) closeVerifyModal(); });
+document.getElementById('verify-confirm-btn').addEventListener('click', () => {
+  const input = document.getElementById('verify-code-input').value.trim();
+  if (!input) { document.getElementById('verify-error').textContent = '인증번호를 입력해주세요.'; return; }
+  if (input !== verifyCode) { document.getElementById('verify-error').textContent = '인증번호가 일치하지 않습니다.'; return; }
+  closeVerifyModal();
+  showAlert('비밀번호가 변경되었습니다.', () => {
+    document.getElementById('pw-0').value = '';
+    document.getElementById('pw-1').value = '';
+    document.getElementById('pw-2').value = '';
+  });
+});
+
 // Password change
 document.getElementById('change-pw-btn').addEventListener('click', () => {
   const cur = document.getElementById('pw-0').value;
@@ -215,11 +302,7 @@ document.getElementById('change-pw-btn').addEventListener('click', () => {
   if (!cur || !nw || !cf) { showAlert('모든 비밀번호 필드를 입력해주세요.'); return; }
   if (nw.length < 8) { showAlert('새 비밀번호는 8자 이상이어야 합니다.'); return; }
   if (nw !== cf) { showAlert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.'); return; }
-  showAlert('비밀번호가 변경되었습니다.', () => {
-    document.getElementById('pw-0').value = '';
-    document.getElementById('pw-1').value = '';
-    document.getElementById('pw-2').value = '';
-  });
+  openVerifyModal();
 });
 </script>
 </body>

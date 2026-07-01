@@ -25,6 +25,11 @@
       .hist-date-input { width: 108px !important; }
       .hist-keyword-input { width: 130px !important; }
     }
+    .hist-mobile-list { display: flex; flex-direction: column; }
+    .hist-mobile-list > *:last-child { border-bottom: none !important; }
+    @media (min-width: 768px) {
+      .hist-mobile-list { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -96,8 +101,8 @@
         </table>
       </div>
 
-      <!-- Mobile cards -->
-      <div id="history-cards-mobile" class="mobile-cards-list">
+      <!-- Mobile list -->
+      <div id="history-cards-mobile" class="hist-mobile-list">
         <div style="text-align:center;padding:3rem 0"><div class="loading-spinner-sm" style="margin:0 auto"></div></div>
       </div>
     </div>
@@ -153,7 +158,7 @@ function renderTable() {
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
       <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
     </td></tr>`;
-    cardsWrap.innerHTML = `<div style="text-align:center;padding:4rem 0;color:#9ca3af">
+    cardsWrap.innerHTML = `<div style="text-align:center;padding:4rem 20px;color:#9ca3af">
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
       <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
     </div>`;
@@ -183,15 +188,17 @@ function renderTable() {
     const total = o.TOTAL_PRICE + fee;
     const statStyle = STAT_STYLE[o.ORDER_STAT_CD] ?? 'background:#f3f4f6;color:#6b7280';
     return `
-      <div onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;cursor:pointer;background:#fff">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
-          <span style="font-size:0.875rem;font-family:monospace;font-weight:700;color:#1a2260">${escapeHtml(o.ORDER_NO)}</span>
-          <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
+      <div onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;border-bottom:1px solid #f3f4f6;cursor:pointer">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span style="font-size:0.8125rem;font-family:monospace;font-weight:700;color:#1a2260">${escapeHtml(o.ORDER_NO)}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;white-space:nowrap;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
+          </div>
+          <div style="font-size:0.75rem;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.ORDER_DT.slice(0,10)} · ${escapeHtml(o.STORE_NM)}</div>
         </div>
-        <div style="font-size:0.8125rem;color:#6b7280;margin-bottom:12px">${o.ORDER_DT.slice(0,10)} · ${escapeHtml(o.STORE_NM)}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f3f4f6">
-          <span style="font-size:0.75rem;color:#9ca3af">상품 ${comma(o.TOTAL_PRICE)}원 + 수수료 ${comma(fee)}원</span>
-          <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${comma(total)}원</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <span style="font-size:0.9375rem;font-weight:800;color:#1a2260;white-space:nowrap">${comma(total)}원</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>`;
   }).join('');
