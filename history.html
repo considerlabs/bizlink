@@ -101,7 +101,7 @@
         <table style="width:100%;min-width:920px">
           <thead>
             <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
-              <th style="text-align:left;padding:12px 20px;width:130px">주문일</th>
+              <th style="text-align:left;padding:12px 20px;width:150px">주문일</th>
               <th style="text-align:left;padding:12px 20px;width:190px">주문번호</th>
               <th style="text-align:left;padding:12px 20px;min-width:150px">공급처</th>
               <th style="text-align:center;padding:12px 20px;width:120px">주문상태</th>
@@ -205,7 +205,7 @@ function renderTable() {
     const statStyle = STAT_STYLE[o.ORDER_STAT_CD] ?? 'background:#f3f4f6;color:#6b7280';
     return `
       <tr onclick="location.href='history-detail.html?no=${encodeURIComponent(o.ORDER_NO)}'" style="border-bottom:1px solid #f3f4f6;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
-        <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280">${o.ORDER_DT.slice(0,10)}</td>
+        <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280;white-space:nowrap">${o.ORDER_DT}</td>
         <td style="padding:16px 20px;font-size:0.875rem;font-family:monospace;color:#1a2260;font-weight:600">${escapeHtml(o.ORDER_NO)}</td>
         <td style="padding:16px 20px;font-size:0.875rem;color:#1a2260">${escapeHtml(o.STORE_NM)}</td>
         <td style="padding:16px 20px;text-align:center">
@@ -227,7 +227,7 @@ function renderTable() {
           <span style="font-size:0.875rem;font-family:monospace;font-weight:700;color:#1a2260">${escapeHtml(o.ORDER_NO)}</span>
           <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${statStyle}">${escapeHtml(o.ORDER_STAT_NM)}</span>
         </div>
-        <div style="font-size:0.8125rem;color:#6b7280;margin-bottom:12px">${o.ORDER_DT.slice(0,10)} · ${escapeHtml(o.STORE_NM)}</div>
+        <div style="font-size:0.8125rem;color:#6b7280;margin-bottom:12px">${o.ORDER_DT} · ${escapeHtml(o.STORE_NM)}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f3f4f6">
           <span style="font-size:0.75rem;color:#9ca3af">상품 ${comma(o.TOTAL_PRICE)}원 + 수수료 ${comma(fee)}원</span>
           <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${comma(total)}원</span>
