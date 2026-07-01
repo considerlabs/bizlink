@@ -61,7 +61,21 @@
 
   <!-- ── Mobile vendor bar ── -->
   <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6">
-    <p style="font-size:11px;font-weight:700;color:#9ca3af;padding:10px 12px 6px">공급자</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;gap:8px">
+      <p style="font-size:0.9375rem;font-weight:800;color:#1a2260">공급처 목록</p>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer;flex-shrink:0">
+        <span class="toggle-wrap">
+          <input type="checkbox" id="fav-only-toggle-mobile">
+          <span class="toggle-slider"></span>
+        </span>
+        즐겨찾기만
+      </label>
+    </div>
+    <div style="padding:0 12px 8px">
+      <select id="vendor-select-mobile" class="form-field" style="height:34px;font-size:0.8125rem">
+        <option value="ALL">전체공급처</option>
+      </select>
+    </div>
     <div id="mobile-vendor-cards" style="display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto"></div>
   </div>
 
@@ -197,6 +211,13 @@ async function init() {
   [S.vendors, S.basket] = await Promise.all([api.getVendors(), api.getBasketList()]);
   QUICK_QTYS.forEach(() => {}); // noop – ensure const available
   S.vendors.forEach(v => { if (!S.productQty[v.VENDOR_CD]) {} }); // init later per product
+  const vendorSelect = document.getElementById('vendor-select-mobile');
+  S.vendors.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.VENDOR_CD;
+    opt.textContent = v.VENDOR_NM;
+    vendorSelect.appendChild(opt);
+  });
   renderSidebar();
   await loadProducts();
   bindEvents();
@@ -217,7 +238,9 @@ function bindEvents() {
   document.getElementById('refresh-btn').addEventListener('click', loadProducts);
   document.getElementById('sidebar-sort').addEventListener('change', e => { S.sidebarSort = e.target.value; renderSidebar(); });
   document.getElementById('fav-only-toggle').addEventListener('change', e => { S.favOnly = e.target.checked; renderSidebar(); });
+  document.getElementById('fav-only-toggle-mobile').addEventListener('change', e => { S.favOnly = e.target.checked; renderSidebar(); });
   document.getElementById('all-vendors-btn').addEventListener('click', () => selectVendor('ALL'));
+  document.getElementById('vendor-select-mobile').addEventListener('change', e => selectVendor(e.target.value));
 }
 
 async function loadProducts() {
@@ -323,6 +346,11 @@ function renderSidebar() {
   const totalAll = Object.values(totals).reduce((s,v)=>s+v,0);
   const visibleVendors = getSortedVisibleVendors();
   const isAllActive = S.activeVendor === 'ALL';
+
+  // sync mobile controls
+  document.getElementById('vendor-select-mobile').value = S.activeVendor;
+  document.getElementById('fav-only-toggle').checked = S.favOnly;
+  document.getElementById('fav-only-toggle-mobile').checked = S.favOnly;
 
   // all button
   const allBtn = document.getElementById('all-vendors-btn');
