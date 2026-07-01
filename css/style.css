@@ -37,6 +37,7 @@ body { font-family: 'PretendardVariable', -apple-system, BlinkMacSystemFont, 'Se
   display: flex; align-items: center;
   background: #fff; font-size: 0.875rem; color: #1a2260; width: 100%;
 }
+.form-field input { min-width: 0; }
 input.form-field { outline: none; }
 input.form-field:focus, select.form-field:focus { border-color: #2B3990; }
 select.form-field { appearance: none; cursor: pointer; outline: none; }

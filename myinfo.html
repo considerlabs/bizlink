@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>내정보 - BIZLINK</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,6 +19,7 @@
   <script src="js/api.js"></script>
   <script src="js/header.js"></script>
   <style>
+    .mi-grid > * { min-width: 0; }
     @media (max-width: 767px) {
       .mi-section { padding: 18px 16px !important; }
       .mi-grid { grid-template-columns: 110px 1fr !important; }
