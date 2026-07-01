@@ -17,44 +17,69 @@
   <script src="js/data.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
+  <style>
+    .login-right { background: linear-gradient(to bottom right, #1e3a8a, #2B3990, #eef2ff); display: flex; align-items: center; justify-content: center; }
+    .login-card { background: #fff; border-radius: 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); overflow: hidden; }
+    .login-mobile-logo { display: flex; }
+    .login-left-panel { display: none; }
+    @media (min-width: 768px) {
+      .login-right { background: #fff; width: 50% !important; }
+      .login-card { border-radius: 0; box-shadow: none; }
+      .login-mobile-logo { display: none; }
+      .login-left-panel { display: flex; }
+    }
+  </style>
 </head>
 <body>
-  <div class="min-h-screen bg-gradient-to-br from-blue-900 via-primary-700 to-blue-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-white rounded-3xl shadow-popup overflow-hidden">
-      <div class="px-8 pt-10 pb-8">
-        <div class="flex justify-center mb-8">
-          <img src="img/logo.jpg" alt="BIZLINK" style="height:48px;width:auto;object-fit:contain">
-        </div>
-        <h2 class="text-center text-sm font-semibold text-gray-500 mb-6">B2B 상품권 주문 플랫폼</h2>
+  <div style="min-height:100vh;display:flex">
+    <!-- Left branding panel (desktop only) -->
+    <div class="login-left-panel" style="width:50%;align-items:center;justify-content:center;background:linear-gradient(160deg,#f4f6fb 0%,#e3e8f5 100%)">
+      <div style="text-align:center">
+        <img src="img/logo.png" alt="BIZLINK" style="width:140px;height:140px;object-fit:contain;margin:0 auto 20px">
+        <p style="font-size:2rem;font-weight:800;color:#2B3990;letter-spacing:0.05em">BIZLINK</p>
+        <p style="font-size:1.125rem;font-weight:700;color:#2B3990;margin-top:2px">비즈링크</p>
+        <p style="font-size:0.875rem;color:#9ca3af;margin-top:14px">B2B 상품권 주문 플랫폼</p>
+      </div>
+    </div>
 
-        <form id="login-form" class="space-y-3">
-          <div>
-            <label class="text-xs font-bold text-gray-500 mb-1 block">아이디</label>
-            <input id="login-id" type="text" placeholder="아이디를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="username">
+    <!-- Right: login form -->
+    <div class="login-right" style="width:100%;padding:1rem">
+      <div class="w-full max-w-sm login-card">
+        <div class="px-8 pt-10 pb-8">
+          <div class="login-mobile-logo" style="justify-content:center;margin-bottom:2rem">
+            <img src="img/logo.png" alt="BIZLINK" style="height:56px;width:56px;object-fit:contain">
           </div>
-          <div>
-            <label class="text-xs font-bold text-gray-500 mb-1 block">비밀번호</label>
-            <input id="login-pw" type="password" placeholder="비밀번호를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="current-password">
+          <h2 class="text-center text-sm font-semibold text-gray-500 mb-6" style="display:block">B2B 상품권 주문 플랫폼</h2>
+
+          <form id="login-form" class="space-y-3">
+            <div>
+              <label class="text-xs font-bold text-gray-500 mb-1 block">아이디</label>
+              <input id="login-id" type="text" placeholder="아이디를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="username">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-gray-500 mb-1 block">비밀번호</label>
+              <input id="login-pw" type="password" placeholder="비밀번호를 입력하세요" class="form-field w-full h-11 text-sm" autocomplete="current-password">
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                <input type="checkbox" id="save-id" class="rounded"> 아이디 저장
+              </label>
+              <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                <input type="checkbox" id="auto-login" class="rounded"> 자동 로그인
+              </label>
+            </div>
+
+            <button type="submit" class="btn-primary w-full h-11 text-sm mt-2" style="border-radius:0.75rem">
+              로그인
+            </button>
+          </form>
+
+          <div class="flex justify-center gap-4 mt-4">
+            <button onclick="showAlert('아이디 찾기 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">아이디 찾기</button>
+            <span class="text-gray-200">|</span>
+            <button onclick="showAlert('비밀번호 재설정 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">비밀번호 재설정</button>
           </div>
-
-          <div class="flex items-center justify-between pt-1">
-            <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-              <input type="checkbox" id="save-id" class="rounded"> 아이디 저장
-            </label>
-            <label class="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-              <input type="checkbox" id="auto-login" class="rounded"> 자동 로그인
-            </label>
-          </div>
-
-          <button type="submit" class="btn-primary w-full h-11 text-sm mt-2" style="border-radius:0.75rem">
-            로그인
-          </button>
-        </form>
-
-        <div class="flex justify-center gap-4 mt-4">
-          <button onclick="showAlert('아이디 찾기 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">아이디 찾기</button>
-          <span class="text-gray-200">|</span>
-          <button onclick="showAlert('비밀번호 재설정 기능은 준비 중입니다.')" class="text-xs text-gray-400 hover:text-primary-500">비밀번호 재설정</button>
         </div>
       </div>
     </div>
