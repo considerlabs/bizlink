@@ -76,8 +76,8 @@ select.form-field { appearance: none; cursor: pointer; outline: none; }
 table { border-collapse: collapse; width: 100%; }
 th { font-weight: 700; }
 
-/* Mobile scroll hint for wide tables */
-.mobile-scroll-hint { display: none; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; font-size: 11px; color: #9ca3af; font-weight: 600; }
-@media (max-width: 767px) {
-  .mobile-scroll-hint { display: flex; }
+/* Mobile card list (shown instead of a table on narrow screens) */
+.mobile-cards-list { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+@media (min-width: 768px) {
+  .mobile-cards-list { display: none; }
 }

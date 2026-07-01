@@ -123,6 +123,29 @@ function render() {
       </td>
     </tr>`).join('');
 
+  const cardsHtml = activeItems.map(item => `
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="min-width:0">
+          <p style="font-size:11px;color:#9ca3af;font-family:monospace;margin-bottom:2px">${escapeHtml(item.GOODS_CD)}</p>
+          <p style="font-weight:800;color:#2B3990;font-size:0.9375rem">${escapeHtml(item.GOODS_NM)}</p>
+        </div>
+        <button class="del-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" style="flex-shrink:0;background:#fef2f2;color:#f87171;font-size:11px;font-weight:700;padding:5px 10px;border:none;border-radius:6px;cursor:pointer">삭제</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.8125rem;color:#6b7280">
+        <span>단가 ${comma(item.UNIT_PRICE)}원</span>
+        <span style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px">부가세 포함</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid #f3f4f6">
+        <div style="display:flex;align-items:center;gap:0">
+          <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="-1" style="width:30px;height:30px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#4b5563">−</button>
+          <span style="margin:0 6px;width:44px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:6px;font-size:0.9375rem;font-weight:700;color:#1a2260">${item.ORDER_QTY}</span>
+          <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="1" style="width:30px;height:30px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#4b5563">+</button>
+        </div>
+        <span style="font-weight:800;color:#1a2260;font-size:1rem">${comma(item.TOTAL_PRICE)}원</span>
+      </div>
+    </div>`).join('');
+
   content.innerHTML = `
     <div class="surface-card">
       <div style="display:flex;border-bottom:1px solid #e5e7eb;overflow-x:auto">${tabsHtml}</div>
@@ -138,8 +161,8 @@ function render() {
         <button id="clear-btn" style="background:#fef2f2;color:#f87171;font-size:0.875rem;font-weight:700;padding:6px 14px;border:none;border-radius:10px;cursor:pointer">장바구니 비우기</button>
       </div>
 
-      <div class="mobile-scroll-hint">← 좌우로 스크롤하면 수량 조절·삭제 버튼을 볼 수 있어요 →</div>
-      <div style="overflow-x:auto">
+      <!-- Desktop table -->
+      <div class="hidden md:block" style="overflow-x:auto">
         <table style="width:100%;min-width:920px">
           <thead>
             <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
@@ -157,6 +180,9 @@ function render() {
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>
+
+      <!-- Mobile cards -->
+      <div class="mobile-cards-list">${cardsHtml}</div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid #f3f4f6">
         <a href="order.html" class="btn-secondary px-5 py-2.5">돌아가기</a>
