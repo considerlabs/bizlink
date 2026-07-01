@@ -18,6 +18,14 @@
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/header.js"></script>
+  <style>
+    .basket-summary-mobile { display: block; }
+    .basket-summary-desktop { display: none; }
+    @media (min-width: 768px) {
+      .basket-summary-mobile { display: none; }
+      .basket-summary-desktop { display: flex; }
+    }
+  </style>
 </head>
 <body>
 <div class="app-page">
@@ -150,7 +158,8 @@ function render() {
     <div class="surface-card">
       <div style="display:flex;border-bottom:1px solid #e5e7eb;overflow-x:auto">${tabsHtml}</div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;gap:8px">
+      <!-- Desktop summary bar -->
+      <div class="basket-summary-desktop" style="align-items:center;justify-content:space-between;padding:10px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;gap:8px">
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:0.875rem;flex-wrap:wrap;text-align:right">
           <span style="color:#6b7280">주문금액: <strong style="color:#1a2260">${comma(subtotal)}원</strong></span>
           <span style="color:#9ca3af">+</span>
@@ -158,7 +167,24 @@ function render() {
           <span style="color:#9ca3af">=</span>
           <span style="background:#eef0f9;border-radius:8px;padding:4px 10px;color:#2B3990">결제금액: <strong>${comma(paymentTotal)}원</strong></span>
         </div>
-        <button id="clear-btn" style="background:#fef2f2;color:#f87171;font-size:0.875rem;font-weight:700;padding:6px 14px;border:none;border-radius:10px;cursor:pointer">장바구니 비우기</button>
+        <button class="clear-basket-btn" style="background:#fef2f2;color:#f87171;font-size:0.875rem;font-weight:700;padding:6px 14px;border:none;border-radius:10px;cursor:pointer">장바구니 비우기</button>
+      </div>
+
+      <!-- Mobile summary -->
+      <div class="basket-summary-mobile" style="padding:14px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8125rem;color:#6b7280;margin-bottom:6px">
+          <span>주문금액</span>
+          <span style="font-weight:700;color:#1a2260">${comma(subtotal)}원</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8125rem;color:#6b7280;margin-bottom:10px">
+          <span>플랫폼수수료(5.5%)</span>
+          <span style="font-weight:700;color:#1a2260">${comma(platformFee)}원</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #e5e7eb">
+          <span style="font-size:0.875rem;font-weight:700;color:#2B3990">결제금액</span>
+          <span style="font-size:1.0625rem;font-weight:800;color:#2B3990">${comma(paymentTotal)}원</span>
+        </div>
+        <button class="clear-basket-btn" style="margin-top:12px;width:100%;background:#fef2f2;color:#f87171;font-size:0.8125rem;font-weight:700;padding:9px 0;border:none;border-radius:8px;cursor:pointer">장바구니 비우기</button>
       </div>
 
       <!-- Desktop table -->
@@ -224,17 +250,19 @@ function render() {
   });
 
   // Clear vendor basket
-  document.getElementById('clear-btn').addEventListener('click', async () => {
-    if (state.clearing) return;
-    state.clearing = true;
-    const toDelete = (vendorGroups()[state.activeTab] ?? []);
-    await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
-    state.items = state.items.filter(it => it.VENDOR_CD !== state.activeTab);
-    const remaining = Object.keys(vendorGroups());
-    state.activeTab = remaining[0] ?? '';
-    state.clearing = false;
-    render();
-    showAlert(`${activeVendor?.VENDOR_NM ?? '선택한 공급처'} 장바구니를 비웠습니다.`);
+  content.querySelectorAll('.clear-basket-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (state.clearing) return;
+      state.clearing = true;
+      const toDelete = (vendorGroups()[state.activeTab] ?? []);
+      await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
+      state.items = state.items.filter(it => it.VENDOR_CD !== state.activeTab);
+      const remaining = Object.keys(vendorGroups());
+      state.activeTab = remaining[0] ?? '';
+      state.clearing = false;
+      render();
+      showAlert(`${activeVendor?.VENDOR_NM ?? '선택한 공급처'} 장바구니를 비웠습니다.`);
+    });
   });
 
   // Checkout
