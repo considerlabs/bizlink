@@ -60,10 +60,9 @@
   <div id="app-header"></div>
 
   <!-- ── Mobile vendor bar ── -->
-  <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6;overflow-x:auto">
-    <div id="mobile-vendor-pills" style="display:flex;gap:6px;padding:8px 12px;min-width:max-content;align-items:center">
-      <span style="font-size:10px;font-weight:700;color:#9ca3af;margin-right:4px;flex-shrink:0">유통사</span>
-    </div>
+  <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6">
+    <p style="font-size:11px;font-weight:700;color:#9ca3af;padding:10px 12px 6px">공급자</p>
+    <div id="mobile-vendor-cards" style="display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto"></div>
   </div>
 
   <!-- ── Desktop layout ── -->
@@ -199,7 +198,6 @@ async function init() {
   QUICK_QTYS.forEach(() => {}); // noop – ensure const available
   S.vendors.forEach(v => { if (!S.productQty[v.VENDOR_CD]) {} }); // init later per product
   renderSidebar();
-  renderMobileVendorBar();
   await loadProducts();
   bindEvents();
 }
@@ -258,7 +256,6 @@ async function selectVendor(cd) {
   document.getElementById('search-input').value = '';
   document.getElementById('search-input-mobile').value = '';
   renderSidebar();
-  renderMobileVendorBar();
   await loadProducts();
 }
 
@@ -280,7 +277,6 @@ async function handleReAdd(vendor) {
   }
   S.basket = await api.getBasketList();
   renderSidebar();
-  renderMobileVendorBar();
   renderProducts();
   showAlert(`${vendor.VENDOR_NM} 장바구니를 비웠습니다.`);
 }
@@ -296,7 +292,6 @@ async function handleAddToCart(goodsCd) {
     await api.addToBasket(goodsCd, qty);
     S.basket = await api.getBasketList();
     renderSidebar();
-    renderMobileVendorBar();
     renderProducts();
     showAlert(`"${product.GOODS_NM}" ${qty}개를 담았습니다.`);
   } catch(e) { showAlert(e.message); }
@@ -309,7 +304,6 @@ async function handleResetCart(goodsCd) {
   await Promise.all(toDelete.map(it => api.deleteBasketItem(it.BASKET_SEQ)));
   S.basket = await api.getBasketList();
   renderSidebar();
-  renderMobileVendorBar();
   renderProducts();
 }
 
@@ -348,8 +342,11 @@ function renderSidebar() {
 
   // vendor cards
   const cardsEl = document.getElementById('vendor-cards');
+  const mobileCardsEl = document.getElementById('mobile-vendor-cards');
+
   if (visibleVendors.length === 0) {
     cardsEl.innerHTML = `<div style="padding:20px 12px;text-align:center;font-size:0.75rem;font-weight:600;color:#9ca3af">즐겨찾기한 공급처가 없습니다.</div>`;
+    mobileCardsEl.innerHTML = `<div style="padding:12px;font-size:11px;font-weight:600;color:#9ca3af;white-space:nowrap">즐겨찾기한 공급자가 없습니다.</div>`;
     return;
   }
 
@@ -386,41 +383,59 @@ function renderSidebar() {
       </div>`;
   }).join('');
 
-  // bind sidebar events
-  cardsEl.querySelectorAll('.star-btn').forEach(btn => {
+  // mobile vendor cards (card format, same info as desktop, horizontally scrollable)
+  const allCardMobileHtml = `
+    <button id="all-vendors-btn-mobile" style="flex-shrink:0;width:104px;border-radius:12px;border:1px solid ${isAllActive?'#7e8ad2':'#e5e7eb'};background:${isAllActive?'#eef0f9':'#fff'};padding:10px;text-align:left;cursor:pointer">
+      <span style="font-size:0.8125rem;font-weight:800;color:${isAllActive?'#24307a':'#1a2260'};display:block">전체</span>
+      <span style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:4px;display:block">${S.vendors.length}개 공급자</span>
+    </button>`;
+
+  mobileCardsEl.innerHTML = allCardMobileHtml + visibleVendors.map(v => {
+    const total = totals[v.VENDOR_CD] ?? 0;
+    const hasItems = total > 0;
+    const isActive = S.activeVendor === v.VENDOR_CD;
+    const isFav = S.favorites.includes(v.VENDOR_CD);
+    const freeShipping = v.SHIPPING_FEE === 0 || total >= v.FREE_SHIPPING_MIN;
+    const shippingLabel = freeShipping ? '무료 배송' : `배송비 ${comma(v.SHIPPING_FEE)}원`;
+
+    return `
+      <div class="vendor-card-item" data-vcd="${v.VENDOR_CD}" style="flex-shrink:0;width:176px;position:relative;border-radius:12px;border:1px solid ${isActive?'#7e8ad2':'#e5e7eb'};background:${isActive?'#eef0f9':'#fff'};padding:10px;cursor:pointer">
+        <button class="star-btn" data-vcd="${v.VENDOR_CD}" style="position:absolute;top:8px;right:8px;border:none;background:none;cursor:pointer;padding:3px;border-radius:6px;color:${isFav?'#f59e0b':'#d1d5db'}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="${isFav?'currentColor':'none'}" stroke="${isFav?'#f59e0b':'#d1d5db'}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </button>
+        <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="padding-right:20px">
+          <p style="font-size:0.8125rem;font-weight:800;color:${isActive?'#24307a':'#1a2260'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.VENDOR_NM)}</p>
+          <p style="font-size:9px;font-weight:500;color:#9ca3af;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">사업자번호 ${escapeHtml(v.BIZ_NUM ?? v.VENDOR_CD)}</p>
+          <p style="font-size:9px;font-weight:500;color:#9ca3af;margin-top:2px">${shippingLabel}</p>
+        </div>
+        <div style="margin-top:8px;padding-top:6px;border-top:1px solid #f3f4f6">
+          <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:9px;font-weight:700;color:#6b7280">주문금액</span>
+            <span style="font-size:0.75rem;font-weight:800;color:${hasItems?'#1a2260':'#9ca3af'}">${comma(total)}원</span>
+          </div>
+          <button class="readd-btn" data-vcd="${v.VENDOR_CD}" style="display:flex;width:100%;height:28px;align-items:center;justify-content:center;gap:4px;border-radius:8px;font-size:11px;font-weight:800;border:none;cursor:pointer;background:${isActive?'#2B3990':'#5a6abf'};color:#fff">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            다시담기
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // bind sidebar events (shared between desktop and mobile card lists)
+  document.querySelectorAll('.star-btn').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); toggleFavorite(btn.dataset.vcd); });
   });
-  cardsEl.querySelectorAll('.vendor-select-area').forEach(el => {
+  document.querySelectorAll('.vendor-select-area').forEach(el => {
     el.addEventListener('click', () => selectVendor(el.dataset.vcd));
   });
-  cardsEl.querySelectorAll('.readd-btn').forEach(btn => {
+  document.querySelectorAll('.readd-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const vendor = S.vendors.find(v => v.VENDOR_CD === btn.dataset.vcd);
       if (vendor) handleReAdd(vendor);
     });
   });
-}
-
-/* ── Mobile vendor bar ── */
-function renderMobileVendorBar() {
-  const totals = getVendorTotals();
-  const pills = document.getElementById('mobile-vendor-pills');
-  const header = pills.querySelector('span');
-  pills.innerHTML = '';
-  if (header) pills.appendChild(header);
-
-  const makeBtn = (cd, nm, total) => {
-    const active = S.activeVendor === cd;
-    const btn = document.createElement('button');
-    btn.style.cssText = `display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:9999px;font-size:11px;font-weight:600;border:none;cursor:pointer;white-space:nowrap;background:${active?'#2B3990':'#f3f4f6'};color:${active?'#fff':'#4b5563'}`;
-    btn.innerHTML = escapeHtml(nm) + (total > 0 ? `<span style="font-size:10px;font-weight:700;color:${active?'#d4d8f0':'#2B3990'}">${Math.round(total/1000)}k</span>` : '');
-    btn.addEventListener('click', () => selectVendor(cd));
-    return btn;
-  };
-
-  pills.appendChild(makeBtn('ALL', '전체', 0));
-  S.vendors.forEach(v => pills.appendChild(makeBtn(v.VENDOR_CD, v.VENDOR_NM, totals[v.VENDOR_CD] ?? 0)));
+  document.getElementById('all-vendors-btn-mobile').addEventListener('click', () => selectVendor('ALL'));
 }
 
 /* ── Product card HTML ── */
