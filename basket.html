@@ -25,6 +25,9 @@
       .basket-summary-mobile { display: none; }
       .basket-summary-desktop { display: flex; }
     }
+    .qty-input { text-align: center; border: 1px solid #e5e7eb; border-radius: 6px; font-weight: 700; color: #1a2260; }
+    .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .qty-input { -moz-appearance: textfield; }
   </style>
 </head>
 <body>
@@ -120,7 +123,7 @@ function render() {
       <td style="padding:16px;text-align:center">
         <div style="display:flex;align-items:center;justify-content:center;gap:0">
           <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="-1" style="width:28px;height:28px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4b5563">−</button>
-          <span style="margin:0 4px;width:40px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:6px;font-size:0.875rem;font-weight:700;color:#1a2260">${item.ORDER_QTY}</span>
+          <input type="number" class="qty-input" data-seq="${escapeHtml(item.BASKET_SEQ)}" min="1" step="1" value="${item.ORDER_QTY}" style="margin:0 4px;width:40px;height:28px;font-size:0.875rem">
           <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="1" style="width:28px;height:28px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4b5563">+</button>
         </div>
       </td>
@@ -147,7 +150,7 @@ function render() {
       <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid #f3f4f6">
         <div style="display:flex;align-items:center;gap:0">
           <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="-1" style="width:30px;height:30px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#4b5563">−</button>
-          <span style="margin:0 6px;width:44px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:6px;font-size:0.9375rem;font-weight:700;color:#1a2260">${item.ORDER_QTY}</span>
+          <input type="number" class="qty-input" data-seq="${escapeHtml(item.BASKET_SEQ)}" min="1" step="1" value="${item.ORDER_QTY}" style="margin:0 6px;width:44px;height:30px;font-size:0.9375rem">
           <button class="qty-btn" data-seq="${escapeHtml(item.BASKET_SEQ)}" data-delta="1" style="width:30px;height:30px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#4b5563">+</button>
         </div>
         <span style="font-weight:800;color:#1a2260;font-size:1rem">${comma(item.TOTAL_PRICE)}원</span>
@@ -221,21 +224,38 @@ function render() {
     btn.addEventListener('click', () => { state.activeTab = btn.dataset.cd; render(); });
   });
 
+  // Qty update (shared by +/- buttons and direct input)
+  const updateQty = async (seq, newQty) => {
+    const item = state.items.find(it => it.BASKET_SEQ === seq);
+    if (!item || newQty < 1) return;
+    item.ORDER_QTY = newQty;
+    item.TOTAL_PRICE = item.UNIT_PRICE * newQty;
+    saveBasket(state.items);
+    await api.updateBasketQty(seq, newQty);
+    render();
+  };
+
   // Qty buttons
   content.querySelectorAll('.qty-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const seq = btn.dataset.seq;
-      const delta = parseInt(btn.dataset.delta);
-      const item = state.items.find(it => it.BASKET_SEQ === seq);
+    btn.addEventListener('click', () => {
+      const item = state.items.find(it => it.BASKET_SEQ === btn.dataset.seq);
       if (!item) return;
-      const newQty = item.ORDER_QTY + delta;
-      if (newQty < 1) return;
-      item.ORDER_QTY = newQty;
-      item.TOTAL_PRICE = item.UNIT_PRICE * newQty;
-      saveBasket(state.items);
-      await api.updateBasketQty(seq, newQty);
-      render();
+      updateQty(btn.dataset.seq, item.ORDER_QTY + parseInt(btn.dataset.delta));
     });
+  });
+
+  // Qty direct input
+  content.querySelectorAll('.qty-input').forEach(input => {
+    const commit = () => {
+      const item = state.items.find(it => it.BASKET_SEQ === input.dataset.seq);
+      if (!item) return;
+      const parsed = parseInt(input.value, 10);
+      const newQty = Number.isInteger(parsed) && parsed >= 1 ? parsed : item.ORDER_QTY;
+      if (newQty === item.ORDER_QTY) { input.value = item.ORDER_QTY; return; }
+      updateQty(input.dataset.seq, newQty);
+    };
+    input.addEventListener('change', commit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
   });
 
   // Delete buttons
