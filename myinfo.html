@@ -51,16 +51,7 @@
       <section class="surface-card mi-section" style="padding:24px 32px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-          <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">페이 정보</h2>
-        </div>
-
-        <!-- 잔액 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
-          <div>
-            <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:4px">페이 잔액</p>
-            <p id="pay-balance" style="font-size:1.5rem;font-weight:800;color:#2B3990"></p>
-          </div>
-          <button id="pay-history-btn" style="border:1px solid #a9b1e1;border-radius:8px;padding:8px 16px;font-size:0.875rem;font-weight:700;color:#24307a;background:#fff;cursor:pointer">페이내역</button>
+          <h2 style="font-size:0.875rem;font-weight:800;color:#24307a">카드등록관리</h2>
         </div>
 
         <!-- 충전카드 -->
@@ -126,33 +117,6 @@
   </div>
 </div>
 
-<!-- 페이 내역 모달 -->
-<div id="pay-history-modal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:1rem">
-  <div style="width:100%;max-width:480px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #f3f4f6">
-      <h3 style="font-size:0.875rem;font-weight:800;color:#1a2260">페이 내역</h3>
-      <button id="pay-modal-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.25rem;line-height:1">×</button>
-    </div>
-    <div id="pay-modal-balance" style="padding:12px 24px;border-bottom:1px solid #d4d8f0;background:#eef0f9"></div>
-    <div style="max-height:256px;overflow:auto">
-      <table style="width:100%;min-width:420px;font-size:0.875rem">
-        <thead style="position:sticky;top:0;background:#f9fafb">
-          <tr style="border-bottom:1px solid #e5e7eb">
-            <th style="text-align:left;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">일자</th>
-            <th style="text-align:left;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">내용</th>
-            <th style="text-align:right;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">금액</th>
-            <th style="text-align:right;padding:10px 16px;font-size:0.75rem;font-weight:700;color:#6b7280">잔액</th>
-          </tr>
-        </thead>
-        <tbody id="pay-history-tbody"></tbody>
-      </table>
-    </div>
-    <div style="padding:16px 24px;display:flex;justify-content:flex-end;border-top:1px solid #f3f4f6">
-      <button id="pay-modal-close2" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 20px;font-size:0.875rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">닫기</button>
-    </div>
-  </div>
-</div>
-
 <!-- 인증번호 확인 모달 -->
 <div id="verify-code-modal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:1rem">
   <div style="width:100%;max-width:360px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
@@ -191,7 +155,6 @@ document.getElementById('store-info-grid').innerHTML = [
   <span style="font-size:0.875rem;font-weight:600;color:#1a2260">${escapeHtml(v ?? '-')}</span>
 `).join('');
 
-document.getElementById('pay-balance').textContent = comma(info.UABLE_PAY) + '원';
 document.getElementById('cybank-type').textContent = info.CYBANK_TYPE_NAME ?? '한국유통';
 
 if (info.CARD_NO) {
@@ -204,25 +167,6 @@ if (info.CARD_NO) {
       <span style="font-size:0.875rem;color:#4b5563">${escapeHtml(info.CARD_NO)}</span>
     </div>`;
 }
-
-// Pay history modal
-const modal = document.getElementById('pay-history-modal');
-document.getElementById('pay-modal-balance').innerHTML = `
-  <p style="font-size:0.75rem;color:#6b7280;margin-bottom:2px">전체 페이 잔액</p>
-  <p style="font-size:1.25rem;font-weight:800;color:#2B3990">${comma(info.UABLE_PAY)}원</p>`;
-
-document.getElementById('pay-history-tbody').innerHTML = MOCK_PAY_HISTORY.map(row => `
-  <tr style="border-bottom:1px solid #f3f4f6">
-    <td style="padding:12px 16px;font-size:0.75rem;color:#6b7280;white-space:nowrap">${escapeHtml(row.date)}</td>
-    <td style="padding:12px 16px;font-weight:500;color:#1a2260">${escapeHtml(row.desc)}</td>
-    <td style="padding:12px 16px;text-align:right;font-weight:700;color:${row.amount > 0 ? '#2B3990' : '#ef4444'}">${row.amount > 0 ? '+' : ''}${comma(row.amount)}원</td>
-    <td style="padding:12px 16px;text-align:right;font-weight:600;color:#1a2260;white-space:nowrap">${comma(row.balance)}원</td>
-  </tr>`).join('');
-
-document.getElementById('pay-history-btn').addEventListener('click', () => { modal.style.display = 'flex'; });
-document.getElementById('pay-modal-close').addEventListener('click', () => { modal.style.display = 'none'; });
-document.getElementById('pay-modal-close2').addEventListener('click', () => { modal.style.display = 'none'; });
-modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
 
 // Password toggle
 function togglePw(i) {
