@@ -63,16 +63,16 @@
           <div id="card-display"></div>
         </div>
 
-        <!-- 공급자계정 -->
+        <!-- 송금자명 -->
         <div>
-          <p style="font-size:0.75rem;font-weight:800;color:#1a2260;margin-bottom:12px">공급자계정</p>
+          <p style="font-size:0.75rem;font-weight:800;color:#1a2260;margin-bottom:12px">송금자명</p>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <span style="font-size:0.875rem;color:#6b7280">첫 공급자계정</span>
+            <span style="font-size:0.875rem;color:#6b7280">현 송금자명</span>
             <span id="cybank-type" style="border-radius:9999px;background:#eef0f9;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#2B3990"></span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <input type="text" placeholder="변경할 공급자계정 입력" class="form-field" style="flex:1;height:36px;font-size:0.875rem">
-            <button onclick="showAlert('공급자계정 변경 기능은 준비 중입니다.')" style="border-radius:8px;background:#2B3990;padding:0 16px;height:36px;font-size:0.75rem;font-weight:700;color:#fff;border:none;cursor:pointer;flex-shrink:0">변경</button>
+            <input type="text" id="remitter-name-input" placeholder="변경할 송금자명 입력" class="form-field" style="flex:1;height:36px;font-size:0.875rem">
+            <button onclick="changeRemitterName()" style="border-radius:8px;background:#2B3990;padding:0 16px;height:36px;font-size:0.75rem;font-weight:700;color:#fff;border:none;cursor:pointer;flex-shrink:0">변경</button>
           </div>
         </div>
       </section>
@@ -156,6 +156,15 @@ document.getElementById('store-info-grid').innerHTML = [
 `).join('');
 
 document.getElementById('cybank-type').textContent = info.CYBANK_TYPE_NAME ?? '한국유통';
+
+function changeRemitterName() {
+  const input = document.getElementById('remitter-name-input');
+  const name = input.value.trim();
+  if (!name) { showAlert('변경할 송금자명을 입력해주세요.'); return; }
+  document.getElementById('cybank-type').textContent = name;
+  input.value = '';
+  showAlert('송금자명이 변경되었습니다.');
+}
 
 if (info.CARD_NO) {
   document.getElementById('card-display').innerHTML = `

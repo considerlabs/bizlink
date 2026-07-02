@@ -46,7 +46,7 @@ const MOCK_STORE_INFO = {
   UABLE_PAY: 150000,
   NOW_PAY: 35000,
   CARD_NO: '****-****-****-1234',
-  CYBANK_TYPE_NAME: '하나은행',
+  CYBANK_TYPE_NAME: '한국유통',
   CYBANK_ACCOUNT: '123-456789-01234',
   RESIST_CARD: true,
   CASH_OSTD: 0,
