@@ -300,26 +300,52 @@ function renderApproval(content) {
     REVIEWING: 'background:#fef9c3;color:#a16207',
     REJECTED:  'background:#fef2f2;color:#dc2626',
   };
-  const cards = MOCK_VENDOR_APPROVALS.map(v => `
-    <div class="vr-approval-card" style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;background:#fff;transition:box-shadow .15s"
-        onclick="location.href='vendor-detail.html?id=${v.id}'"
-        onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
-        onmouseout="this.style.boxShadow='none'">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
-        <span style="font-size:11px;color:#9ca3af;font-weight:700">등록번호 ${v.id}</span>
+
+  const rows = MOCK_VENDOR_APPROVALS.map(v => `
+    <tr onclick="location.href='vendor-detail.html?id=${v.id}'" style="border-bottom:1px solid #f3f4f6;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+      <td style="padding:16px 20px;font-size:0.75rem;color:#9ca3af;font-family:monospace">${v.id}</td>
+      <td style="padding:16px 20px;font-size:0.875rem;font-weight:700;color:#1a2260">${escapeHtml(v.name)}</td>
+      <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.biz_num)}</td>
+      <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.rep)}</td>
+      <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280;white-space:nowrap">${escapeHtml(v.applied)}</td>
+      <td style="padding:16px 20px;text-align:center">
         <span style="font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:9999px;white-space:nowrap;${STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(v.status)}</span>
+      </td>
+    </tr>`).join('');
+
+  const listItems = MOCK_VENDOR_APPROVALS.map(v => `
+    <div onclick="location.href='vendor-detail.html?id=${v.id}'" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 4px;border-bottom:1px solid #f3f4f6;cursor:pointer">
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${escapeHtml(v.name)}</span>
+          <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(v.status)}</span>
+        </div>
+        <div style="font-size:0.75rem;color:#9ca3af">등록번호 ${v.id} · ${escapeHtml(v.biz_num)} · ${escapeHtml(v.applied)}</div>
       </div>
-      <p style="font-size:1rem;font-weight:800;color:#1a2260;margin-bottom:8px">${escapeHtml(v.name)}</p>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-        <div style="display:flex;gap:8px;font-size:0.8125rem"><span style="color:#9ca3af;min-width:70px">등록일자</span><span style="color:#4b5563;font-weight:500">${escapeHtml(v.applied)}</span></div>
-        <div style="display:flex;gap:8px;font-size:0.8125rem"><span style="color:#9ca3af;min-width:70px">사업자번호</span><span style="color:#4b5563;font-weight:500">${escapeHtml(v.biz_num)}</span></div>
-      </div>
-      <button style="width:100%;padding:9px 0;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;color:#4b5563;font-size:0.8125rem;font-weight:700;cursor:pointer">상세보기</button>
+      <span style="color:#9ca3af;flex-shrink:0">›</span>
     </div>`).join('');
 
   content.innerHTML = `
-    <div class="vr-approval-grid" style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
-      ${cards}
+    <div class="surface-card" style="margin-top:20px">
+      <!-- Desktop table -->
+      <div class="hidden md:block" style="overflow-x:auto">
+        <table style="width:100%;min-width:760px">
+          <thead>
+            <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
+              <th style="text-align:left;padding:12px 20px;width:100px">등록번호</th>
+              <th style="text-align:left;padding:12px 20px;min-width:150px">공급자명</th>
+              <th style="text-align:left;padding:12px 20px;width:150px">사업자번호</th>
+              <th style="text-align:left;padding:12px 20px;width:110px">대표자</th>
+              <th style="text-align:left;padding:12px 20px;width:130px">등록일자</th>
+              <th style="text-align:center;padding:12px 20px;width:110px">상태</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+
+      <!-- Mobile list -->
+      <div class="md:hidden" style="padding:4px 16px">${listItems}</div>
     </div>`;
 }
 
