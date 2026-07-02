@@ -62,7 +62,10 @@
   <!-- ── Mobile vendor bar ── -->
   <div id="mobile-vendor-bar" class="md:hidden" style="padding-top:58px;background:#fff;border-bottom:1px solid #f3f4f6">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;gap:8px;flex-wrap:wrap">
-      <p style="font-size:0.9375rem;font-weight:800;color:#1a2260;flex-shrink:0">공급처 목록</p>
+      <p style="display:flex;align-items:center;gap:6px;font-size:0.9375rem;font-weight:800;color:#1a2260;flex-shrink:0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2" style="flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        공급처 목록
+      </p>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#6b7280;cursor:pointer;flex-shrink:0">
           <span class="toggle-wrap">
@@ -383,9 +386,6 @@ function renderSidebar() {
     const hasItems = total > 0;
     const isActive = S.activeVendor === v.VENDOR_CD;
     const isFav = S.favorites.includes(v.VENDOR_CD);
-    const freeShipping = v.SHIPPING_FEE === 0 || total >= v.FREE_SHIPPING_MIN;
-    const shippingLabel = freeShipping ? '무료 배송' : `배송비 ${comma(v.SHIPPING_FEE)}원`;
-    const freeLabel = v.FREE_SHIPPING_MIN > 0 ? `${comma(v.FREE_SHIPPING_MIN)}원 이상 무료` : '상시 무료 배송';
 
     return `
       <div class="vendor-card-item" style="position:relative;border-radius:12px;border:1px solid ${isActive?'#7e8ad2':'#e5e7eb'};background:${isActive?'#eef0f9':'#fff'};padding:12px;transition:all .15s;cursor:pointer" data-vcd="${v.VENDOR_CD}">
@@ -395,8 +395,7 @@ function renderSidebar() {
         <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="padding-right:24px">
           <p style="font-size:0.875rem;font-weight:800;color:${isActive?'#24307a':'#1a2260'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.VENDOR_NM)}</p>
           <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:4px">사업자번호 ${escapeHtml(v.BIZ_NUM ?? v.VENDOR_CD)}</p>
-          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:2px">${shippingLabel}</p>
-          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:2px">${freeLabel}</p>
+          <p style="font-size:10px;font-weight:500;color:#9ca3af;margin-top:2px">대표자명 ${escapeHtml(v.REP_NAME ?? '-')}</p>
         </div>
         <div style="margin-top:12px;padding-top:8px;border-top:1px solid #f3f4f6">
           <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-bottom:8px">
@@ -429,8 +428,6 @@ function renderSidebar() {
     const hasItems = total > 0;
     const isActive = S.activeVendor === v.VENDOR_CD;
     const isFav = S.favorites.includes(v.VENDOR_CD);
-    const freeShipping = v.SHIPPING_FEE === 0 || total >= v.FREE_SHIPPING_MIN;
-    const shippingLabel = freeShipping ? '무료 배송' : `배송비 ${comma(v.SHIPPING_FEE)}원`;
 
     return `
       <div class="vendor-card-item" data-vcd="${v.VENDOR_CD}" style="flex-shrink:0;width:176px;position:relative;border-radius:12px;border:1px solid ${isActive?'#7e8ad2':'#e5e7eb'};background:${isActive?'#eef0f9':'#fff'};padding:10px;cursor:pointer">
@@ -440,7 +437,7 @@ function renderSidebar() {
         <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="padding-right:20px">
           <p style="font-size:0.8125rem;font-weight:800;color:${isActive?'#24307a':'#1a2260'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.VENDOR_NM)}</p>
           <p style="font-size:9px;font-weight:500;color:#9ca3af;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">사업자번호 ${escapeHtml(v.BIZ_NUM ?? v.VENDOR_CD)}</p>
-          <p style="font-size:9px;font-weight:500;color:#9ca3af;margin-top:2px">${shippingLabel}</p>
+          <p style="font-size:9px;font-weight:500;color:#9ca3af;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">대표자명 ${escapeHtml(v.REP_NAME ?? '-')}</p>
         </div>
         <div style="margin-top:8px;padding-top:6px;border-top:1px solid #f3f4f6">
           <div class="vendor-select-area" data-vcd="${v.VENDOR_CD}" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
