@@ -49,9 +49,8 @@ function renderHeader() {
   if (!el) return;
   el.innerHTML = `
     <header style="position:fixed;top:0;left:0;right:0;z-index:30;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.08);height:58px;display:flex;align-items:center;padding:0 1rem;gap:0.75rem">
-      <a href="order.html" style="display:flex;align-items:center;gap:8px;flex-shrink:0;text-decoration:none">
-        <img src="img/logo.png" alt="BIZLINK" style="height:32px;width:32px;object-fit:contain">
-        <span style="font-size:1.0625rem;font-weight:800;color:#2B3990;letter-spacing:0.01em">BIZLINK</span>
+      <a href="order.html" style="display:flex;align-items:center;flex-shrink:0;text-decoration:none">
+        <img src="img/logo-horizontal.jpg" alt="BIZLINK" style="height:28px;width:auto;object-fit:contain">
       </a>
       <nav class="desktop-nav" style="display:flex;align-items:center;gap:4px;margin-left:8px;flex:1;overflow:hidden">${navHtml}</nav>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto">
