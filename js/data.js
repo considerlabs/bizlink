@@ -38,6 +38,7 @@ const MOCK_PRODUCTS = [
 ];
 
 const MOCK_STORE_INFO = {
+  ST_CD: 'S051513',
   BIZ_NAME: '(주) 테스트 식당',
   ST_ADDR: '서울특별시 강남구 테헤란로 123',
   BIZ_NUM: '123-45-67890',

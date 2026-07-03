@@ -155,7 +155,7 @@ const info = getStoreInfo();
 
 // Populate store info
 document.getElementById('store-info-grid').innerHTML = [
-  ['상점명', info.BIZ_NAME], ['사업자명', info.BIZ_NAME],
+  ['상점명', info.BIZ_NAME], ['상점코드', info.ST_CD], ['사업자명', info.BIZ_NAME],
   ['사업자번호', info.BIZ_NUM], ['대표자명', info.BIZ_OWNER],
   ['인증 휴대번호', info.BIZ_TEL],
 ].map(([k, v]) => `
