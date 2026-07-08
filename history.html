@@ -151,7 +151,8 @@ function toDateStr(d) { return d.toISOString().slice(0, 10); }
 // latest mock order date rather than the real "today" (which would show
 // nothing once real time passes the mock data's date range).
 function getLatestOrderDate() {
-  const dates = [...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].map(o => o.ORDER_DT.slice(0, 10));
+  const newDates = getNewOrders().map(n => n.order.ORDER_DT.slice(0, 10));
+  const dates = [...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].map(o => o.ORDER_DT.slice(0, 10)).concat(newDates);
   return new Date(dates.sort().pop());
 }
 

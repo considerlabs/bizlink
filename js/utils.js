@@ -1,6 +1,7 @@
 const MOCK_LOGGED_IN_KEY  = 'MOCK_LOGGED_IN';
 const MOCK_BASKET_KEY     = 'MOCK_BASKET_V2';
 const FAVORITE_VENDORS_KEY = 'ONIONON_FAVORITE_VENDORS';
+const MOCK_NEW_ORDERS_KEY = 'MOCK_NEW_ORDERS_V1';
 const PLATFORM_FEE_RATE   = 0.055;
 
 function comma(n) {
@@ -43,6 +44,17 @@ function getBasket() {
 
 function saveBasket(items) {
   localStorage.setItem(MOCK_BASKET_KEY, JSON.stringify(items));
+}
+
+// Orders actually placed during this session (mock data itself is static,
+// so newly submitted orders are layered on top via localStorage instead).
+function getNewOrders() {
+  const stored = localStorage.getItem(MOCK_NEW_ORDERS_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+function saveNewOrders(entries) {
+  localStorage.setItem(MOCK_NEW_ORDERS_KEY, JSON.stringify(entries));
 }
 
 function getCartCount() {

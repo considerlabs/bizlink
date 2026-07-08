@@ -72,26 +72,65 @@ const api = {
   },
 
   submitOrder(vendorCd) {
-    saveBasket(getBasket().filter(it => it.VENDOR_CD !== vendorCd));
+    const vendor = MOCK_VENDORS.find(v => v.VENDOR_CD === vendorCd);
+    const vendorItems = getBasket().filter(it => it.VENDOR_CD === vendorCd);
+    const totalPrice = vendorItems.reduce((s, it) => s + it.TOTAL_PRICE, 0);
     const no = 'ORD' + new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const orderDt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const newOrders = getNewOrders();
+    newOrders.unshift({
+      order: {
+        ORDER_NO: no,
+        ORDER_DT: orderDt,
+        ORDER_STAT_NM: '주문접수',
+        ORDER_STAT_CD: 'RECEIVED',
+        TOTAL_PRICE: totalPrice,
+        GOODS_COUNT: vendorItems.length,
+        STORE_NM: vendor?.VENDOR_NM ?? '-',
+        REMIT_TYPE: null,
+        REMIT_DT: null,
+        REMIT_AMOUNT: null,
+        REMIT_BANK: null,
+      },
+      items: vendorItems.map((it, i) => ({
+        SEQ: `${no}-${i}`,
+        ORDER_NO: no,
+        GOODS_CD: it.GOODS_CD,
+        GOODS_NM: it.GOODS_NM,
+        WEIGHT_KG: 0,
+        UNIT_PRICE: it.UNIT_PRICE,
+        TAX_TYPE: '과세',
+        ORDER_QTY: it.ORDER_QTY,
+        TOTAL_PRICE: it.TOTAL_PRICE,
+      })),
+    });
+    saveNewOrders(newOrders);
+
+    saveBasket(getBasket().filter(it => it.VENDOR_CD !== vendorCd));
     return Promise.resolve({ ORDER_NO: no });
   },
 
   getIngOrders(start, end) {
-    let list = JSON.parse(JSON.stringify(MOCK_ING_ORDERS));
+    const extra = getNewOrders().map(n => n.order).filter(o => o.ORDER_STAT_CD === 'RECEIVED' || o.ORDER_STAT_CD === 'DELIVERING');
+    let list = [...extra, ...JSON.parse(JSON.stringify(MOCK_ING_ORDERS))];
     if (start) list = list.filter(o => o.ORDER_DT.slice(0, 10) >= start);
     if (end) list = list.filter(o => o.ORDER_DT.slice(0, 10) <= end);
     return Promise.resolve(list);
   },
 
   getEndOrders(start, end) {
-    let list = JSON.parse(JSON.stringify(MOCK_END_ORDERS));
+    const extra = getNewOrders().map(n => n.order).filter(o => o.ORDER_STAT_CD === 'COMPLETED' || o.ORDER_STAT_CD === 'CANCELLED');
+    let list = [...extra, ...JSON.parse(JSON.stringify(MOCK_END_ORDERS))];
     if (start) list = list.filter(o => o.ORDER_DT.slice(0, 10) >= start);
     if (end) list = list.filter(o => o.ORDER_DT.slice(0, 10) <= end);
     return Promise.resolve(list);
   },
 
   getOrderDetail(orderNo) {
-    return Promise.resolve(MOCK_DELIVERY_ITEMS.filter(it => it.ORDER_NO === orderNo));
+    const extra = getNewOrders().find(n => n.order.ORDER_NO === orderNo)?.items ?? [];
+    return Promise.resolve([...extra, ...MOCK_DELIVERY_ITEMS.filter(it => it.ORDER_NO === orderNo)]);
   },
 };

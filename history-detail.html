@@ -67,7 +67,7 @@ const storeInfo = getStoreInfo();
 if (!orderNo) {
   document.getElementById('detail-content').innerHTML = '<div style="text-align:center;padding:4rem;color:#9ca3af">주문번호가 없습니다.</div>';
 } else {
-  const order = [...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].find(o => o.ORDER_NO === orderNo) ?? null;
+  const order = [...getNewOrders().map(n => n.order), ...MOCK_ING_ORDERS, ...MOCK_END_ORDERS].find(o => o.ORDER_NO === orderNo) ?? null;
 
   api.getOrderDetail(orderNo).then(items => {
     const totalAmount = items.reduce((s, it) => s + it.TOTAL_PRICE, 0);
