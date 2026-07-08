@@ -306,7 +306,7 @@ function render() {
         state.activeTab = ids[0] ?? '';
         state.ordering = false;
         render();
-        showAlert(`주문이 완료되었습니다.\n주문번호: ${res.ORDER_NO}`);
+        showAlert(`주문이 완료되었습니다.\n주문번호: ${res.ORDER_NO}`, () => location.href = 'history.html');
       },
     });
   });
