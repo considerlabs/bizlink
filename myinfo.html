@@ -112,24 +112,6 @@
             <button id="card-display-next" class="card-carousel-arrow next" aria-label="다음 카드"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           </div>
         </div>
-
-        <!-- 송금자명 -->
-        <div>
-          <p style="font-size:0.75rem;font-weight:800;color:#1a2260;margin-bottom:12px">송금자명</p>
-          <div class="mi-grid" style="display:grid;grid-template-columns:150px 1fr;gap:16px 0;align-items:center">
-            <span style="font-size:0.75rem;font-weight:700;color:#9ca3af">현 송금자명</span>
-            <span id="cybank-type" style="font-size:0.9375rem;font-weight:800;color:#2B3990"></span>
-
-            <span style="font-size:0.75rem;font-weight:700;color:#9ca3af">변경할 송금자명</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <input type="text" id="remitter-name-input" placeholder="변경할 송금자명 입력" class="form-field" style="flex:1;max-width:280px;height:36px;font-size:0.875rem">
-              <button onclick="changeRemitterName()" style="display:flex;align-items:center;gap:4px;border-radius:8px;background:#2B3990;padding:0 16px;height:36px;font-size:0.75rem;font-weight:700;color:#fff;border:none;cursor:pointer;flex-shrink:0">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                변경
-              </button>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- 계정 정보 -->
@@ -355,16 +337,6 @@ document.getElementById('store-info-grid').innerHTML = [
 `).join('');
 
 document.getElementById('pay-balance').textContent = comma(info.UABLE_PAY) + '원';
-document.getElementById('cybank-type').textContent = info.CYBANK_TYPE_NAME ?? '한국유통';
-
-function changeRemitterName() {
-  const input = document.getElementById('remitter-name-input');
-  const name = input.value.trim();
-  if (!name) { showAlert('변경할 송금자명을 입력해주세요.'); return; }
-  document.getElementById('cybank-type').textContent = name;
-  input.value = '';
-  showAlert('송금자명이 변경되었습니다.');
-}
 
 // Card registration/deletion (mock, persisted in localStorage; getCards/saveCards live in js/utils.js)
 const MAX_CARDS = 5;

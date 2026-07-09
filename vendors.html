@@ -142,6 +142,10 @@ function renderStep1(content) {
             <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">계좌번호</label>
             <input id="account" type="text" placeholder="계좌번호를 입력하세요" value="${escapeHtml(d.account || '')}" class="form-field" style="height:40px">
           </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">송금자명</label>
+            <input id="remitter" type="text" placeholder="송금자명을 입력하세요" value="${escapeHtml(d.remitter || '')}" class="form-field" style="height:40px">
+          </div>
           <div style="grid-column:1/-1">
             <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">비고</label>
             <textarea id="memo" placeholder="추가 정보를 입력하세요" rows="3" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.875rem;color:#1a2260;outline:none;resize:vertical">${escapeHtml(d.memo || '')}</textarea>
@@ -171,6 +175,7 @@ function renderStep1(content) {
       address: document.getElementById('address').value.trim(),
       bank:    document.getElementById('bank').value,
       account: document.getElementById('account').value.trim(),
+      remitter: document.getElementById('remitter').value.trim(),
       memo:    document.getElementById('memo').value.trim(),
     };
     currentStep = 2;
@@ -194,6 +199,7 @@ function renderStep2(content) {
     ['주소',          d.address || '-'],
     ['결제은행',      d.bank],
     ['계좌번호',      d.account || '-'],
+    ['송금자명',      d.remitter || '-'],
   ];
 
   const docItems = [
