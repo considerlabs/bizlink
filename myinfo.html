@@ -126,21 +126,21 @@
 
           <span style="font-size:0.75rem;font-weight:700;color:#9ca3af;padding-top:8px">비밀번호 변경</span>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="form-field" style="padding:0 4px 0 12px">
-              <input type="password" id="pw-0" placeholder="현재 비밀번호 입력" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
-              <button type="button" onclick="togglePw(0)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+            <div style="position:relative">
+              <input type="password" id="pw-0" placeholder="현재 비밀번호 입력" class="form-field" style="padding-right:34px;height:32px;font-size:0.875rem">
+              <button type="button" onclick="togglePw(0)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
                 <svg id="eye-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-            <div class="form-field" style="padding:0 4px 0 12px">
-              <input type="password" id="pw-1" placeholder="새 비밀번호 입력 (8자 이상)" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
-              <button type="button" onclick="togglePw(1)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+            <div style="position:relative">
+              <input type="password" id="pw-1" placeholder="새 비밀번호 입력 (8자 이상)" class="form-field" style="padding-right:34px;height:32px;font-size:0.875rem">
+              <button type="button" onclick="togglePw(1)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
                 <svg id="eye-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-            <div class="form-field" style="padding:0 4px 0 12px">
-              <input type="password" id="pw-2" placeholder="새 비밀번호 확인" style="flex:1;border:none;background:transparent;font-size:0.875rem;color:#1a2260;outline:none;height:32px">
-              <button type="button" onclick="togglePw(2)" style="padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
+            <div style="position:relative">
+              <input type="password" id="pw-2" placeholder="새 비밀번호 확인" class="form-field" style="padding-right:34px;height:32px;font-size:0.875rem">
+              <button type="button" onclick="togglePw(2)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:6px;border:none;background:none;cursor:pointer;color:#9ca3af" title="비밀번호 보기">
                 <svg id="eye-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
