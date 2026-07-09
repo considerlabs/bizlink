@@ -25,14 +25,15 @@
       .mi-grid { grid-template-columns: 110px 1fr !important; }
     }
 
-    .card-modal-box { width: 100%; max-width: 560px; }
+    .card-modal-box { width: 100%; max-width: 900px; }
     .card-modal-box.is-register { max-width: 720px; }
-    .card-tile-row { display: flex; flex-wrap: wrap; gap: 20px; }
-    .card-tile-wrap { width: 230px; }
+    .card-tile-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+    .card-display-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .card-register-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
     @media (max-width: 767px) {
       .card-modal-box, .card-modal-box.is-register { max-width: 420px; }
-      .card-tile-wrap { width: 100%; }
+      .card-tile-row { grid-template-columns: 1fr; }
+      .card-display-grid { grid-template-columns: repeat(2, 1fr); }
       .card-register-grid { grid-template-columns: 1fr; column-gap: 0; }
     }
   </style>
@@ -342,21 +343,8 @@ function changeRemitterName() {
   showAlert('송금자명이 변경되었습니다.');
 }
 
-// Card registration/deletion (mock, persisted in localStorage)
-const MOCK_CARDS_KEY = 'MOCK_CARDS_V1';
+// Card registration/deletion (mock, persisted in localStorage; getCards/saveCards live in js/utils.js)
 const MAX_CARDS = 5;
-
-function getCards() {
-  const stored = localStorage.getItem(MOCK_CARDS_KEY);
-  if (stored) return JSON.parse(stored);
-  const seed = info.CARD_NO ? [{ no: info.CARD_NO, owner: info.BIZ_OWNER }] : [];
-  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(seed));
-  return seed;
-}
-
-function saveCards(cards) {
-  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(cards));
-}
 
 function cardTileHtml(card, sizeStyle = 'width:220px;height:138px') {
   const groups = card.no.split('-');
@@ -378,7 +366,7 @@ function cardTileHtml(card, sizeStyle = 'width:220px;height:138px') {
 function renderCardDisplay() {
   const cards = getCards();
   document.getElementById('card-display').innerHTML = cards.length
-    ? `<div style="display:flex;gap:12px;flex-wrap:wrap">${cards.map(c => cardTileHtml(c)).join('')}</div>`
+    ? `<div class="card-display-grid">${cards.map(c => cardTileHtml(c, 'width:100%;aspect-ratio:1.6/1')).join('')}</div>`
     : `<p style="font-size:0.8125rem;color:#9ca3af">등록된 카드가 없습니다.</p>`;
 }
 

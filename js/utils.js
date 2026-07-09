@@ -34,6 +34,21 @@ function getStoreInfo() {
   return { ...MOCK_STORE_INFO };
 }
 
+const MOCK_CARDS_KEY = 'MOCK_CARDS_V1';
+
+function getCards() {
+  const stored = localStorage.getItem(MOCK_CARDS_KEY);
+  if (stored) return JSON.parse(stored);
+  const info = getStoreInfo();
+  const seed = info.CARD_NO ? [{ no: info.CARD_NO, owner: info.BIZ_OWNER }] : [];
+  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(seed));
+  return seed;
+}
+
+function saveCards(cards) {
+  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(cards));
+}
+
 function getBasket() {
   const stored = localStorage.getItem(MOCK_BASKET_KEY);
   if (stored) return JSON.parse(stored);
@@ -115,6 +130,7 @@ function showConfirm(message, onYes) {
 
 function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeInfo, onClose, onConfirm }) {
   document.getElementById('payment-modal')?.remove();
+  const cards = getCards();
   const modal = document.createElement('div');
   modal.id = 'payment-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
@@ -168,17 +184,19 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
             </span>
             <span style="font-size:0.75rem;font-weight:800;color:#374151">결제 카드 선택</span>
           </div>
+          ${cards.length ? `
           <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem">
-            <div style="width:88px;height:54px;border-radius:0.75rem;background:linear-gradient(135deg,#f59e0b,#f97316);padding:0.5rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
+            <div id="pm-card-visual" style="width:88px;height:54px;border-radius:0.75rem;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:0.5rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
               <span style="font-size:9px;font-weight:700;font-style:italic;color:rgba(255,255,255,0.8);letter-spacing:0.05em">VISA</span>
-              <span style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.1em">${escapeHtml(storeInfo?.CARD_NO ?? '****-****-****-****')}</span>
+              <span id="pm-card-visual-no" style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.1em">${escapeHtml(cards[0].no)}</span>
             </div>
-            <div style="flex:1;min-width:0">
-              <p style="font-size:0.75rem;font-weight:700;color:#1a2260">${escapeHtml(storeInfo?.CARD_NO ?? '카드 없음')}</p>
-              <p style="font-size:11px;color:#9ca3af;margin-top:2px">${escapeHtml(storeInfo?.CYBANK_TYPE_NAME ?? '')}</p>
-            </div>
-            <span style="font-size:10px;font-weight:700;color:#2B3990;background:#eef0f9;border:1px solid #a9b1e1;padding:2px 8px;border-radius:9999px;flex-shrink:0">기본</span>
-          </div>
+            <select id="pm-card-select" style="flex:1;min-width:0;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0 0.75rem;height:2.25rem;font-size:0.8125rem;color:#1a2260;background:#fff;outline:none">
+              ${cards.map((c, i) => `<option value="${i}">${escapeHtml(c.no)}${c.owner ? ' · ' + escapeHtml(c.owner) : ''}</option>`).join('')}
+            </select>
+          </div>` : `
+          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem">
+            <p style="font-size:0.8125rem;color:#6b7280">등록된 결제카드가 없습니다.</p>
+          </div>`}
         </div>
 
         <div>
@@ -207,10 +225,14 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   const close = () => { modal.remove(); onClose?.(); };
   document.getElementById('pm-close').addEventListener('click', close);
   document.getElementById('pm-cancel').addEventListener('click', close);
+  document.getElementById('pm-card-select')?.addEventListener('change', e => {
+    document.getElementById('pm-card-visual-no').textContent = cards[Number(e.target.value)].no;
+  });
   document.getElementById('pm-confirm').addEventListener('click', () => {
     const installment = document.getElementById('pm-installment').value;
+    const selectedCard = cards[Number(document.getElementById('pm-card-select')?.value ?? -1)] ?? null;
     modal.remove();
-    onConfirm?.(installment);
+    onConfirm?.(installment, selectedCard);
   });
 }
 
