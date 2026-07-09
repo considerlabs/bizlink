@@ -185,14 +185,26 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
             <span style="font-size:0.75rem;font-weight:800;color:#374151">결제 카드 선택</span>
           </div>
           ${cards.length ? `
-          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem">
-            <div id="pm-card-visual" style="width:88px;height:54px;border-radius:0.75rem;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:0.5rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
-              <span style="font-size:9px;font-weight:700;font-style:italic;color:rgba(255,255,255,0.8);letter-spacing:0.05em">VISA</span>
-              <span id="pm-card-visual-no" style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.1em">${escapeHtml(cards[0].no)}</span>
+          <style>
+            #pm-card-list::-webkit-scrollbar{display:none}
+            #pm-card-prev:disabled,#pm-card-next:disabled{background:#d1d5db;box-shadow:none;cursor:default}
+          </style>
+          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;position:relative">
+            <button type="button" id="pm-card-prev" aria-label="이전 카드" style="position:absolute;top:50%;left:2px;transform:translateY(-50%);width:26px;height:26px;border-radius:9999px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(43,57,144,0.35);z-index:2;transition:background 0.15s"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div id="pm-card-list" style="display:flex;gap:0.625rem;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;margin:0 34px">
+              ${cards.map((c, i) => {
+                const [l1, l2] = [c.no.split('-').slice(0, 2).join(' '), c.no.split('-').slice(2).join(' ')];
+                return `
+                <button type="button" class="pm-card-option" data-idx="${i}" style="flex:0 0 auto;border:none;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+                  <span class="pm-card-visual" style="width:88px;height:54px;border-radius:0.75rem;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:0.5rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.15);box-sizing:border-box;outline-offset:2px;transition:filter 0.15s,outline 0.15s">
+                    <span style="font-size:9px;font-weight:700;font-style:italic;color:rgba(255,255,255,0.8);letter-spacing:0.05em">VISA</span>
+                    <span style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.05em;line-height:1.3">${escapeHtml(l1)}<br>${escapeHtml(l2)}</span>
+                  </span>
+                  <span style="font-size:10px;color:#6b7280;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.owner || '')}</span>
+                </button>`;
+              }).join('')}
             </div>
-            <select id="pm-card-select" style="flex:1;min-width:0;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0 0.75rem;height:2.25rem;font-size:0.8125rem;color:#1a2260;background:#fff;outline:none">
-              ${cards.map((c, i) => `<option value="${i}">${escapeHtml(c.no)}${c.owner ? ' · ' + escapeHtml(c.owner) : ''}</option>`).join('')}
-            </select>
+            <button type="button" id="pm-card-next" aria-label="다음 카드" style="position:absolute;top:50%;right:2px;transform:translateY(-50%);width:26px;height:26px;border-radius:9999px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(43,57,144,0.35);z-index:2;transition:background 0.15s"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           </div>` : `
           <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem">
             <p style="font-size:0.8125rem;color:#6b7280">등록된 결제카드가 없습니다.</p>
@@ -225,12 +237,42 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   const close = () => { modal.remove(); onClose?.(); };
   document.getElementById('pm-close').addEventListener('click', close);
   document.getElementById('pm-cancel').addEventListener('click', close);
-  document.getElementById('pm-card-select')?.addEventListener('change', e => {
-    document.getElementById('pm-card-visual-no').textContent = cards[Number(e.target.value)].no;
+
+  let selectedCardIdx = 0;
+  const cardOptionBtns = modal.querySelectorAll('.pm-card-option');
+  const applyCardSelection = idx => {
+    cardOptionBtns.forEach(btn => {
+      const visual = btn.querySelector('.pm-card-visual');
+      const selected = Number(btn.dataset.idx) === idx;
+      visual.style.filter = selected ? 'invert(1)' : 'none';
+      visual.style.outline = selected ? '2px solid #2B3990' : 'none';
+    });
+  };
+  if (cards.length) applyCardSelection(selectedCardIdx);
+  cardOptionBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedCardIdx = Number(btn.dataset.idx);
+      applyCardSelection(selectedCardIdx);
+    });
   });
+
+  const cardTrack = document.getElementById('pm-card-list');
+  const cardPrevBtn = document.getElementById('pm-card-prev');
+  const cardNextBtn = document.getElementById('pm-card-next');
+  if (cardTrack) {
+    const refreshCardArrows = () => {
+      cardPrevBtn.disabled = cardTrack.scrollLeft <= 4;
+      cardNextBtn.disabled = cardTrack.scrollLeft >= cardTrack.scrollWidth - cardTrack.clientWidth - 4;
+    };
+    cardPrevBtn.addEventListener('click', () => cardTrack.scrollBy({ left: -98, behavior: 'smooth' }));
+    cardNextBtn.addEventListener('click', () => cardTrack.scrollBy({ left: 98, behavior: 'smooth' }));
+    cardTrack.addEventListener('scroll', refreshCardArrows);
+    refreshCardArrows();
+  }
+
   document.getElementById('pm-confirm').addEventListener('click', () => {
     const installment = document.getElementById('pm-installment').value;
-    const selectedCard = cards[Number(document.getElementById('pm-card-select')?.value ?? -1)] ?? null;
+    const selectedCard = cards[selectedCardIdx] ?? null;
     modal.remove();
     onConfirm?.(installment, selectedCard);
   });
