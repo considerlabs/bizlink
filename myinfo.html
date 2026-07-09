@@ -25,7 +25,7 @@
       .mi-grid { grid-template-columns: 110px 1fr !important; }
     }
 
-    .card-modal-box { width: 100%; max-width: 640px; min-height: 460px; }
+    .card-modal-box { width: 100%; max-width: 700px; min-height: 460px; }
     .card-modal-box.is-register { max-width: 720px; min-height: 0; }
     .card-register-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
     @media (max-width: 767px) {
@@ -36,19 +36,21 @@
     .card-carousel { position: relative; }
     .card-carousel-track {
       display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory;
-      scroll-behavior: smooth; margin: 0 40px; scrollbar-width: none;
+      scroll-behavior: smooth; margin: 0 44px; scrollbar-width: none;
     }
     .card-carousel-track::-webkit-scrollbar { display: none; }
     .card-carousel-track > * { flex: 0 0 auto; scroll-snap-align: start; }
     .card-carousel-arrow {
       position: absolute; top: 50%; transform: translateY(-50%);
-      width: 32px; height: 32px; border-radius: 9999px; border: 1px solid #e5e7eb;
-      background: #fff; color: #4b5563; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 2;
+      width: 36px; height: 36px; border-radius: 9999px; border: none;
+      background: #2B3990; color: #fff; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(43,57,144,0.35); z-index: 2;
+      transition: background 0.15s;
     }
+    .card-carousel-arrow:hover:not(:disabled) { background: #24307a; }
     .card-carousel-arrow.prev { left: 0; }
     .card-carousel-arrow.next { right: 0; }
-    .card-carousel-arrow:disabled { opacity: 0.3; cursor: default; }
+    .card-carousel-arrow:disabled { background: #d1d5db; box-shadow: none; cursor: default; }
   </style>
 </head>
 <body>
@@ -105,9 +107,9 @@
           </div>
           <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:16px">결제카드는 최대 5개까지 등록할 수 있습니다.</p>
           <div class="card-carousel">
-            <button id="card-display-prev" class="card-carousel-arrow prev" aria-label="이전 카드">‹</button>
+            <button id="card-display-prev" class="card-carousel-arrow prev" aria-label="이전 카드"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
             <div id="card-display" class="card-carousel-track"></div>
-            <button id="card-display-next" class="card-carousel-arrow next" aria-label="다음 카드">›</button>
+            <button id="card-display-next" class="card-carousel-arrow next" aria-label="다음 카드"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           </div>
         </div>
 
@@ -232,9 +234,9 @@
       <div style="padding:20px 24px;overflow:auto">
         <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:14px">삭제할 카드를 선택해주세요.</p>
         <div class="card-carousel">
-          <button id="card-delete-prev" class="card-carousel-arrow prev" aria-label="이전 카드">‹</button>
+          <button id="card-delete-prev" class="card-carousel-arrow prev" aria-label="이전 카드"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div id="card-slot-list" class="card-carousel-track"></div>
-          <button id="card-delete-next" class="card-carousel-arrow next" aria-label="다음 카드">›</button>
+          <button id="card-delete-next" class="card-carousel-arrow next" aria-label="다음 카드"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
         </div>
       </div>
     </div>
@@ -441,11 +443,11 @@ const cardModal = document.getElementById('card-modal');
 const cardModalBox = document.getElementById('card-modal-box');
 
 function openCardDeleteModal() {
-  renderCardDeleteList();
   document.getElementById('card-delete-view').style.display = 'flex';
   document.getElementById('card-register-view').style.display = 'none';
   cardModalBox.classList.remove('is-register');
   cardModal.style.display = 'flex';
+  renderCardDeleteList();
 }
 
 function closeCardModal() { cardModal.style.display = 'none'; }
