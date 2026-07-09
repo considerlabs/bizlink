@@ -67,7 +67,7 @@
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <p style="font-size:0.75rem;font-weight:800;color:#1a2260">결제카드 관리</p>
-            <button onclick="showAlert('카드 등록 및 삭제 기능은 준비 중입니다.')" style="display:flex;align-items:center;gap:6px;border:1.5px dashed #93a5e0;border-radius:9999px;padding:8px 16px;font-size:0.8125rem;font-weight:700;color:#2B3990;background:#fff;cursor:pointer">
+            <button onclick="openCardModal()" style="display:flex;align-items:center;gap:6px;border:1.5px dashed #93a5e0;border-radius:9999px;padding:8px 16px;font-size:0.8125rem;font-weight:700;color:#2B3990;background:#fff;cursor:pointer">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
               카드 등록&삭제
             </button>
@@ -183,6 +183,113 @@
   </div>
 </div>
 
+<!-- 카드 등록·삭제 모달 -->
+<div id="card-modal" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:1rem">
+  <div style="width:100%;max-width:420px;max-height:90vh;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;overflow:hidden">
+
+    <!-- 카드 목록 뷰 -->
+    <div id="card-list-view" style="display:flex;flex-direction:column;min-height:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #f3f4f6;flex-shrink:0">
+        <h3 style="font-size:0.875rem;font-weight:800;color:#1a2260">카드 등록·삭제</h3>
+        <button id="card-modal-close" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.25rem;line-height:1">×</button>
+      </div>
+      <div style="padding:20px 24px;overflow:auto">
+        <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:12px">결제카드는 최대 3개까지 등록할 수 있습니다.</p>
+        <div id="card-slot-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+
+    <!-- 카드 등록 폼 뷰 -->
+    <div id="card-register-view" style="display:none;flex-direction:column;min-height:0">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 24px;border-bottom:1px solid #f3f4f6;flex-shrink:0">
+        <button id="card-register-back" style="background:none;border:none;cursor:pointer;color:#4b5563;font-size:1.25rem;line-height:1">‹</button>
+        <h3 style="font-size:0.875rem;font-weight:800;color:#1a2260">카드 등록</h3>
+      </div>
+      <div style="padding:20px 24px;overflow:auto">
+        <p style="font-size:0.8125rem;font-weight:800;color:#1a2260;margin-bottom:2px">결제정보</p>
+        <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:14px">결제에 사용하실 카드 정보를 입력하세요</p>
+
+        <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">카드번호</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+          <input class="form-field" id="card-num-0" maxlength="4" inputmode="numeric" placeholder="1234" style="text-align:center;padding:0 6px">
+          <input class="form-field" id="card-num-1" maxlength="4" inputmode="numeric" placeholder="1234" style="text-align:center;padding:0 6px">
+          <input class="form-field" id="card-num-2" maxlength="4" inputmode="numeric" placeholder="1234" style="text-align:center;padding:0 6px">
+          <input class="form-field" id="card-num-3" maxlength="4" inputmode="numeric" placeholder="1234" style="text-align:center;padding:0 6px">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">유효기간</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <input class="form-field" id="card-exp-mm" maxlength="2" inputmode="numeric" placeholder="MM(월)" style="text-align:center;padding:0 6px">
+              <input class="form-field" id="card-exp-yy" maxlength="2" inputmode="numeric" placeholder="YY(년)" style="text-align:center;padding:0 6px">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">비밀번호</label>
+            <input class="form-field" id="card-pw" maxlength="2" inputmode="numeric" placeholder="앞 2자리" style="text-align:center;padding:0 6px">
+          </div>
+        </div>
+
+        <p style="font-size:0.8125rem;font-weight:800;color:#1a2260;margin:20px 0 2px">인증정보</p>
+        <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:14px">안전한 결제를 위해 카드 소유자 정보를 입력해 주세요</p>
+
+        <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">이름</label>
+        <input class="form-field" id="card-owner-name" placeholder="카드 소유자 이름 입력" style="margin-bottom:16px">
+
+        <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">생년월일 · 사업자등록번호</label>
+        <input class="form-field" id="card-owner-birth" inputmode="numeric" placeholder="- 없이 숫자만 입력" style="margin-bottom:16px">
+
+        <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">휴대전화</label>
+        <input class="form-field" id="card-owner-phone" inputmode="numeric" placeholder="- 없이 숫자만 입력" style="margin-bottom:20px">
+
+        <!-- 유의사항 -->
+        <div style="border-top:1px solid #f3f4f6;padding-top:16px;margin-bottom:16px">
+          <p style="font-size:0.8125rem;font-weight:800;color:#1a2260;margin-bottom:10px">⚠ 카드 등록 및 결제 시 유의사항</p>
+          <details style="margin-bottom:8px">
+            <summary style="cursor:pointer;font-size:0.8125rem;font-weight:700;color:#4b5563">카드 등록 시 주의 사항</summary>
+            <ol style="font-size:0.75rem;color:#6b7280;padding-left:18px;margin-top:8px;line-height:1.6">
+              <li>개인일 경우 본인 명의 카드, 법인일 경우 법인카드 등록이 가능합니다.</li>
+              <li>카드 정보(번호·유효기간·CVC)를 정확히 입력해주세요.</li>
+              <li>카드 만료일이 임박한 카드의 경우 충전·결제 승인이 제한될 수 있습니다.</li>
+              <li>해외발급 카드 또는 일부 체크카드는 사용이 제한될 수 있습니다.</li>
+            </ol>
+          </details>
+          <details>
+            <summary style="cursor:pointer;font-size:0.8125rem;font-weight:700;color:#4b5563">카드 결제 시 주의 사항</summary>
+            <ol style="font-size:0.75rem;color:#6b7280;padding-left:18px;margin-top:8px;line-height:1.6">
+              <li>카드사 결제 한도에 따라 결제가 실패할 수 있습니다. 카드 결제 한도를 확인해주세요.</li>
+              <li>카드사 승인지연 또는 네트워크 오류가 발생할 수 있습니다. 결제가 실패하는 경우 잠시 후 다시 시도해주세요.</li>
+              <li>카드결제 취소 시 즉시 환불되지 않을 수 있습니다. 카드사 정책에 따라 취소 승인까지 일정기간이 소요될 수 있습니다.</li>
+              <li>카드 한도 초과·이용정지·이상거래 탐지 등으로 결제가 실패할 수 있습니다. 또한 지속적인 이상거래로 간주될 경우 서비스가 해제될 수 있습니다.</li>
+            </ol>
+          </details>
+        </div>
+
+        <!-- 약관동의 -->
+        <div style="border:1px solid #e5e7eb;border-radius:0.75rem;overflow:hidden;margin-bottom:20px">
+          <label style="display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:0.8125rem;font-weight:800;color:#1a2260;border-bottom:1px solid #f3f4f6;cursor:pointer">
+            <input type="checkbox" id="card-terms-all">
+            약관에 전체 동의 합니다
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:0.75rem;color:#4b5563;cursor:pointer">
+            <input type="checkbox" class="card-terms-item" id="card-terms-1">
+            전자금융거래 기본약관
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:0.75rem;color:#4b5563;cursor:pointer">
+            <input type="checkbox" class="card-terms-item" id="card-terms-2">
+            개인정보 처리방침
+          </label>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #f3f4f6;flex-shrink:0">
+        <button id="card-register-submit" class="btn-primary" disabled style="width:100%;padding:12px 0;font-size:0.9375rem">등록하기</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
 if (!requireAuth()) throw new Error();
 renderHeader();
@@ -211,11 +318,27 @@ function changeRemitterName() {
   showAlert('송금자명이 변경되었습니다.');
 }
 
-if (info.CARD_NO) {
-  const groups = info.CARD_NO.split('-');
+// Card registration/deletion (mock, persisted in localStorage)
+const MOCK_CARDS_KEY = 'MOCK_CARDS_V1';
+const MAX_CARDS = 3;
+
+function getCards() {
+  const stored = localStorage.getItem(MOCK_CARDS_KEY);
+  if (stored) return JSON.parse(stored);
+  const seed = info.CARD_NO ? [{ no: info.CARD_NO, owner: info.BIZ_OWNER }] : [];
+  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(seed));
+  return seed;
+}
+
+function saveCards(cards) {
+  localStorage.setItem(MOCK_CARDS_KEY, JSON.stringify(cards));
+}
+
+function cardTileHtml(card) {
+  const groups = card.no.split('-');
   const line1 = groups.slice(0, 2).join(' ');
   const line2 = groups.slice(2).join(' ');
-  document.getElementById('card-display').innerHTML = `
+  return `
     <div style="width:190px;height:115px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:16px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 4px 10px rgba(0,0,0,0.15)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div style="width:28px;height:20px;border-radius:4px;background:linear-gradient(135deg,#fbbf24,#f59e0b)"></div>
@@ -227,6 +350,114 @@ if (info.CARD_NO) {
       </div>
     </div>`;
 }
+
+function renderCardDisplay() {
+  const cards = getCards();
+  document.getElementById('card-display').innerHTML = cards.length
+    ? `<div style="display:flex;gap:12px;flex-wrap:wrap">${cards.map(cardTileHtml).join('')}</div>`
+    : `<p style="font-size:0.8125rem;color:#9ca3af">등록된 카드가 없습니다.</p>`;
+}
+
+function renderCardSlotList() {
+  const cards = getCards();
+  let html = cards.map((card, i) => `
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid #f3f4f6;border-radius:12px;padding:10px">
+      <div style="transform:scale(0.7);transform-origin:left center;margin:-17px -28px -17px -6px">${cardTileHtml(card)}</div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:0.8125rem;font-weight:700;color:#1a2260;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(card.owner || '카드 소유자')}</p>
+        <p style="font-size:0.75rem;color:#9ca3af">${escapeHtml(card.no)}</p>
+      </div>
+      <button onclick="deleteCard(${i})" style="border:1px solid #fca5a5;color:#ef4444;background:#fff;border-radius:8px;padding:6px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;flex-shrink:0">삭제</button>
+    </div>`).join('');
+
+  for (let i = cards.length; i < MAX_CARDS; i++) {
+    html += `
+      <button onclick="openCardRegisterView()" style="display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #93a5e0;border-radius:12px;padding:16px;font-size:0.8125rem;font-weight:700;color:#2B3990;background:#fff;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        카드 등록
+      </button>`;
+  }
+  document.getElementById('card-slot-list').innerHTML = html;
+}
+
+function deleteCard(i) {
+  const cards = getCards();
+  cards.splice(i, 1);
+  saveCards(cards);
+  renderCardSlotList();
+  renderCardDisplay();
+  showAlert('카드가 삭제되었습니다.');
+}
+
+const cardModal = document.getElementById('card-modal');
+
+function openCardModal() {
+  renderCardSlotList();
+  document.getElementById('card-list-view').style.display = 'flex';
+  document.getElementById('card-register-view').style.display = 'none';
+  cardModal.style.display = 'flex';
+}
+
+function closeCardModal() { cardModal.style.display = 'none'; }
+
+document.getElementById('card-modal-close').addEventListener('click', closeCardModal);
+cardModal.addEventListener('click', e => { if (e.target === cardModal) closeCardModal(); });
+
+const cardFormIds = ['card-num-0', 'card-num-1', 'card-num-2', 'card-num-3', 'card-exp-mm', 'card-exp-yy', 'card-pw', 'card-owner-name', 'card-owner-birth', 'card-owner-phone'];
+const cardTermsAll = document.getElementById('card-terms-all');
+const cardTermItems = document.querySelectorAll('.card-terms-item');
+const cardSubmitBtn = document.getElementById('card-register-submit');
+
+function updateCardSubmitState() {
+  const filled = cardFormIds.every(id => document.getElementById(id).value.trim().length > 0);
+  cardSubmitBtn.disabled = !(filled && cardTermsAll.checked);
+}
+
+function resetCardForm() {
+  cardFormIds.forEach(id => { document.getElementById(id).value = ''; });
+  cardTermsAll.checked = false;
+  cardTermItems.forEach(cb => { cb.checked = false; });
+  updateCardSubmitState();
+}
+
+function openCardRegisterView() {
+  resetCardForm();
+  document.getElementById('card-list-view').style.display = 'none';
+  document.getElementById('card-register-view').style.display = 'flex';
+}
+
+document.getElementById('card-register-back').addEventListener('click', () => {
+  document.getElementById('card-register-view').style.display = 'none';
+  document.getElementById('card-list-view').style.display = 'flex';
+  renderCardSlotList();
+});
+
+cardFormIds.forEach(id => document.getElementById(id).addEventListener('input', updateCardSubmitState));
+cardTermsAll.addEventListener('change', () => {
+  cardTermItems.forEach(cb => { cb.checked = cardTermsAll.checked; });
+  updateCardSubmitState();
+});
+cardTermItems.forEach(cb => cb.addEventListener('change', () => {
+  cardTermsAll.checked = Array.from(cardTermItems).every(c => c.checked);
+  updateCardSubmitState();
+}));
+
+cardSubmitBtn.addEventListener('click', () => {
+  const nums = ['card-num-0', 'card-num-1', 'card-num-2', 'card-num-3'].map(id => document.getElementById(id).value.trim());
+  if (nums.some(n => n.length !== 4)) { showAlert('카드번호를 정확히 입력해주세요.'); return; }
+  const cards = getCards();
+  if (cards.length >= MAX_CARDS) { showAlert(`카드는 최대 ${MAX_CARDS}개까지 등록할 수 있습니다.`); return; }
+
+  cards.push({ no: `****-****-****-${nums[3]}`, owner: document.getElementById('card-owner-name').value.trim() });
+  saveCards(cards);
+  renderCardDisplay();
+  document.getElementById('card-register-view').style.display = 'none';
+  document.getElementById('card-list-view').style.display = 'flex';
+  renderCardSlotList();
+  showAlert('카드가 등록되었습니다.');
+});
+
+renderCardDisplay();
 
 // Pay history modal
 const modal = document.getElementById('pay-history-modal');
