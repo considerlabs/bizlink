@@ -78,7 +78,7 @@ function fieldRowHtml(label, key) {
         <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
         <div style="font-size:0.875rem;color:#1a2260;font-weight:500;word-break:break-all">${escapeHtml(value || '-')}</div>
       </div>
-      ${canEdit ? `<button onclick="startEditField('${key}')" style="flex-shrink:0;font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer">수정</button>` : ''}
+      ${canEdit ? `<button onclick="startEditField('${key}')" style="flex-shrink:0;font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer">${key === 'remitter' ? '변경' : '수정'}</button>` : ''}
     </div>`;
 }
 
