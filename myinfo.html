@@ -25,17 +25,30 @@
       .mi-grid { grid-template-columns: 110px 1fr !important; }
     }
 
-    .card-modal-box { width: 100%; max-width: 900px; }
-    .card-modal-box.is-register { max-width: 720px; }
-    .card-tile-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-    .card-display-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .card-modal-box { width: 100%; max-width: 640px; min-height: 460px; }
+    .card-modal-box.is-register { max-width: 720px; min-height: 0; }
     .card-register-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
     @media (max-width: 767px) {
       .card-modal-box, .card-modal-box.is-register { max-width: 420px; }
-      .card-tile-row { grid-template-columns: 1fr; }
-      .card-display-grid { grid-template-columns: repeat(2, 1fr); }
       .card-register-grid { grid-template-columns: 1fr; column-gap: 0; }
     }
+
+    .card-carousel { position: relative; }
+    .card-carousel-track {
+      display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory;
+      scroll-behavior: smooth; margin: 0 40px; scrollbar-width: none;
+    }
+    .card-carousel-track::-webkit-scrollbar { display: none; }
+    .card-carousel-track > * { flex: 0 0 auto; scroll-snap-align: start; }
+    .card-carousel-arrow {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border-radius: 9999px; border: 1px solid #e5e7eb;
+      background: #fff; color: #4b5563; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.12); z-index: 2;
+    }
+    .card-carousel-arrow.prev { left: 0; }
+    .card-carousel-arrow.next { right: 0; }
+    .card-carousel-arrow:disabled { opacity: 0.3; cursor: default; }
   </style>
 </head>
 <body>
@@ -91,7 +104,11 @@
             </div>
           </div>
           <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:16px">결제카드는 최대 5개까지 등록할 수 있습니다.</p>
-          <div id="card-display"></div>
+          <div class="card-carousel">
+            <button id="card-display-prev" class="card-carousel-arrow prev" aria-label="이전 카드">‹</button>
+            <div id="card-display" class="card-carousel-track"></div>
+            <button id="card-display-next" class="card-carousel-arrow next" aria-label="다음 카드">›</button>
+          </div>
         </div>
 
         <!-- 송금자명 -->
@@ -214,7 +231,11 @@
       </div>
       <div style="padding:20px 24px;overflow:auto">
         <p style="font-size:0.75rem;color:#9ca3af;margin-bottom:14px">삭제할 카드를 선택해주세요.</p>
-        <div id="card-slot-list" class="card-tile-row"></div>
+        <div class="card-carousel">
+          <button id="card-delete-prev" class="card-carousel-arrow prev" aria-label="이전 카드">‹</button>
+          <div id="card-slot-list" class="card-carousel-track"></div>
+          <button id="card-delete-next" class="card-carousel-arrow next" aria-label="다음 카드">›</button>
+        </div>
       </div>
     </div>
 
@@ -363,24 +384,46 @@ function cardTileHtml(card, sizeStyle = 'width:220px;height:138px') {
     </div>`;
 }
 
+const CARD_CAROUSEL_SIZE = 'width:170px;height:106px';
+const CARD_CAROUSEL_STEP = 184; // card width(170) + gap(14)
+
+function setupCardCarousel(trackId, prevId, nextId) {
+  const track = document.getElementById(trackId);
+  const prevBtn = document.getElementById(prevId);
+  const nextBtn = document.getElementById(nextId);
+  const refresh = () => {
+    prevBtn.disabled = track.scrollLeft <= 4;
+    nextBtn.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+  };
+  prevBtn.addEventListener('click', () => track.scrollBy({ left: -CARD_CAROUSEL_STEP, behavior: 'smooth' }));
+  nextBtn.addEventListener('click', () => track.scrollBy({ left: CARD_CAROUSEL_STEP, behavior: 'smooth' }));
+  track.addEventListener('scroll', refresh);
+  return refresh;
+}
+
+const refreshCardDisplayCarousel = setupCardCarousel('card-display', 'card-display-prev', 'card-display-next');
+const refreshCardDeleteCarousel = setupCardCarousel('card-slot-list', 'card-delete-prev', 'card-delete-next');
+
 function renderCardDisplay() {
   const cards = getCards();
   document.getElementById('card-display').innerHTML = cards.length
-    ? `<div class="card-display-grid">${cards.map(c => cardTileHtml(c, 'width:100%;aspect-ratio:1.6/1')).join('')}</div>`
+    ? cards.map(c => cardTileHtml(c, CARD_CAROUSEL_SIZE)).join('')
     : `<p style="font-size:0.8125rem;color:#9ca3af">등록된 카드가 없습니다.</p>`;
+  refreshCardDisplayCarousel();
 }
 
 function renderCardDeleteList() {
   const cards = getCards();
   document.getElementById('card-slot-list').innerHTML = cards.length
     ? cards.map((card, i) => `
-      <div class="card-tile-wrap" style="position:relative">
-        ${cardTileHtml(card, 'width:100%;aspect-ratio:1.6/1')}
+      <div style="position:relative;width:170px">
+        ${cardTileHtml(card, CARD_CAROUSEL_SIZE)}
         <button onclick="deleteCard(${i})" title="카드 삭제" style="position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:9999px;border:none;background:rgba(255,255,255,0.9);color:#ef4444;font-size:1rem;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.2)">×</button>
         <p style="margin-top:8px;font-size:0.8125rem;font-weight:700;color:#1a2260;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(card.owner || '카드 소유자')}</p>
         <p style="font-size:0.75rem;color:#9ca3af">${escapeHtml(card.no)}</p>
       </div>`).join('')
     : `<p style="font-size:0.8125rem;color:#9ca3af">등록된 카드가 없습니다.</p>`;
+  refreshCardDeleteCarousel();
 }
 
 function deleteCard(i) {
