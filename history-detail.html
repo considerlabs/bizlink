@@ -48,6 +48,68 @@
   </div>
 </div>
 
+<!-- 거래명세표 등록 모달 -->
+<div id="statement-modal" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:1rem">
+  <div style="width:100%;max-width:400px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#2B3990">
+      <div style="display:flex;align-items:center;gap:8px;color:#fff;font-size:0.9375rem;font-weight:800">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        거래명세표 등록
+      </div>
+      <button onclick="closeStatementModal()" style="background:none;border:none;cursor:pointer;color:#fff;font-size:1.25rem;line-height:1">×</button>
+    </div>
+    <div style="padding:20px">
+      <p style="font-size:0.8125rem;color:#6b7280;margin-bottom:14px">주문번호: <strong id="statement-order-no" style="color:#1a2260"></strong></p>
+      <label for="statement-file" style="display:flex;flex-direction:column;align-items:center;gap:8px;border:1.5px dashed #d1d5db;border-radius:8px;padding:24px 12px;cursor:pointer;background:#f9fafb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        <span id="statement-file-name" style="font-size:0.8125rem;color:#6b7280">파일 선택</span>
+      </label>
+      <input id="statement-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.hwp,.xlsx" style="display:none" onchange="updateStatementFileName()">
+      <p style="font-size:0.75rem;color:#9ca3af;margin-top:8px;text-align:center">PDF·JPG·PNG·HWP·XLSX (최대 10MB)</p>
+    </div>
+    <div style="padding:0 20px 20px">
+      <button onclick="submitStatement()" class="btn-primary" style="width:100%;padding:12px;font-size:0.875rem;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        등록하기
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openStatementModal() {
+  document.getElementById('statement-modal').style.display = 'flex';
+}
+
+function closeStatementModal() {
+  document.getElementById('statement-modal').style.display = 'none';
+  document.getElementById('statement-file').value = '';
+  updateStatementFileName();
+}
+
+function updateStatementFileName() {
+  const input = document.getElementById('statement-file');
+  const nameEl = document.getElementById('statement-file-name');
+  if (input.files.length) {
+    nameEl.textContent = input.files[0].name;
+    nameEl.style.color = '#2B3990';
+    nameEl.style.fontWeight = '600';
+  } else {
+    nameEl.textContent = '파일 선택';
+    nameEl.style.color = '#6b7280';
+    nameEl.style.fontWeight = 'normal';
+  }
+}
+
+function submitStatement() {
+  const input = document.getElementById('statement-file');
+  if (!input.files.length) { showAlert('첨부할 파일을 선택해주세요.'); return; }
+  const fileName = input.files[0].name;
+  closeStatementModal();
+  showAlert(`거래명세표가 등록되었습니다.\n${fileName}`);
+}
+</script>
+
 <script>
 if (!requireAuth()) throw new Error();
 
@@ -164,14 +226,22 @@ if (!orderNo) {
         </div>
       </div>`}
 
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid #f3f4f6">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid #f3f4f6;flex-wrap:wrap;gap:10px">
         <a href="history.html" class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
           목록으로
         </a>
-        <button onclick="showAlert('재주문 요청이 완료되었습니다.')" class="btn-primary" style="padding:10px 20px;font-size:0.875rem">재주문하기</button>
+        <div style="display:flex;gap:10px">
+          <button onclick="openStatementModal()" class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            거래명세표 등록
+          </button>
+          <button onclick="showAlert('재주문 요청이 완료되었습니다.')" class="btn-primary" style="padding:10px 20px;font-size:0.875rem">재주문하기</button>
+        </div>
       </div>
     `;
+
+    document.getElementById('statement-order-no').textContent = orderNo;
   });
 }
 </script>
