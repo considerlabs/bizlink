@@ -81,6 +81,9 @@ const api = {
     const orderDt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     const remitAmount = Math.round(totalPrice * (1 + PLATFORM_FEE_RATE));
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const remitDt = new Date(now);
+    remitDt.setDate(remitDt.getDate() + Math.floor(Math.random() * 3));
 
     const newOrders = getNewOrders();
     newOrders.unshift({
@@ -92,12 +95,12 @@ const api = {
         TOTAL_PRICE: totalPrice,
         GOODS_COUNT: vendorItems.length,
         STORE_NM: vendor?.VENDOR_NM ?? '-',
-        CONTRACT_TYPE: '구매대행',
-        PAY_CARD: '삼성카드',
-        REMIT_TYPE: '계좌이체',
-        REMIT_DT: orderDt.slice(0, 10),
+        CONTRACT_TYPE: pick(['결제대행', '구매대행']),
+        PAY_CARD: pick(['삼성카드', '국민카드', '신한카드']),
+        REMIT_TYPE: pick(['계좌이체', '카드결제']),
+        REMIT_DT: `${remitDt.getFullYear()}-${pad(remitDt.getMonth() + 1)}-${pad(remitDt.getDate())}`,
         REMIT_AMOUNT: remitAmount,
-        REMIT_BANK: '국민은행',
+        REMIT_BANK: pick(['국민은행', '신한은행', '하나은행']),
         STATEMENT_YN: 'N',
       },
       items: vendorItems.map((it, i) => ({
