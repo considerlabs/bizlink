@@ -80,6 +80,8 @@ const api = {
     const pad = n => String(n).padStart(2, '0');
     const orderDt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
+    const remitAmount = Math.round(totalPrice * (1 + PLATFORM_FEE_RATE));
+
     const newOrders = getNewOrders();
     newOrders.unshift({
       order: {
@@ -91,11 +93,11 @@ const api = {
         GOODS_COUNT: vendorItems.length,
         STORE_NM: vendor?.VENDOR_NM ?? '-',
         CONTRACT_TYPE: '구매대행',
-        PAY_CARD: null,
-        REMIT_TYPE: null,
-        REMIT_DT: null,
-        REMIT_AMOUNT: null,
-        REMIT_BANK: null,
+        PAY_CARD: '삼성카드',
+        REMIT_TYPE: '계좌이체',
+        REMIT_DT: orderDt.slice(0, 10),
+        REMIT_AMOUNT: remitAmount,
+        REMIT_BANK: '국민은행',
         STATEMENT_YN: 'N',
       },
       items: vendorItems.map((it, i) => ({
