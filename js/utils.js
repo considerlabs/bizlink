@@ -2,6 +2,7 @@ const MOCK_LOGGED_IN_KEY  = 'MOCK_LOGGED_IN';
 const MOCK_BASKET_KEY     = 'MOCK_BASKET_V2';
 const FAVORITE_VENDORS_KEY = 'ONIONON_FAVORITE_VENDORS';
 const MOCK_NEW_ORDERS_KEY = 'MOCK_NEW_ORDERS_V1';
+const STATEMENT_REGISTERED_KEY = 'MOCK_STATEMENT_REGISTERED_V1';
 const PLATFORM_FEE_RATE   = 0.055;
 
 function comma(n) {
@@ -70,6 +71,21 @@ function getNewOrders() {
 
 function saveNewOrders(entries) {
   localStorage.setItem(MOCK_NEW_ORDERS_KEY, JSON.stringify(entries));
+}
+
+// Order numbers whose 거래명세표 has been registered this session (mock
+// order data itself is static, so registrations are layered on via localStorage).
+function getRegisteredStatements() {
+  const stored = localStorage.getItem(STATEMENT_REGISTERED_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+function markStatementRegistered(orderNo) {
+  const list = getRegisteredStatements();
+  if (!list.includes(orderNo)) {
+    list.push(orderNo);
+    localStorage.setItem(STATEMENT_REGISTERED_KEY, JSON.stringify(list));
+  }
 }
 
 function getCartCount() {

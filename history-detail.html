@@ -105,6 +105,7 @@ function submitStatement() {
   const input = document.getElementById('statement-file');
   if (!input.files.length) { showAlert('첨부할 파일을 선택해주세요.'); return; }
   const fileName = input.files[0].name;
+  markStatementRegistered(orderNo);
   closeStatementModal();
   showAlert(`거래명세표가 등록되었습니다.\n${fileName}`);
 }
