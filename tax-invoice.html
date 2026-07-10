@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>세금계산서 - BIZLINK</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 50:'#eef0f9',100:'#d4d8f0',400:'#5a6abf',500:'#2B3990',600:'#24307a',700:'#1a2260' }, navy:'#1a2260' },
+        boxShadow: { card:'0 2px 8px rgba(0,0,0,0.08)', popup:'0 8px 32px rgba(0,0,0,0.18)' }
+      }}
+    };
+  </script>
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/header.js"></script>
+  <style>
+    @media (max-width: 767px) {
+      .ti-filter-wrap { padding: 12px !important; }
+      .ti-filter-box { padding: 10px 12px !important; flex-direction: column !important; align-items: stretch !important; }
+      .ti-row-months { flex: 1 1 100%; }
+      .ti-month-wrap { flex: 1; min-width: 0; }
+      .ti-month-input { width: 100% !important; }
+      .ti-row-ranges { flex: 1 1 100%; width: 100%; }
+      .ti-row-ranges .range-btn { flex: 1; text-align: center; }
+      .ti-note { margin-left: 0 !important; }
+    }
+    .ti-mobile-list { display: flex; flex-direction: column; gap: 10px; padding: 14px; }
+    @media (min-width: 768px) {
+      .ti-mobile-list { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-page">
+  <div id="app-header"></div>
+  <div class="app-main" style="max-width:1280px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px">
+      <span style="font-size:1.125rem;font-weight:800;color:#1a2260">세금계산서</span>
+    </div>
+
+    <div class="surface-card">
+      <!-- Filters -->
+      <div class="ti-filter-wrap" style="background:#f3f4f6;padding:20px;border-radius:1rem 1rem 0 0">
+        <div class="ti-filter-box" style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 16px;flex-wrap:wrap">
+          <div class="ti-row-months" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:0.75rem;font-weight:700;color:#6b7280;flex-shrink:0">거래월</span>
+            <div class="form-field ti-month-wrap" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <input type="month" id="start-month" class="ti-month-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:120px">
+            </div>
+            <span style="font-size:0.75rem;color:#d1d5db;flex-shrink:0">~</span>
+            <div class="form-field ti-month-wrap" style="width:auto;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" style="flex-shrink:0"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <input type="month" id="end-month" class="ti-month-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:120px">
+            </div>
+          </div>
+          <div class="ti-row-ranges" style="display:flex;gap:8px">
+            <button onclick="setMonthRange(1)" class="range-btn" data-months="1" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">1개월</button>
+            <button onclick="setMonthRange(3)" class="range-btn" data-months="3" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">3개월</button>
+            <button onclick="setMonthRange(6)" class="range-btn" data-months="6" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:0.75rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">6개월</button>
+          </div>
+          <span class="ti-note" style="margin-left:auto;font-size:0.75rem;color:#9ca3af">※ 공급자 결제대행 계약조건 거래내역 월별 세금계산서 발행</span>
+        </div>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="hidden md:block" style="overflow-x:auto">
+        <table style="width:100%;min-width:900px">
+          <thead>
+            <tr style="font-size:0.75rem;font-weight:800">
+              <th rowspan="2" style="text-align:center;padding:12px 16px;background:#f1f5f9;color:#2B3990;border-bottom:1px solid #e5e7eb;width:100px">거래월</th>
+              <th colspan="5" style="text-align:center;padding:10px 16px;background:#2B3990;color:#fff">공급자</th>
+              <th colspan="3" style="text-align:center;padding:10px 16px;background:#1a2260;color:#fff">공급받는자</th>
+              <th rowspan="2" style="text-align:center;padding:12px 16px;background:#f1f5f9;color:#2B3990;border-bottom:1px solid #e5e7eb;width:110px">상세다운로드</th>
+            </tr>
+            <tr style="font-size:0.75rem;font-weight:700;color:#4b5563;background:#f9fafb">
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">사업자등록번호</th>
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">회사명</th>
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">대표자명</th>
+              <th style="text-align:right;padding:10px 16px;border-bottom:1px solid #e5e7eb">공급가</th>
+              <th style="text-align:right;padding:10px 16px;border-bottom:1px solid #e5e7eb">부가세</th>
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">사업자등록번호</th>
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">회사명</th>
+              <th style="text-align:center;padding:10px 16px;border-bottom:1px solid #e5e7eb">대표자명</th>
+            </tr>
+          </thead>
+          <tbody id="tax-tbody">
+            <tr><td colspan="9" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile list -->
+      <div id="tax-cards-mobile" class="ti-mobile-list">
+        <div style="text-align:center;padding:3rem 0"><div class="loading-spinner-sm" style="margin:0 auto"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+if (!requireAuth()) throw new Error();
+renderHeader();
+
+const storeInfo = getStoreInfo();
+
+function monthStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getLatestInvoiceMonth() {
+  const months = MOCK_TAX_INVOICES.map(t => t.MONTH).sort();
+  return months.length ? months[months.length - 1] : monthStr(new Date());
+}
+
+function setActiveRangeBtn(months) {
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.months) === months;
+    btn.style.background = active ? '#5a6abf' : '#fff';
+    btn.style.color = active ? '#fff' : '#4b5563';
+    btn.style.borderColor = active ? '#5a6abf' : '#e5e7eb';
+  });
+}
+
+function setMonthRange(months) {
+  const [y, m] = getLatestInvoiceMonth().split('-').map(Number);
+  const end = new Date(y, m - 1, 1);
+  const start = new Date(y, m - 1 - (months - 1), 1);
+  document.getElementById('start-month').value = monthStr(start);
+  document.getElementById('end-month').value = monthStr(end);
+  setActiveRangeBtn(months);
+  renderTable();
+}
+
+function filteredInvoices() {
+  const start = document.getElementById('start-month').value;
+  const end = document.getElementById('end-month').value;
+  return MOCK_TAX_INVOICES
+    .filter(t => (!start || t.MONTH >= start) && (!end || t.MONTH <= end))
+    .sort((a, b) => b.MONTH.localeCompare(a.MONTH));
+}
+
+function downloadInvoice(month) {
+  showAlert(`${month} 세금계산서 상세 다운로드는 준비 중입니다.`);
+}
+
+function renderTable() {
+  const invoices = filteredInvoices();
+  const tbody = document.getElementById('tax-tbody');
+  const cardsWrap = document.getElementById('tax-cards-mobile');
+
+  if (invoices.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:6rem 0;color:#9ca3af">
+      <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
+      <p style="font-size:0.875rem;font-weight:600">세금계산서 내역이 없습니다.</p>
+    </td></tr>`;
+    cardsWrap.innerHTML = `<div style="text-align:center;padding:4rem 20px;color:#9ca3af">
+      <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
+      <p style="font-size:0.875rem;font-weight:600">세금계산서 내역이 없습니다.</p>
+    </div>`;
+    return;
+  }
+
+  const monthLabel = m => { const [y, mm] = m.split('-'); return `${y}년${mm}월`; };
+
+  tbody.innerHTML = invoices.map(t => `
+    <tr style="border-bottom:1px solid #f3f4f6" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
+      <td style="padding:14px 16px;text-align:center;font-size:0.875rem;font-weight:700;color:#1a2260">${monthLabel(t.MONTH)}</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.8125rem;color:#4b5563;font-family:monospace">${escapeHtml(TAX_INVOICE_SUPPLIER.BIZ_NUM)}</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.875rem;color:#1a2260">${escapeHtml(TAX_INVOICE_SUPPLIER.BIZ_NAME)}</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(TAX_INVOICE_SUPPLIER.REP_NAME)}</td>
+      <td style="padding:14px 16px;text-align:right;font-size:0.875rem;font-weight:700;color:#1a2260">${comma(t.SUPPLY_AMOUNT)}원</td>
+      <td style="padding:14px 16px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(t.VAT_AMOUNT)}원</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.8125rem;color:#4b5563;font-family:monospace">${escapeHtml(storeInfo.BIZ_NUM)}</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.875rem;color:#1a2260">${escapeHtml(storeInfo.BIZ_NAME)}</td>
+      <td style="padding:14px 16px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(storeInfo.BIZ_OWNER)}</td>
+      <td style="padding:14px 16px;text-align:center">
+        <button onclick="downloadInvoice('${monthLabel(t.MONTH)}')" style="display:inline-flex;align-items:center;gap:4px;border:none;border-radius:6px;padding:6px 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          상세다운
+        </button>
+      </td>
+    </tr>`).join('');
+
+  cardsWrap.innerHTML = invoices.map(t => `
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${monthLabel(t.MONTH)}</span>
+        <button onclick="downloadInvoice('${monthLabel(t.MONTH)}')" style="display:inline-flex;align-items:center;gap:4px;border:none;border-radius:6px;padding:6px 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          상세다운
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8125rem;padding:8px 0;border-top:1px solid #f3f4f6">
+        <span style="color:#9ca3af">공급가</span>
+        <span style="font-weight:700;color:#1a2260">${comma(t.SUPPLY_AMOUNT)}원</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.8125rem;padding-bottom:8px">
+        <span style="color:#9ca3af">부가세</span>
+        <span style="color:#4b5563">${comma(t.VAT_AMOUNT)}원</span>
+      </div>
+      <div style="font-size:0.75rem;color:#9ca3af;padding-top:8px;border-top:1px solid #f3f4f6">
+        공급자 <span style="color:#4b5563;font-weight:600">${escapeHtml(TAX_INVOICE_SUPPLIER.BIZ_NAME)}</span> ·
+        공급받는자 <span style="color:#4b5563;font-weight:600">${escapeHtml(storeInfo.BIZ_NAME)}</span>
+      </div>
+    </div>`).join('');
+}
+
+// Init
+document.getElementById('start-month').addEventListener('change', () => { setActiveRangeBtn(null); renderTable(); });
+document.getElementById('end-month').addEventListener('change', () => { setActiveRangeBtn(null); renderTable(); });
+
+setMonthRange(3);
+</script>
+</body>
+</html>

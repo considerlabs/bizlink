@@ -90,10 +90,13 @@ const api = {
         TOTAL_PRICE: totalPrice,
         GOODS_COUNT: vendorItems.length,
         STORE_NM: vendor?.VENDOR_NM ?? '-',
+        CONTRACT_TYPE: '구매대행',
+        PAY_CARD: null,
         REMIT_TYPE: null,
         REMIT_DT: null,
         REMIT_AMOUNT: null,
         REMIT_BANK: null,
+        STATEMENT_YN: 'N',
       },
       items: vendorItems.map((it, i) => ({
         SEQ: `${no}-${i}`,

@@ -2,6 +2,7 @@ const NAV = [
   { label: '주문',       href: 'order.html',           iconPath: 'M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z' },
   { label: '장바구니',   href: 'basket.html',           iconPath: 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z;M3 6h18;M16 10a4 4 0 0 1-8 0', isCart: true },
   { label: '구매내역',   href: 'history.html',          iconPath: 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z;M9 7h6;M9 11h6;M9 15h4' },
+  { label: '세금계산서', href: 'tax-invoice.html',      iconPath: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z;M14 2v6h6;M9 13h6;M9 17h6' },
   { label: '공급자관리', href: 'vendors.html',          iconPath: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z;M9 22V12h6v10' },
   { label: '발주서주문', href: 'purchase-orders.html',  iconPath: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2;M8 2h8v4H8z;M9 12h6;M9 16h4' },
   { label: '내정보',     href: 'myinfo.html',           iconPath: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2;M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
