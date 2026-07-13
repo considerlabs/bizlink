@@ -93,13 +93,26 @@ function renderTab() {
   }
 }
 
-function radioBoxHtml(name, options, selected, disabled = false) {
-  return `<div class="form-field" style="height:40px;display:flex;align-items:center;gap:24px;${disabled ? 'background:#f9fafb' : ''}">
+function radioBoxHtml(name, options, selected) {
+  return `<div class="form-field" style="height:40px;display:flex;align-items:center;gap:24px">
     ${options.map(opt => `
-      <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:${disabled ? '#9ca3af' : '#1a2260'};cursor:${disabled ? 'not-allowed' : 'pointer'};font-weight:500">
-        <input type="radio" name="${name}" value="${opt}" ${opt === selected ? 'checked' : ''} ${disabled ? 'disabled' : ''} style="accent-color:#2B3990;width:16px;height:16px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#1a2260;cursor:pointer;font-weight:500">
+        <input type="radio" name="${name}" value="${opt}" ${opt === selected ? 'checked' : ''} style="accent-color:#2B3990;width:16px;height:16px">
         ${opt}
       </label>`).join('')}
+  </div>`;
+}
+
+// Matches the read-only radio display used on vendor-detail.html
+function radioStaticHtml(options, selected) {
+  return `<div class="form-field" style="height:40px;gap:20px;background:#f9fafb">
+    ${options.map(opt => `
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:0.875rem;font-weight:${opt === selected ? '700' : '500'};color:${opt === selected ? '#1a2260' : '#c7cad1'}">
+        <span style="width:14px;height:14px;border-radius:50%;border:2px solid ${opt === selected ? '#2B3990' : '#d1d5db'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+          ${opt === selected ? '<span style="width:6px;height:6px;border-radius:50%;background:#2B3990"></span>' : ''}
+        </span>
+        ${opt}
+      </span>`).join('')}
   </div>`;
 }
 
@@ -142,7 +155,8 @@ function renderRegister(content) {
           </div>
           <div>
             <label style="${LABEL_STYLE}">구매대금 송금방식 <span style="color:#ef4444">*</span></label>
-            ${radioBoxHtml('reg-remit-type', ['통장지급', '페이지급'], d.remitType || '통장지급', true)}
+            ${radioStaticHtml(['통장지급', '페이지급'], d.remitType || '통장지급')}
+            <input type="hidden" id="reg-remit-type" value="${d.remitType || '통장지급'}">
           </div>
           <div>
             <label style="${LABEL_STYLE}">송금자명</label>
@@ -232,7 +246,7 @@ function submitVendor() {
     contractType: document.querySelector('input[name="reg-contract"]:checked').value,
     manager: document.getElementById('reg-manager').value.trim(),
     managerContact,
-    remitType: document.querySelector('input[name="reg-remit-type"]:checked').value,
+    remitType: document.getElementById('reg-remit-type').value,
     remitter: document.getElementById('reg-remitter').value.trim(),
     bank: document.getElementById('reg-bank').value,
     account: document.getElementById('reg-account').value.trim(),
