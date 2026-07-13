@@ -20,16 +20,17 @@
   <script src="js/header.js"></script>
   <style>
     @media (max-width: 767px) {
-      .vd-columns { grid-template-columns: 1fr !important; }
-      .vd-info-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-      .vd-panel { padding: 16px !important; }
+      .vd-card { padding: 20px 16px !important; }
+      .vd-grid-2 { grid-template-columns: 1fr !important; gap: 16px !important; }
+      .vd-header-row { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+      .vd-header-row > div:last-child { text-align: left !important; }
     }
   </style>
 </head>
 <body>
 <div class="app-page">
   <div id="app-header"></div>
-  <div class="app-main" style="max-width:1280px">
+  <div class="app-main" style="max-width:1900px">
     <div id="detail-content"></div>
   </div>
 </div>
@@ -49,86 +50,88 @@ const STAT_CONFIG = {
 };
 
 const BACK_URL = 'vendors.html?tab=approval';
-const docIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-let editingField = null;
+const LABEL_STYLE = 'font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px';
+const BANKS = ['국민은행', '신한은행', '하나은행', '우리은행', '농협은행', '기업은행'];
+const docIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
-function fieldRowHtml(label, key) {
-  const canEdit = vendor.status_cd === 'REJECTED' || key === 'remitter';
+function radioBoxHtml(name, options, selected) {
+  return `<div class="form-field" style="height:40px;display:flex;align-items:center;gap:24px">
+    ${options.map(opt => `
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#1a2260;cursor:pointer;font-weight:500">
+        <input type="radio" name="${name}" value="${opt}" ${opt === selected ? 'checked' : ''} style="accent-color:#2B3990;width:16px;height:16px">
+        ${opt}
+      </label>`).join('')}
+  </div>`;
+}
+
+function textFieldHtml(label, key, { editable = false, required = false, placeholder = '' } = {}) {
   const value = vendor[key];
-
-  if (editingField === key) {
-    return `
-      <div>
-        <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input id="edit-input-${key}" type="text" value="${escapeHtml(value ?? '')}" class="form-field" style="height:32px;font-size:0.8125rem">
-          <button onclick="saveEditField('${key}')" style="flex-shrink:0;width:28px;height:28px;border-radius:6px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center" title="저장">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-          </button>
-          <button onclick="cancelEditField()" style="flex-shrink:0;width:28px;height:28px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#9ca3af;cursor:pointer;display:flex;align-items:center;justify-content:center" title="취소">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-      </div>`;
-  }
-
   return `
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">
-      <div style="min-width:0">
-        <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">${label}</div>
-        <div style="font-size:0.875rem;color:#1a2260;font-weight:500;word-break:break-all">${escapeHtml(value || '-')}</div>
-      </div>
-      ${canEdit ? `<button onclick="startEditField('${key}')" style="flex-shrink:0;font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer">${key === 'remitter' ? '변경' : '수정'}</button>` : ''}
+    <div>
+      <label style="${LABEL_STYLE}">${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}</label>
+      ${editable
+        ? `<input id="edit-${key}" type="text" placeholder="${placeholder}" value="${escapeHtml(value ?? '')}" class="form-field" style="height:40px">`
+        : `<div class="form-field" style="height:40px;background:#f9fafb;color:#1a2260;font-weight:500">${escapeHtml(value || '-')}</div>`}
     </div>`;
 }
 
-function startEditField(key) {
-  editingField = key;
-  renderDetail();
-  document.getElementById('edit-input-' + key)?.focus();
+function radioFieldHtml(label, name, key, options, { editable = false, required = false } = {}) {
+  const value = vendor[key];
+  const body = editable
+    ? radioBoxHtml(name, options, value)
+    : `<div class="form-field" style="height:40px;gap:20px;background:#f9fafb">
+        ${options.map(opt => `
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:0.875rem;font-weight:${opt === value ? '700' : '500'};color:${opt === value ? '#1a2260' : '#c7cad1'}">
+            <span style="width:14px;height:14px;border-radius:50%;border:2px solid ${opt === value ? '#2B3990' : '#d1d5db'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+              ${opt === value ? '<span style="width:6px;height:6px;border-radius:50%;background:#2B3990"></span>' : ''}
+            </span>
+            ${opt}
+          </span>`).join('')}
+      </div>`;
+  return `<div><label style="${LABEL_STYLE}">${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}</label>${body}</div>`;
 }
 
-function cancelEditField() {
-  editingField = null;
-  renderDetail();
+function selectFieldHtml(label, key, options, { editable = false } = {}) {
+  const value = vendor[key];
+  return `
+    <div>
+      <label style="${LABEL_STYLE}">${label}</label>
+      ${editable
+        ? `<select id="edit-${key}" class="form-field" style="height:40px;appearance:auto">
+            <option value=""${!value ? ' selected' : ''}>-- 은행 선택 --</option>
+            ${options.map(b => `<option${value === b ? ' selected' : ''}>${b}</option>`).join('')}
+          </select>`
+        : `<div class="form-field" style="height:40px;background:#f9fafb;color:#1a2260;font-weight:500">${escapeHtml(value || '-')}</div>`}
+    </div>`;
 }
 
-function saveEditField(key) {
-  const input = document.getElementById('edit-input-' + key);
-  const value = input.value.trim();
-  if (!value) { showAlert('값을 입력해주세요.'); return; }
-  vendor[key] = value;
-  editingField = null;
-  renderDetail();
-  if (key === 'remitter') showAlert('송금자명이 변경되었습니다.');
+function formatFileSize(bytes) {
+  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
 }
 
 function docsHtml() {
   const canEdit = vendor.status_cd === 'REJECTED';
   const docs = vendor.docs || [];
+  const chips = docs.map((doc, i) => `
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:#f8f9ff;border:1px solid #d4d8f0;border-radius:8px;font-size:0.8125rem;color:#1a2260;max-width:100%">
+      ${docIcon}
+      <span style="font-weight:700;color:#2B3990;flex-shrink:0">[${escapeHtml(doc.type)}]</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(doc.name)}</span>
+      <span style="color:#9ca3af;flex-shrink:0">(${escapeHtml(doc.size)})</span>
+      ${canEdit ? `<button type="button" onclick="deleteDoc(${i})" style="flex-shrink:0;width:18px;height:18px;border:none;background:none;color:#9ca3af;cursor:pointer;display:flex;align-items:center;justify-content:center" title="삭제">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>` : ''}
+    </span>`).join('');
+
   const list = docs.length
-    ? `<div style="display:flex;flex-direction:column;gap:8px">
-        ${docs.map((doc, i) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#f8f9ff;border:1px solid #d4d8f0;border-radius:8px">
-            <div style="display:flex;align-items:center;gap:8px;color:#1a2260;min-width:0">
-              ${docIcon}
-              <span style="font-size:0.875rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(doc)}</span>
-            </div>
-            ${canEdit
-              ? `<button onclick="deleteDoc(${i})" style="flex-shrink:0;width:26px;height:26px;border-radius:6px;border:1px solid #fecaca;background:#fff;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center" title="삭제">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                </button>`
-              : `<button onclick="showAlert('다운로드 기능은 준비 중입니다.')" style="font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0">다운로드</button>`}
-          </div>
-        `).join('')}
-       </div>`
-    : `<p style="font-size:0.875rem;color:#9ca3af;text-align:center;padding:20px 0">첨부된 서류가 없습니다.</p>`;
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${chips}</div>`
+    : `<p style="font-size:0.875rem;color:#9ca3af">첨부된 서류가 없습니다.</p>`;
 
   const addBtn = canEdit ? `
-    <label style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:10px;border:1.5px dashed #d4d8f0;border-radius:8px;color:#2B3990;font-size:0.8125rem;font-weight:700;cursor:pointer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    <label style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;border:1.5px dashed #d4d8f0;border-radius:8px;color:#2B3990;font-size:0.8125rem;font-weight:700;cursor:pointer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
       서류 추가
-      <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="addDoc(this)">
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.hwp,.xlsx" style="display:none" onchange="addDoc(this)">
     </label>` : '';
 
   return list + addBtn;
@@ -141,20 +144,43 @@ function deleteDoc(index) {
 
 function addDoc(input) {
   if (!input.files.length) return;
+  const file = input.files[0];
   if (!vendor.docs) vendor.docs = [];
-  vendor.docs.push(input.files[0].name);
+  vendor.docs.push({ type: '추가서류', name: file.name, size: formatFileSize(file.size) });
   renderDetail();
 }
 
+function saveRemitter() {
+  const value = document.getElementById('edit-remitter').value.trim();
+  if (!value) { showAlert('송금자명을 입력해주세요.'); return; }
+  vendor.remitter = value;
+  renderDetail();
+  showAlert('송금자명이 변경되었습니다.');
+}
+
 function requestReapproval() {
+  const name = document.getElementById('edit-name').value.trim();
+  const bizNum = document.getElementById('edit-biz_num').value.trim();
+  const rep = document.getElementById('edit-rep').value.trim();
+  const managerContact = document.getElementById('edit-manager_contact').value.trim();
+  if (!name || !bizNum || !rep || !managerContact) { showAlert('필수 항목을 모두 입력해주세요.'); return; }
+
   showConfirm('재승인 요청 하시겠습니까?', () => {
+    vendor.name = name;
+    vendor.biz_num = bizNum;
+    vendor.rep = rep;
+    vendor.contract_type = document.querySelector('input[name="edit-contract"]:checked').value;
+    vendor.manager = document.getElementById('edit-manager').value.trim();
+    vendor.manager_contact = managerContact;
+    vendor.remit_type = document.querySelector('input[name="edit-remit-type"]:checked').value;
+    vendor.remitter = document.getElementById('edit-remitter').value.trim();
+    vendor.bank = document.getElementById('edit-bank').value;
+    vendor.account = document.getElementById('edit-account').value.trim();
     vendor.status_cd = 'REVIEWING';
     vendor.status = '검토중';
     vendor.reject_reason = null;
     vendor.reviewed = null;
-    vendor.reviewer = null;
     vendor.applied = toDateStr(new Date());
-    editingField = null;
     showAlert('재승인 요청이 완료되었습니다.\n검토 후 승인 처리됩니다.', () => {
       location.href = BACK_URL;
     });
@@ -174,109 +200,81 @@ function renderDetail() {
   }
 
   const st = STAT_CONFIG[vendor.status_cd] || { bg: '#f3f4f6', color: '#6b7280', label: vendor.status };
-
-  const infoItems = [
-    ['공급자명',      'name'],
-    ['사업자등록번호', 'biz_num'],
-    ['대표자명',      'rep'],
-    ['연락처',        'contact'],
-    ['이메일',        'email'],
-    ['주소',          'address'],
-    ['결제은행',      'bank'],
-    ['계좌번호',      'account'],
-    ['송금자명',      'remitter'],
-  ];
+  const canEditAll = vendor.status_cd === 'REJECTED';
 
   content.innerHTML = `
-    <!-- Page header -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-      <a href="${BACK_URL}" style="display:inline-flex;align-items:center;gap:4px;color:#6b7280;font-size:0.875rem;font-weight:600;text-decoration:none;padding:6px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff"
-         onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fff'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        목록으로
-      </a>
-      <div style="width:1px;height:20px;background:#e5e7eb"></div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <h1 style="font-size:1rem;font-weight:800;color:#1a2260">${escapeHtml(vendor.name)}</h1>
-        <span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:9999px;background:${st.bg};color:${st.color}">${st.label}</span>
-      </div>
-    </div>
+    <div class="vd-card" style="margin:20px auto 0;width:100%;max-width:860px;border-radius:1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
 
-    <!-- Two-column layout -->
-    <div class="vd-columns" style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
-
-      <!-- Left: info + docs -->
-      <div style="display:flex;flex-direction:column;gap:16px">
-
-        <!-- Basic info -->
-        <div class="vd-panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-          <h2 style="font-size:0.875rem;font-weight:800;color:#1a2260;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            기본 정보
-          </h2>
-          <div class="vd-info-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px 24px">
-            ${infoItems.map(([label, key]) => fieldRowHtml(label, key)).join('')}
-            ${vendor.memo ? `
-              <div style="grid-column:1/-1">
-                <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">비고</div>
-                <div style="font-size:0.875rem;color:#1a2260;font-weight:500">${escapeHtml(vendor.memo)}</div>
-              </div>
-            ` : ''}
-          </div>
+      <!-- Header -->
+      <div class="vd-header-row" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h1 style="font-size:1.25rem;font-weight:800;color:#1a2260">${escapeHtml(vendor.name)}</h1>
+          <span style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:9999px;background:${st.bg};color:${st.color}">${st.label}</span>
         </div>
-
-        <!-- Documents -->
-        <div class="vd-panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-          <h2 style="font-size:0.875rem;font-weight:800;color:#1a2260;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            첨부서류
-            <span style="font-size:0.75rem;font-weight:600;color:#9ca3af;margin-left:4px">${(vendor.docs || []).length}건</span>
-          </h2>
-          ${docsHtml()}
+        <div style="text-align:right">
+          <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:2px">등록일</div>
+          <div style="font-size:1rem;font-weight:800;color:#1a2260">${escapeHtml(vendor.applied)}</div>
         </div>
       </div>
 
-      <!-- Right: status -->
-      <div style="display:flex;flex-direction:column;gap:12px">
+      ${vendor.status_cd === 'REJECTED' && vendor.reject_reason ? `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-bottom:24px">
+          <div style="font-size:0.75rem;color:#dc2626;font-weight:700;margin-bottom:4px">반려 사유</div>
+          <div style="font-size:0.8125rem;color:#b91c1c;line-height:1.5">${escapeHtml(vendor.reject_reason)}</div>
+        </div>
+      ` : ''}
 
-        <!-- Status card -->
-        <div class="vd-panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:1rem;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-          <h2 style="font-size:0.875rem;font-weight:800;color:#1a2260;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            처리 현황
-          </h2>
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div>
-              <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">승인 상태</div>
-              <span style="display:inline-block;font-size:0.8125rem;font-weight:700;padding:4px 12px;border-radius:9999px;background:${st.bg};color:${st.color}">${st.label}</span>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">신청일</div>
-              <div style="font-size:0.875rem;color:#1a2260;font-weight:500">${escapeHtml(vendor.applied)}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">처리일</div>
-              <div style="font-size:0.875rem;color:#1a2260;font-weight:500">${vendor.reviewed ? escapeHtml(vendor.reviewed) : '-'}</div>
-            </div>
-            <div>
-              <div style="font-size:0.75rem;color:#9ca3af;font-weight:700;margin-bottom:3px">처리자</div>
-              <div style="font-size:0.875rem;color:#1a2260;font-weight:500">${vendor.reviewer ? escapeHtml(vendor.reviewer) : '-'}</div>
-            </div>
-            ${vendor.status_cd === 'REJECTED' && vendor.reject_reason ? `
-              <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px">
-                <div style="font-size:0.75rem;color:#dc2626;font-weight:700;margin-bottom:4px">반려 사유</div>
-                <div style="font-size:0.8125rem;color:#b91c1c;line-height:1.5">${escapeHtml(vendor.reject_reason)}</div>
-              </div>
-            ` : ''}
-            ${vendor.status_cd === 'REJECTED' ? `
-              <button onclick="requestReapproval()"
-                      style="width:100%;padding:12px;background:#2B3990;color:#fff;border:none;border-radius:10px;font-size:0.875rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                재승인 요청
-              </button>
-            ` : ''}
+      <!-- Field grid -->
+      <div class="vd-grid-2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
+        ${textFieldHtml('공급자명', 'name', { editable: canEditAll, required: true })}
+        ${textFieldHtml('사업자번호', 'biz_num', { editable: canEditAll, required: true })}
+        ${textFieldHtml('대표자명', 'rep', { editable: canEditAll, required: true })}
+        ${radioFieldHtml('계약구분', 'edit-contract', 'contract_type', ['구매대행', '결제대행'], { editable: canEditAll, required: true })}
+        ${textFieldHtml('담당자명', 'manager', { editable: canEditAll })}
+        ${textFieldHtml('담당자 연락처', 'manager_contact', { editable: canEditAll, required: true })}
+        ${radioFieldHtml('구매대금 송금방식', 'edit-remit-type', 'remit_type', ['통장지급', '페이지급'], { editable: canEditAll, required: true })}
+        ${textFieldHtml('송금자명', 'remitter', { editable: true })}
+        ${selectFieldHtml('공급자 은행', 'bank', BANKS, { editable: canEditAll })}
+        ${textFieldHtml('공급자 계좌번호', 'account', { editable: canEditAll })}
+        <div>
+          <label style="${LABEL_STYLE}">승인상태</label>
+          <div class="form-field" style="height:40px;background:#f9fafb">
+            <span style="font-size:0.8125rem;font-weight:700;padding:3px 10px;border-radius:9999px;background:${st.bg};color:${st.color}">${st.label}</span>
           </div>
         </div>
+        <div>
+          <label style="${LABEL_STYLE}">승인일</label>
+          <div class="form-field" style="height:40px;background:#f9fafb;color:#1a2260;font-weight:500">${vendor.reviewed ? escapeHtml(vendor.reviewed) : '-'}</div>
+        </div>
+        ${vendor.memo ? `
+          <div style="grid-column:1/-1">
+            <label style="${LABEL_STYLE}">비고</label>
+            <div class="form-field" style="height:40px;background:#f9fafb;color:#1a2260;font-weight:500">${escapeHtml(vendor.memo)}</div>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Documents -->
+      <div style="margin-top:28px">
+        <label style="${LABEL_STYLE}margin-bottom:12px">첨부서류</label>
+        ${docsHtml()}
+      </div>
+
+      <!-- Footer -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid #f3f4f6">
+        <a href="${BACK_URL}" class="btn-secondary" style="padding:10px 20px;display:inline-flex;align-items:center;gap:6px;text-decoration:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          목록으로
+        </a>
+        ${canEditAll
+          ? `<button type="button" onclick="requestReapproval()" class="btn-primary" style="padding:10px 20px;display:flex;align-items:center;gap:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              재승인 요청
+            </button>`
+          : `<button type="button" onclick="saveRemitter()" class="btn-primary" style="padding:10px 20px;display:flex;align-items:center;gap:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              저장하기
+            </button>`}
       </div>
     </div>
   `;

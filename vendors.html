@@ -22,7 +22,9 @@
     @media (max-width: 767px) {
       .vr-tab-btn { padding: 10px 12px !important; font-size: 0.75rem !important; }
       .vr-card { padding: 20px 16px !important; }
-      .vr-grid-2, .vr-docs-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+      .vr-grid-2 { grid-template-columns: 1fr !important; gap: 16px !important; }
+      .vr-doc-row { flex-direction: column !important; align-items: flex-start !important; }
+      .vr-doc-row .vr-doc-btn { align-self: stretch !important; justify-content: center !important; }
     }
   </style>
 </head>
@@ -52,10 +54,24 @@ if (!requireAuth()) throw new Error();
 renderHeader();
 
 let activeTab = 'register';
-let currentStep = 1;
-let step1Data = {};
+let registerData = {};
 
 const BANKS = ['국민은행', '신한은행', '하나은행', '우리은행', '농협은행', '기업은행'];
+const LABEL_STYLE = 'font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px';
+
+const CONTRACT_STYLE = { '구매대행': 'background:#f5f3ff;color:#7c3aed', '결제대행': 'background:#eff6ff;color:#2563eb' };
+const REMIT_TYPE_STYLE = { '통장지급': 'background:#ecfdf5;color:#059669', '페이지급': 'background:#f5f3ff;color:#7c3aed' };
+const STAT_STYLE = { APPROVED: 'background:#eef0f9;color:#2B3990', REVIEWING: 'background:#fef9c3;color:#a16207', REJECTED: 'background:#fef2f2;color:#dc2626' };
+
+const REGISTER_DOC_ITEMS = [
+  { label: '사업자등록증', id: 'doc-biz-license', badge: '필수 1', badgeColor: 'background:#fef2f2;color:#ef4444', hint: 'PDF·JPG·PNG (최대 10MB)', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { label: '통장사본',     id: 'doc-bankbook',    badge: '필수 2', badgeColor: 'background:#fef2f2;color:#ef4444', hint: 'PDF·JPG·PNG (최대 10MB)', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { label: '거래명세표',   id: 'doc-statement',   badge: '선택 3', badgeColor: 'background:#eff6ff;color:#3b82f6', hint: '최근 1개월 이내 / PDF·JPG·PNG·HWP·XLSX (최대 10MB)', required: false, accept: '.pdf,.jpg,.jpeg,.png,.hwp,.xlsx' },
+];
+
+function badgeHtml(text, style) {
+  return `<span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${style}">${escapeHtml(text)}</span>`;
+}
 
 function setTab(tab) {
   activeTab = tab;
@@ -68,282 +84,229 @@ function setTab(tab) {
   renderTab();
 }
 
-function stepIndicatorHtml(active) {
-  const steps = ['기본 정보 입력', '첨부서류 등록'];
-  return `<div style="display:flex;align-items:center;justify-content:center;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #f3f4f6">
-    ${steps.map((label, i) => {
-      const n = i + 1;
-      const done = n < active;
-      const isActive = n === active;
-      const circleStyle = (done || isActive)
-        ? 'background:#2B3990;color:#fff;border:2px solid #2B3990'
-        : 'background:#fff;color:#9ca3af;border:2px solid #e5e7eb';
-      const labelColor = (done || isActive) ? '#1a2260' : '#9ca3af';
-      const labelWeight = (done || isActive) ? '700' : '500';
-      const circleContent = done
-        ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`
-        : `${n}`;
-      const connector = i < steps.length - 1
-        ? `<div style="flex:1;height:2px;background:${done ? '#2B3990' : '#e5e7eb'};margin:0 16px;margin-bottom:20px;min-width:80px"></div>`
-        : '';
-      return `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div style="width:34px;height:34px;border-radius:50%;${circleStyle};display:flex;align-items:center;justify-content:center;font-size:0.875rem;font-weight:800">
-            ${circleContent}
-          </div>
-          <span style="font-size:0.75rem;color:${labelColor};font-weight:${labelWeight};white-space:nowrap">${label}</span>
-        </div>
-        ${connector}
-      `;
-    }).join('')}
-  </div>`;
-}
-
 function renderTab() {
   const content = document.getElementById('tab-content');
   if (activeTab === 'register') {
-    currentStep === 1 ? renderStep1(content) : renderStep2(content);
+    renderRegister(content);
   } else {
     renderApproval(content);
   }
 }
 
-function renderStep1(content) {
-  const d = step1Data;
-  const fields = [
-    ['공급자명',      'vendor-name', 'text',  '공급자명을 입력하세요',   true,  d.name    || ''],
-    ['사업자등록번호', 'biz-num',     'text',  '000-00-00000',           true,  d.bizNum  || ''],
-    ['대표자명',      'rep-name',    'text',  '대표자명을 입력하세요',   false, d.repName || ''],
-    ['연락처',        'contact',     'text',  '연락처를 입력하세요',     false, d.contact || ''],
-    ['이메일',        'email',       'email', 'example@email.com',       false, d.email   || ''],
-    ['주소',          'address',     'text',  '사업자 주소를 입력하세요', false, d.address || ''],
-  ];
+function radioBoxHtml(name, options, selected) {
+  return `<div class="form-field" style="height:40px;display:flex;align-items:center;gap:24px">
+    ${options.map(opt => `
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.875rem;color:#1a2260;cursor:pointer;font-weight:500">
+        <input type="radio" name="${name}" value="${opt}" ${opt === selected ? 'checked' : ''} style="accent-color:#2B3990;width:16px;height:16px">
+        ${opt}
+      </label>`).join('')}
+  </div>`;
+}
+
+function renderRegister(content) {
+  const d = registerData;
 
   content.innerHTML = `
     <div class="vr-card" style="margin:20px auto 0;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
-      ${stepIndicatorHtml(1)}
-      <form id="step1-form">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #f3f4f6">
+        <div style="width:20px;height:20px;border-radius:50%;background:#2B3990;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">신규 공급자 등록</span>
+      </div>
+      <form id="register-form">
         <div class="vr-grid-2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:24px">
-          ${fields.map(([label, id, type, placeholder, required, value]) => `
-            <div>
-              <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">
-                ${label}${required ? ' <span style="color:#ef4444">*</span>' : ''}
-              </label>
-              <input id="${id}" type="${type}" placeholder="${placeholder}" value="${escapeHtml(value)}" class="form-field" style="height:40px">
-            </div>
-          `).join('')}
           <div>
-            <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">결제은행</label>
-            <select id="bank" class="form-field" style="height:40px;appearance:auto">
+            <label style="${LABEL_STYLE}">공급자명 <span style="color:#ef4444">*</span></label>
+            <input id="reg-name" type="text" placeholder="상호명 입력" value="${escapeHtml(d.name || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">사업자번호 <span style="color:#ef4444">*</span></label>
+            <input id="reg-biznum" type="text" placeholder="000-00-00000" value="${escapeHtml(d.bizNum || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">대표자명 <span style="color:#ef4444">*</span></label>
+            <input id="reg-rep" type="text" placeholder="대표자 성명" value="${escapeHtml(d.rep || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">계약구분 <span style="color:#ef4444">*</span></label>
+            ${radioBoxHtml('reg-contract', ['구매대행', '결제대행'], d.contractType || '구매대행')}
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">담당자명</label>
+            <input id="reg-manager" type="text" placeholder="담당자 성명" value="${escapeHtml(d.manager || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">담당자 연락처 <span style="color:#ef4444">*</span></label>
+            <input id="reg-manager-contact" type="text" placeholder="010-0000-0000" value="${escapeHtml(d.managerContact || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">구매대금 송금방식 <span style="color:#ef4444">*</span></label>
+            ${radioBoxHtml('reg-remit-type', ['통장지급', '페이지급'], d.remitType || '통장지급')}
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">송금자명</label>
+            <input id="reg-remitter" type="text" placeholder="송금자 성명 입력" value="${escapeHtml(d.remitter || '')}" class="form-field" style="height:40px">
+          </div>
+          <div>
+            <label style="${LABEL_STYLE}">공급자 은행</label>
+            <select id="reg-bank" class="form-field" style="height:40px;appearance:auto">
+              <option value=""${!d.bank ? ' selected' : ''}>-- 은행 선택 --</option>
               ${BANKS.map(b => `<option${d.bank === b ? ' selected' : ''}>${b}</option>`).join('')}
             </select>
           </div>
           <div>
-            <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">계좌번호</label>
-            <input id="account" type="text" placeholder="계좌번호를 입력하세요" value="${escapeHtml(d.account || '')}" class="form-field" style="height:40px">
-          </div>
-          <div>
-            <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">송금자명</label>
-            <input id="remitter" type="text" placeholder="송금자명을 입력하세요" value="${escapeHtml(d.remitter || '')}" class="form-field" style="height:40px">
-          </div>
-          <div style="grid-column:1/-1">
-            <label style="font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px">비고</label>
-            <textarea id="memo" placeholder="추가 정보를 입력하세요" rows="3" style="width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;font-size:0.875rem;color:#1a2260;outline:none;resize:vertical">${escapeHtml(d.memo || '')}</textarea>
+            <label style="${LABEL_STYLE}">공급자 계좌번호</label>
+            <input id="reg-account" type="text" placeholder="계좌번호 입력 (- 없이)" value="${escapeHtml(d.account || '')}" class="form-field" style="height:40px">
           </div>
         </div>
+
+        <div style="margin-top:28px">
+          <label style="${LABEL_STYLE}margin-bottom:12px">첨부서류</label>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            ${REGISTER_DOC_ITEMS.map(({ label, id, badge, badgeColor, hint, accept }) => `
+              <div class="vr-doc-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e5e7eb;border-radius:10px;padding:14px 18px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap">
+                  <span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;flex-shrink:0;${badgeColor}">${badge}</span>
+                  <span style="font-size:0.875rem;font-weight:700;color:#1a2260">${label}</span>
+                  <span style="font-size:0.75rem;color:#9ca3af">${hint}</span>
+                </div>
+                <label for="${id}" id="${id}-btn" class="vr-doc-btn" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 16px;font-size:0.8125rem;font-weight:700;color:#4b5563;cursor:pointer;background:#fff;white-space:nowrap">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  <span class="file-btn-text">파일 선택</span>
+                </label>
+                <input id="${id}" type="file" accept="${accept}" style="display:none" onchange="updateFileBtn('${id}')">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid #f3f4f6">
-          <button type="button" onclick="resetStep1()" class="btn-secondary" style="padding:10px 20px">초기화</button>
+          <button type="button" onclick="resetRegisterForm()" class="btn-secondary" style="padding:10px 20px">초기화</button>
           <button type="submit" class="btn-primary" style="padding:10px 20px;display:flex;align-items:center;gap:6px">
-            다음 단계
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            등록 신청
           </button>
         </div>
       </form>
     </div>`;
 
-  document.getElementById('step1-form').addEventListener('submit', e => {
+  document.getElementById('register-form').addEventListener('submit', e => {
     e.preventDefault();
-    const name = document.getElementById('vendor-name').value.trim();
-    const bizNum = document.getElementById('biz-num').value.trim();
-    if (!name || !bizNum) { showAlert('공급자명과 사업자등록번호는 필수입니다.'); return; }
-    step1Data = {
-      name,
-      bizNum,
-      repName: document.getElementById('rep-name').value.trim(),
-      contact: document.getElementById('contact').value.trim(),
-      email:   document.getElementById('email').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      bank:    document.getElementById('bank').value,
-      account: document.getElementById('account').value.trim(),
-      remitter: document.getElementById('remitter').value.trim(),
-      memo:    document.getElementById('memo').value.trim(),
-    };
-    currentStep = 2;
-    renderTab();
+    submitVendor();
   });
 }
 
-function resetStep1() {
-  step1Data = {};
+function resetRegisterForm() {
+  registerData = {};
   renderTab();
 }
 
-function renderStep2(content) {
-  const d = step1Data;
-  const summaryItems = [
-    ['공급자명',      d.name],
-    ['사업자등록번호', d.bizNum],
-    ['대표자명',      d.repName || '-'],
-    ['연락처',        d.contact || '-'],
-    ['이메일',        d.email   || '-'],
-    ['주소',          d.address || '-'],
-    ['결제은행',      d.bank],
-    ['계좌번호',      d.account || '-'],
-    ['송금자명',      d.remitter || '-'],
-  ];
-
-  const docItems = [
-    ['사업자등록증',     'biz-license-file', true],
-    ['공급자 통장사본',  'bankbook-file',    true],
-    ['공급자거래명세서', 'statement-file',   false],
-  ];
-
-  content.innerHTML = `
-    <div class="vr-card" style="margin:20px auto 0;width:100%;max-width:860px;border-radius:0 0 1rem 1rem;border:1px solid #e5e7eb;background:#fff;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
-      ${stepIndicatorHtml(2)}
-
-      <!-- Step 1 summary -->
-      <div style="background:#f8f9ff;border:1px solid #d4d8f0;border-radius:10px;padding:20px;margin-bottom:24px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <div style="width:20px;height:20px;border-radius:50%;background:#2B3990;display:flex;align-items:center;justify-content:center">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span style="font-size:0.875rem;font-weight:700;color:#24307a">입력한 기본 정보</span>
-          </div>
-          <button onclick="goStep1()" style="font-size:0.75rem;color:#2B3990;font-weight:600;background:none;border:1px solid #d4d8f0;border-radius:6px;padding:4px 10px;cursor:pointer">수정</button>
-        </div>
-        <div class="vr-grid-2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px">
-          ${summaryItems.map(([label, value]) => `
-            <div style="display:flex;gap:8px;font-size:0.8125rem">
-              <span style="color:#9ca3af;min-width:90px;font-weight:600;flex-shrink:0">${label}</span>
-              <span style="color:#1a2260;font-weight:500">${escapeHtml(value || '-')}</span>
-            </div>
-          `).join('')}
-          ${d.memo ? `<div style="display:flex;gap:8px;font-size:0.8125rem;grid-column:1/-1"><span style="color:#9ca3af;min-width:90px;font-weight:600;flex-shrink:0">비고</span><span style="color:#1a2260;font-weight:500">${escapeHtml(d.memo)}</span></div>` : ''}
-        </div>
-      </div>
-
-      <!-- File uploads -->
-      <div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B3990" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          <span style="font-size:0.875rem;font-weight:700;color:#1a2260">첨부서류 등록</span>
-        </div>
-        <div class="vr-docs-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-          ${docItems.map(([label, id, required]) => `
-            <div style="border:1px solid ${required ? '#fca5a5' : '#e5e7eb'};border-radius:8px;padding:14px;background:${required ? '#fff8f8' : '#f9fafb'}">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                <label for="${id}" style="font-size:0.8125rem;font-weight:700;color:#1a2260">${label}</label>
-                <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;${required ? 'background:#fef2f2;color:#ef4444' : 'background:#f3f4f6;color:#6b7280'}">${required ? '필수' : '선택'}</span>
-              </div>
-              <label for="${id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;border:1.5px dashed ${required ? '#fca5a5' : '#d1d5db'};border-radius:6px;padding:14px 8px;cursor:pointer;background:#fff">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${required ? '#ef4444' : '#9ca3af'}" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-                <span id="${id}-name" style="font-size:0.75rem;color:#6b7280;text-align:center;word-break:break-all">파일 선택</span>
-                <span style="font-size:10px;color:#9ca3af">PDF, JPG, PNG</span>
-              </label>
-              <input id="${id}" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="updateFileName('${id}')">
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid #f3f4f6">
-        <button type="button" onclick="goStep1()" class="btn-secondary" style="padding:10px 20px;display:flex;align-items:center;gap:6px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-          이전 단계
-        </button>
-        <button type="button" onclick="submitVendor()" class="btn-primary" style="padding:10px 20px;display:flex;align-items:center;gap:6px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          등록 신청
-        </button>
-      </div>
-    </div>`;
-}
-
-function goStep1() {
-  currentStep = 1;
-  renderTab();
-}
-
-function updateFileName(id) {
+function updateFileBtn(id) {
   const input = document.getElementById(id);
-  const nameEl = document.getElementById(id + '-name');
+  const btn = document.getElementById(id + '-btn');
+  const textEl = btn.querySelector('.file-btn-text');
   if (input.files.length) {
-    nameEl.textContent = input.files[0].name;
-    nameEl.style.color = '#2B3990';
-    nameEl.style.fontWeight = '600';
+    const name = input.files[0].name;
+    textEl.textContent = name.length > 18 ? name.slice(0, 15) + '...' : name;
+    btn.style.color = '#2B3990';
+    btn.style.borderColor = '#d4d8f0';
   } else {
-    nameEl.textContent = '파일 선택';
-    nameEl.style.color = '#6b7280';
-    nameEl.style.fontWeight = 'normal';
+    textEl.textContent = '파일 선택';
+    btn.style.color = '#4b5563';
+    btn.style.borderColor = '#e5e7eb';
   }
 }
 
 function submitVendor() {
-  if (!document.getElementById('biz-license-file').files.length) { showAlert('사업자등록증을 첨부해주세요.'); return; }
-  if (!document.getElementById('bankbook-file').files.length) { showAlert('공급자 통장사본을 첨부해주세요.'); return; }
+  const name = document.getElementById('reg-name').value.trim();
+  const bizNum = document.getElementById('reg-biznum').value.trim();
+  const rep = document.getElementById('reg-rep').value.trim();
+  const managerContact = document.getElementById('reg-manager-contact').value.trim();
+  if (!name || !bizNum || !rep || !managerContact) { showAlert('필수 항목을 모두 입력해주세요.'); return; }
+  if (!document.getElementById('doc-biz-license').files.length) { showAlert('사업자등록증을 첨부해주세요.'); return; }
+  if (!document.getElementById('doc-bankbook').files.length) { showAlert('통장사본을 첨부해주세요.'); return; }
+
+  registerData = {
+    name, bizNum, rep,
+    contractType: document.querySelector('input[name="reg-contract"]:checked').value,
+    manager: document.getElementById('reg-manager').value.trim(),
+    managerContact,
+    remitType: document.querySelector('input[name="reg-remit-type"]:checked').value,
+    remitter: document.getElementById('reg-remitter').value.trim(),
+    bank: document.getElementById('reg-bank').value,
+    account: document.getElementById('reg-account').value.trim(),
+  };
+
   showAlert('공급자 등록 신청이 완료되었습니다.\n검토 후 승인 처리됩니다.', () => {
-    currentStep = 1;
-    step1Data = {};
+    registerData = {};
     setTab('approval');
   });
 }
 
 function renderApproval(content) {
-  const STAT_STYLE = {
-    APPROVED:  'background:#eef0f9;color:#2B3990',
-    REVIEWING: 'background:#fef9c3;color:#a16207',
-    REJECTED:  'background:#fef2f2;color:#dc2626',
-  };
-
-  const rows = MOCK_VENDOR_APPROVALS.map(v => `
+  const rows = MOCK_VENDOR_APPROVALS.map((v, i) => `
     <tr onclick="location.href='vendor-detail.html?id=${v.id}'" style="border-bottom:1px solid #f3f4f6;cursor:pointer" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
-      <td style="padding:16px 20px;font-size:0.75rem;color:#9ca3af;font-family:monospace">${v.id}</td>
-      <td style="padding:16px 20px;font-size:0.875rem;font-weight:700;color:#1a2260">${escapeHtml(v.name)}</td>
-      <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.biz_num)}</td>
-      <td style="padding:16px 20px;font-size:0.875rem;color:#4b5563">${escapeHtml(v.rep)}</td>
-      <td style="padding:16px 20px;font-size:0.875rem;color:#6b7280;white-space:nowrap">${escapeHtml(v.applied)}</td>
-      <td style="padding:16px 20px;text-align:center">
-        <span style="font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:9999px;white-space:nowrap;${STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(v.status)}</span>
+      <td style="padding:14px 16px;font-size:0.75rem;color:#9ca3af;text-align:center">${i + 1}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#6b7280;white-space:nowrap">${escapeHtml(v.applied)}</td>
+      <td style="padding:14px 16px;font-size:0.875rem;font-weight:700;color:#1a2260;white-space:nowrap">${escapeHtml(v.name)}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.biz_num)}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.rep)}</td>
+      <td style="padding:14px 16px;text-align:center">${badgeHtml(v.contract_type, CONTRACT_STYLE[v.contract_type] ?? 'background:#f3f4f6;color:#6b7280')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.manager || '-')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.manager_contact || '-')}</td>
+      <td style="padding:14px 16px;text-align:center">${badgeHtml(v.remit_type, REMIT_TYPE_STYLE[v.remit_type] ?? 'background:#f3f4f6;color:#6b7280')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.remitter || '-')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.bank || '-')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#4b5563;white-space:nowrap">${escapeHtml(v.account || '-')}</td>
+      <td style="padding:14px 16px;text-align:center;white-space:nowrap">
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.8125rem;font-weight:700;color:#2B3990">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          ${(v.docs || []).length}건
+        </span>
       </td>
+      <td style="padding:14px 16px;text-align:center">${badgeHtml(v.status, STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280')}</td>
+      <td style="padding:14px 16px;font-size:0.8125rem;color:#6b7280;text-align:center;white-space:nowrap">${v.reviewed ? escapeHtml(v.reviewed) : '-'}</td>
     </tr>`).join('');
 
   const listItems = MOCK_VENDOR_APPROVALS.map(v => `
-    <div onclick="location.href='vendor-detail.html?id=${v.id}'" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 4px;border-bottom:1px solid #f3f4f6;cursor:pointer">
-      <div style="min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <div onclick="location.href='vendor-detail.html?id=${v.id}'" style="padding:14px 4px;border-bottom:1px solid #f3f4f6;cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
           <span style="font-size:0.9375rem;font-weight:800;color:#1a2260">${escapeHtml(v.name)}</span>
-          <span style="font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:9999px;white-space:nowrap;${STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280'}">${escapeHtml(v.status)}</span>
+          ${badgeHtml(v.status, STAT_STYLE[v.status_cd] ?? 'background:#f3f4f6;color:#6b7280')}
         </div>
-        <div style="font-size:0.75rem;color:#9ca3af">등록번호 ${v.id} · ${escapeHtml(v.biz_num)} · ${escapeHtml(v.applied)}</div>
+        <span style="color:#9ca3af;flex-shrink:0">›</span>
       </div>
-      <span style="color:#9ca3af;flex-shrink:0">›</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        ${badgeHtml(v.contract_type, CONTRACT_STYLE[v.contract_type] ?? 'background:#f3f4f6;color:#6b7280')}
+        ${badgeHtml(v.remit_type, REMIT_TYPE_STYLE[v.remit_type] ?? 'background:#f3f4f6;color:#6b7280')}
+      </div>
+      <div style="font-size:0.75rem;color:#9ca3af">${escapeHtml(v.biz_num)} · 담당자 ${escapeHtml(v.manager || '-')} · ${escapeHtml(v.applied)}</div>
     </div>`).join('');
 
   content.innerHTML = `
     <div class="surface-card" style="margin-top:20px">
       <!-- Desktop table -->
       <div class="hidden md:block" style="overflow-x:auto">
-        <table style="width:100%;min-width:760px">
+        <table style="width:100%;min-width:1700px">
           <thead>
             <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
-              <th style="text-align:left;padding:12px 20px;width:100px">등록번호</th>
-              <th style="text-align:left;padding:12px 20px;min-width:150px">공급자명</th>
-              <th style="text-align:left;padding:12px 20px;width:150px">사업자번호</th>
-              <th style="text-align:left;padding:12px 20px;width:110px">대표자</th>
-              <th style="text-align:left;padding:12px 20px;width:130px">등록일자</th>
-              <th style="text-align:center;padding:12px 20px;width:110px">상태</th>
+              <th style="text-align:center;padding:12px 16px;width:60px">순번</th>
+              <th style="text-align:left;padding:12px 16px;width:110px">등록일</th>
+              <th style="text-align:left;padding:12px 16px;min-width:130px">공급자명</th>
+              <th style="text-align:left;padding:12px 16px;width:130px">사업자번호</th>
+              <th style="text-align:left;padding:12px 16px;width:90px">대표자명</th>
+              <th style="text-align:center;padding:12px 16px;width:100px">계약구분</th>
+              <th style="text-align:left;padding:12px 16px;width:90px">담당자명</th>
+              <th style="text-align:left;padding:12px 16px;width:130px">담당자연락처</th>
+              <th style="text-align:center;padding:12px 16px;width:100px">정산방식</th>
+              <th style="text-align:left;padding:12px 16px;width:90px">송금자명</th>
+              <th style="text-align:left;padding:12px 16px;width:100px">공급자은행</th>
+              <th style="text-align:left;padding:12px 16px;width:150px">계좌번호</th>
+              <th style="text-align:center;padding:12px 16px;width:90px">첨부서류</th>
+              <th style="text-align:center;padding:12px 16px;width:100px">승인상태</th>
+              <th style="text-align:center;padding:12px 16px;width:110px">승인일</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
