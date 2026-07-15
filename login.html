@@ -124,7 +124,7 @@
       bizNum: MOCK_STORE_INFO.BIZ_NUM,
       phone: '010-1234-5678',
     };
-    const recoveryState = { type: null, primary: '', phone: '', code: '', verified: false };
+    const recoveryState = { type: null, primary: '', bizNum1: '', bizNum2: '', bizNum3: '', phone: '', code: '', verified: false };
 
     function normalizePhone(value) {
       return String(value ?? '').replace(/\D/g, '');
@@ -134,6 +134,9 @@
       document.getElementById('recovery-modal')?.remove();
       recoveryState.type = null;
       recoveryState.primary = '';
+      recoveryState.bizNum1 = '';
+      recoveryState.bizNum2 = '';
+      recoveryState.bizNum3 = '';
       recoveryState.phone = '';
       recoveryState.code = '';
       recoveryState.verified = false;
@@ -142,6 +145,9 @@
     function openRecoveryModal(type) {
       recoveryState.type = type;
       recoveryState.primary = '';
+      recoveryState.bizNum1 = '';
+      recoveryState.bizNum2 = '';
+      recoveryState.bizNum3 = '';
       recoveryState.phone = '';
       recoveryState.code = '';
       recoveryState.verified = false;
@@ -179,10 +185,21 @@
       const isFindId = recoveryState.type === 'find-id';
       return `
         <div style="display:flex;flex-direction:column;gap:1rem;padding-top:1.25rem">
+          ${isFindId ? `
           <div class="recovery-field">
-            <label for="recovery-primary">${isFindId ? '사업자번호' : '아이디'}</label>
-            <input id="recovery-primary" type="text" class="form-field" style="height:2.75rem" placeholder="${isFindId ? '사업자번호를 입력해 주세요' : '아이디를 입력해 주세요'}" value="${escapeHtml(recoveryState.primary)}">
-          </div>
+            <label for="recovery-biznum-1">사업자번호</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input id="recovery-biznum-1" type="text" class="form-field" style="height:2.75rem;text-align:center" inputmode="numeric" maxlength="3" placeholder="000" value="${escapeHtml(recoveryState.bizNum1)}">
+              <span style="color:#9ca3af">-</span>
+              <input id="recovery-biznum-2" type="text" class="form-field" style="height:2.75rem;text-align:center" inputmode="numeric" maxlength="2" placeholder="00" value="${escapeHtml(recoveryState.bizNum2)}">
+              <span style="color:#9ca3af">-</span>
+              <input id="recovery-biznum-3" type="text" class="form-field" style="height:2.75rem;text-align:center" inputmode="numeric" maxlength="5" placeholder="00000" value="${escapeHtml(recoveryState.bizNum3)}">
+            </div>
+          </div>` : `
+          <div class="recovery-field">
+            <label for="recovery-primary">아이디</label>
+            <input id="recovery-primary" type="text" class="form-field" style="height:2.75rem" placeholder="아이디를 입력해 주세요" value="${escapeHtml(recoveryState.primary)}">
+          </div>`}
           <div class="recovery-field">
             <label for="recovery-phone">휴대폰 번호</label>
             <input id="recovery-phone" type="tel" class="form-field" style="height:2.75rem" placeholder="휴대폰 번호를 입력해 주세요" inputmode="tel" value="${escapeHtml(recoveryState.phone)}">
@@ -249,17 +266,38 @@
         return;
       }
 
-      const primary = document.getElementById('recovery-primary');
+      const isFindId = recoveryState.type === 'find-id';
       const phone = document.getElementById('recovery-phone');
       const sendBtn = document.getElementById('recovery-send-btn');
-      const updateSendState = () => {
-        recoveryState.primary = primary.value.trim();
-        recoveryState.phone = phone.value.trim();
-        sendBtn.disabled = !primary.value.trim() || normalizePhone(phone.value).length < 10;
-      };
-      primary.addEventListener('input', updateSendState);
-      phone.addEventListener('input', updateSendState);
-      updateSendState();
+
+      if (isFindId) {
+        const biznum1 = document.getElementById('recovery-biznum-1');
+        const biznum2 = document.getElementById('recovery-biznum-2');
+        const biznum3 = document.getElementById('recovery-biznum-3');
+        const updateSendState = () => {
+          recoveryState.bizNum1 = biznum1.value.replace(/\D/g, '').slice(0, 3);
+          recoveryState.bizNum2 = biznum2.value.replace(/\D/g, '').slice(0, 2);
+          recoveryState.bizNum3 = biznum3.value.replace(/\D/g, '').slice(0, 5);
+          recoveryState.primary = `${recoveryState.bizNum1}-${recoveryState.bizNum2}-${recoveryState.bizNum3}`;
+          recoveryState.phone = phone.value.trim();
+          sendBtn.disabled = recoveryState.bizNum1.length < 3 || recoveryState.bizNum2.length < 2 || recoveryState.bizNum3.length < 5 || normalizePhone(phone.value).length < 10;
+        };
+        biznum1.addEventListener('input', () => { updateSendState(); if (biznum1.value.length >= 3) biznum2.focus(); });
+        biznum2.addEventListener('input', () => { updateSendState(); if (biznum2.value.length >= 2) biznum3.focus(); });
+        biznum3.addEventListener('input', updateSendState);
+        phone.addEventListener('input', updateSendState);
+        updateSendState();
+      } else {
+        const primary = document.getElementById('recovery-primary');
+        const updateSendState = () => {
+          recoveryState.primary = primary.value.trim();
+          recoveryState.phone = phone.value.trim();
+          sendBtn.disabled = !primary.value.trim() || normalizePhone(phone.value).length < 10;
+        };
+        primary.addEventListener('input', updateSendState);
+        phone.addEventListener('input', updateSendState);
+        updateSendState();
+      }
 
       sendBtn.addEventListener('click', () => {
         recoveryState.code = String(Math.floor(100000 + Math.random() * 900000));
