@@ -121,7 +121,7 @@
 
     const RECOVERY_ACCOUNT = {
       id: localStorage.getItem('LOGIN_ID') || 'bizlink-demo',
-      name: MOCK_STORE_INFO.BIZ_OWNER,
+      bizNum: MOCK_STORE_INFO.BIZ_NUM,
       phone: '010-1234-5678',
     };
     const recoveryState = { type: null, primary: '', phone: '', code: '', verified: false };
@@ -180,8 +180,8 @@
       return `
         <div style="display:flex;flex-direction:column;gap:1rem;padding-top:1.25rem">
           <div class="recovery-field">
-            <label for="recovery-primary">${isFindId ? '이름' : '아이디'}</label>
-            <input id="recovery-primary" type="text" class="form-field" style="height:2.75rem" placeholder="${isFindId ? '이름을 입력해 주세요' : '아이디를 입력해 주세요'}" value="${escapeHtml(recoveryState.primary)}">
+            <label for="recovery-primary">${isFindId ? '사업자번호' : '아이디'}</label>
+            <input id="recovery-primary" type="text" class="form-field" style="height:2.75rem" placeholder="${isFindId ? '사업자번호를 입력해 주세요' : '아이디를 입력해 주세요'}" value="${escapeHtml(recoveryState.primary)}">
           </div>
           <div class="recovery-field">
             <label for="recovery-phone">휴대폰 번호</label>
