@@ -102,6 +102,7 @@ const api = {
         REMIT_AMOUNT: remitAmount,
         REMIT_BANK: pick(['국민은행', '신한은행', '하나은행']),
         STATEMENT_YN: 'N',
+        CARD_TRADE_NO: `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}${String(Math.floor(10000000 + Math.random() * 90000000))}`,
       },
       items: vendorItems.map((it, i) => ({
         SEQ: `${no}-${i}`,
