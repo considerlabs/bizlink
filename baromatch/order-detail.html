@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>바로매치 | 주문 상세</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bm-page">
+  <div id="bm-back-header"></div>
+  <div id="detail-content"></div>
+  <div id="bm-bottom-nav"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+function infoRow(label, valueHtml) {
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6">
+      <span style="font-size:13.5px;color:#6b7280">${label}</span>
+      <span style="font-size:13.5px;font-weight:700;color:#1f2937">${valueHtml}</span>
+    </div>`;
+}
+
+function renderDetail() {
+  const orderNo = new URLSearchParams(location.search).get('no');
+  const order = orderNo ? findOrder(orderNo) : null;
+  const el = document.getElementById('detail-content');
+
+  if (!order) {
+    el.innerHTML = `
+      <div style="padding:100px 24px 0;text-align:center">
+        <p style="font-size:14px;color:#9ca3af;margin-bottom:16px">주문 정보를 찾을 수 없습니다.</p>
+        <a href="history.html" class="bm-btn-primary" style="display:inline-flex;height:44px;padding:0 24px">결제내역으로</a>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <section style="padding:18px 16px 8px">
+      <h2 style="font-size:14px;font-weight:800;color:#1f2937;margin-bottom:10px">주문 정보</h2>
+      <div style="background:#f9fafb;border-radius:0.875rem;padding:4px 16px">
+        ${infoRow('주문번호', order.orderNo)}
+        ${infoRow('주문일시', `${order.date.replace(/-/g, '.')} ${order.time}`)}
+        ${infoRow('주문상태', `<span style="background:#eef1fb;color:#1a2260;font-size:11px;font-weight:800;padding:4px 10px;border-radius:9999px">결제완료</span>`)}
+        ${infoRow('결제수단', '카드결제')}
+        ${infoRow('카드사', escapeHtml(order.cardCompany))}
+        ${infoRow('할부', escapeHtml(order.installment))}
+      </div>
+    </section>
+
+    <section style="padding:16px">
+      <h2 style="font-size:14px;font-weight:800;color:#1f2937;margin-bottom:10px">주문 상품</h2>
+      ${order.items.map(i => {
+        const svc = bmSvc(i.id);
+        return `
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6">
+          <div style="width:52px;height:52px;border-radius:0.75rem;background:${svc.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:22px">${svc.icon}</span>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13.5px;font-weight:700;color:#1f2937">${escapeHtml(svc.name)}</div>
+            <div style="font-size:11.5px;color:#9ca3af;margin-top:2px">기본옵션 · 수량 ${i.qty}개</div>
+          </div>
+          <div style="font-size:13.5px;font-weight:700;color:#1f2937">${comma(svc.price * i.qty)}원</div>
+        </div>`;
+      }).join('')}
+    </section>
+
+    <section style="padding:8px 16px 24px">
+      <h2 style="font-size:14px;font-weight:800;color:#1f2937;margin-bottom:10px">결제 금액</h2>
+      <div style="background:#f9fafb;border-radius:0.875rem;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>상품금액</span><span>${comma(order.subtotal)}원</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>관리수수료</span><span>${comma(order.fee)}원</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e5e7eb">
+          <span style="font-size:14px;font-weight:700;color:#374151">총 결제금액</span>
+          <span style="font-size:18px;font-weight:800;color:#1a2260">${comma(order.total)}원</span>
+        </div>
+      </div>
+    </section>`;
+}
+
+renderBmBackHeader('주문 상세');
+renderDetail();
+renderBmNav('history');
+</script>
+</body>
+</html>

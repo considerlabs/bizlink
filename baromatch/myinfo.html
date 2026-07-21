@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>바로매치 | 내정보</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bm-page">
+  <header style="padding:18px 16px 4px">
+    <h1 style="font-size:1.25rem;font-weight:800;color:#111827">내정보</h1>
+  </header>
+  <div id="myinfo-content"></div>
+  <div id="bm-bottom-nav"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+function renderMyInfo() {
+  const profile = getProfile();
+  const history = getHistory();
+  const totalSpent = history.reduce((sum, o) => sum + o.total, 0);
+  const cartCount = getCart().length;
+
+  document.getElementById('myinfo-content').innerHTML = `
+    <section style="padding:14px 16px;display:flex;align-items:center;gap:14px;border-bottom:8px solid #f3f4f6">
+      <span style="width:52px;height:52px;border-radius:9999px;background:#eef1fb;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1a2260" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#1f2937">${escapeHtml(profile.NAME || '-')}</div>
+        <div style="font-size:12.5px;color:#9ca3af;margin-top:2px">@${escapeHtml(profile.LOGIN_ID)}</div>
+        <div style="font-size:12px;color:#9ca3af">회원번호: ${escapeHtml(profile.MEMBER_NO)}</div>
+      </div>
+    </section>
+
+    <section style="padding:16px;border-bottom:8px solid #f3f4f6">
+      <div style="background:#f9fafb;border-radius:0.875rem;padding:16px;display:flex">
+        ${[['1회한도', comma(profile.LIMIT_ONCE) + '원'], ['월한도', comma(profile.LIMIT_MONTH) + '원'], ['총 구매금액', comma(totalSpent) + '원']].map(([label, value]) => `
+          <div style="flex:1;text-align:center">
+            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px">${label}</div>
+            <div style="font-size:14px;font-weight:800;color:#1f2937">${value}</div>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <section style="padding:16px;border-bottom:8px solid #f3f4f6">
+      <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">주문 현황</h2>
+      <div style="background:#f9fafb;border-radius:0.875rem;padding:16px;display:flex">
+        ${[['결제완료', history.length, 'history.html'], ['배송중', 0, null], ['배송완료', 0, null], ['장바구니', cartCount, 'basket.html']].map(([label, value, href]) => `
+          <div style="flex:1;text-align:center">
+            ${href
+              ? `<a href="${href}" style="font-size:17px;font-weight:800;color:#1a2260;text-decoration:underline">${value}</a>`
+              : `<div style="font-size:17px;font-weight:800;color:#9ca3af">${value}</div>`}
+            <div style="font-size:11.5px;color:#9ca3af;margin-top:4px">${label}</div>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <section style="padding:20px 16px 8px;border-bottom:8px solid #f3f4f6">
+      <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:6px">나의 쇼핑</h2>
+      ${myinfoRow('history.html', null, '결제내역 조회', 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z;M9 7h6;M9 11h6;M9 15h4')}
+      ${myinfoRow('basket.html', null, '장바구니', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z;M3 6h18;M16 10a4 4 0 0 1-8 0')}
+      ${myinfoRow(null, 'address', '배송지 수정', 'M10 17h4V5H2v12h3;M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1;M6 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z;M17 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z')}
+      ${myinfoRow(null, 'profile', '개인정보 수정', 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2;M9 2h6v4H9z;M9 12h6;M9 16h4')}
+    </section>
+
+    <section style="padding:12px 16px 24px">
+      <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:6px">고객지원</h2>
+      ${myinfoRow(null, 'support', '고객센터', 'M3 11a9 9 0 0 1 18 0v6a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h3;M3 11v6a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H3')}
+      ${myinfoRow(null, 'notice', '공지사항', 'M3 11l18-5v12L3 13v-2z;M11.6 16.8a2 2 0 1 1-3.2 2.4')}
+      ${myinfoRow(null, 'logout', '로그아웃', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4;M16 17l5-5-5-5;M21 12H9')}
+    </section>
+  `;
+
+  document.querySelectorAll('[data-action]').forEach(row => {
+    row.addEventListener('click', e => handleMyInfoAction(row.dataset.action, e.currentTarget));
+  });
+}
+
+function myinfoRow(href, action, label, iconPath) {
+  const attrs = href ? `href="${href}"` : `href="javascript:void(0)" data-action="${action}"`;
+  return `
+    <a ${attrs} style="display:flex;align-items:center;gap:12px;padding:13px 2px;text-decoration:none;color:inherit;border-bottom:1px solid #f3f4f6">
+      ${svgIcon(iconPath, 19, '#1a2260')}
+      <span style="flex:1;font-size:14px;font-weight:600;color:#1f2937">${label}</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+    </a>`;
+}
+
+function handleMyInfoAction(action, el) {
+  if (action === 'address') openAddressSheet();
+  else if (action === 'profile') openProfileSheet();
+  else if (action === 'support') showBmToast('고객센터: 1544-0000 (평일 09:00~18:00)');
+  else if (action === 'notice') showBmAlert('등록된 공지사항이 없습니다.');
+  else if (action === 'logout') showBmConfirm('로그아웃 하시겠습니까?', () => showBmToast('로그아웃 되었습니다.'));
+}
+
+function openAddressSheet() {
+  const addr = getAddress();
+  const body = `
+    <h2 style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:14px">배송지 수정</h2>
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">배송지 주소</label>
+    <input id="addr-base" class="bm-field" placeholder="기본주소" value="${escapeHtml(addr.base)}" style="margin-bottom:8px">
+    <input id="addr-detail" class="bm-field" placeholder="상세주소" value="${escapeHtml(addr.detail)}" style="margin-bottom:16px">
+    <button id="addr-save" class="bm-btn-primary" style="width:100%;height:48px;font-size:14.5px">저장하기</button>
+  `;
+  openBmSheet(body, close => {
+    document.getElementById('addr-save').addEventListener('click', () => {
+      saveAddress({ base: document.getElementById('addr-base').value, detail: document.getElementById('addr-detail').value });
+      close();
+      showBmToast('배송지가 저장되었습니다.');
+    });
+  });
+}
+
+function openProfileSheet() {
+  const profile = getProfile();
+  let sentCode = null;
+  let verified = false;
+
+  const body = `
+    <h2 style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:14px">개인정보 수정</h2>
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">로그인 ID</label>
+    <input class="bm-field" value="${escapeHtml(profile.LOGIN_ID)}" disabled style="margin-bottom:14px;background:#f3f4f6;color:#9ca3af">
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">이름</label>
+    <input id="pf-name" class="bm-field" placeholder="홍길동" value="${escapeHtml(profile.NAME)}" style="margin-bottom:14px">
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">휴대폰 번호</label>
+    <input id="pf-phone" class="bm-field" placeholder="010-0000-0000" value="${escapeHtml(profile.PHONE)}" style="margin-bottom:18px">
+
+    <div style="height:1px;background:#f3f4f6;margin-bottom:18px"></div>
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">비밀번호</label>
+    <input id="pf-pw" type="password" class="bm-field" placeholder="변경하지 않으려면 비워두세요" style="margin-bottom:14px">
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">비밀번호 확인</label>
+    <input id="pf-pw2" type="password" class="bm-field" placeholder="비밀번호를 다시 입력하세요" style="margin-bottom:18px">
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">본인인증 휴대폰번호</label>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="pf-verify-phone" class="bm-field" value="${escapeHtml(profile.PHONE)}" style="flex:1">
+      <button id="pf-send-code" class="bm-btn-primary" style="flex-shrink:0;height:2.75rem;font-size:13px">인증번호 요청</button>
+    </div>
+
+    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">인증번호 입력</label>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input id="pf-code" class="bm-field" placeholder="인증번호 6자리" maxlength="6" inputmode="numeric" style="flex:1">
+      <button id="pf-verify-code" class="bm-btn-secondary" style="flex-shrink:0;height:2.75rem;font-size:13px">확인</button>
+    </div>
+
+    <button id="pf-save" class="bm-btn-primary" style="width:100%;height:48px;font-size:14.5px" disabled>저장하기</button>
+  `;
+
+  openBmSheet(body, close => {
+    document.getElementById('pf-send-code').addEventListener('click', () => {
+      sentCode = String(Math.floor(100000 + Math.random() * 900000));
+      showBmAlert(`인증번호가 발송되었습니다.\n인증번호: ${sentCode}`);
+    });
+    document.getElementById('pf-verify-code').addEventListener('click', () => {
+      const input = document.getElementById('pf-code').value.trim();
+      if (!sentCode) { showBmAlert('먼저 인증번호를 요청해 주세요.'); return; }
+      if (input !== sentCode) { showBmAlert('인증번호가 일치하지 않습니다.'); return; }
+      verified = true;
+      document.getElementById('pf-save').disabled = false;
+      showBmToast('휴대폰 인증이 완료되었습니다.');
+    });
+    document.getElementById('pf-save').addEventListener('click', () => {
+      if (!verified) return;
+      const pw = document.getElementById('pf-pw').value;
+      const pw2 = document.getElementById('pf-pw2').value;
+      if (pw && pw !== pw2) { showBmAlert('비밀번호가 일치하지 않습니다.'); return; }
+      saveProfile({
+        NAME: document.getElementById('pf-name').value,
+        PHONE: document.getElementById('pf-phone').value,
+      });
+      close();
+      renderMyInfo();
+      showBmToast('개인정보가 저장되었습니다.');
+    });
+  });
+}
+
+renderMyInfo();
+renderBmNav('myinfo');
+</script>
+</body>
+</html>

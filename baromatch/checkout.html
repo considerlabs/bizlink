@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>바로매치 | 주문/결제</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bm-page" style="padding-bottom:24px">
+  <div id="bm-back-header"></div>
+  <div id="checkout-content"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script>
+const checkoutItems = getCheckoutItems().map(i => ({ ...i, svc: bmSvc(i.id) }));
+if (checkoutItems.length === 0) window.location.href = 'basket.html';
+
+const expert = BM_EXPERTS[Math.floor(Math.random() * BM_EXPERTS.length)];
+const subtotal = checkoutItems.reduce((sum, i) => sum + i.svc.price * i.qty, 0);
+const fee = Math.round(subtotal * BM_PLATFORM_FEE_RATE);
+const total = subtotal + fee;
+
+document.getElementById('checkout-content').innerHTML = `
+  <section style="padding:16px">
+    <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">주문 상품 (${checkoutItems.length})</h2>
+    ${checkoutItems.map(i => `
+      <div style="display:flex;gap:12px;padding:10px 0">
+        <div style="width:56px;height:56px;border-radius:0.75rem;background:${i.svc.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:22px">${i.svc.icon}</span>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#1f2937">${escapeHtml(i.svc.name)}</div>
+          <div style="font-size:12px;color:#9ca3af;margin-top:2px">기본옵션 · 수량 ${i.qty}개</div>
+          <div style="font-size:13.5px;font-weight:700;color:#1f2937;margin-top:4px">${comma(i.svc.price * i.qty)}원</div>
+        </div>
+      </div>
+    `).join('')}
+  </section>
+
+  <div style="height:8px;background:#f3f4f6"></div>
+
+  <section style="padding:16px">
+    <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">결제 수단</h2>
+    <div style="display:flex;align-items:center;gap:10px;border:1px solid #e5e7eb;border-radius:0.875rem;padding:14px 16px">
+      <span style="width:18px;height:18px;border-radius:9999px;border:2px solid #1a2260;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="width:9px;height:9px;border-radius:9999px;background:#1a2260"></span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+      <span style="font-size:14px;font-weight:700;color:#1f2937">신용/체크카드</span>
+    </div>
+  </section>
+
+  <div style="height:8px;background:#f3f4f6"></div>
+
+  <section style="padding:16px">
+    <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">최종 결제금액</h2>
+    <div style="background:#f9fafb;border-radius:0.875rem;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>상품금액</span><span>${comma(subtotal)}원</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#6b7280"><span>관리수수료 (5.5%)</span><span>${comma(fee)}원</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #e5e7eb">
+        <span style="font-size:14px;font-weight:700;color:#374151">총 결제금액</span>
+        <span style="font-size:18px;font-weight:800;color:#1a2260">${comma(total)}원</span>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;background:#eef1fb;border-radius:0.875rem;padding:14px 16px;display:flex;flex-direction:column;gap:6px;position:relative">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:34px;height:34px;border-radius:9999px;background:#1a2260;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:#1a2260">담당 전문가</div>
+          <div style="font-size:11.5px;color:#6b7280">매칭된 서비스 전문가</div>
+        </div>
+        <span style="margin-left:auto;background:#16a34a;color:#fff;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:9999px">매칭완료</span>
+      </div>
+      <p style="font-size:13px;color:#374151"><b style="color:#1a2260">${expert}</b> 전문가님이 서비스를 진행합니다.</p>
+    </div>
+
+    <button id="pay-btn" class="bm-btn-primary" style="width:100%;height:50px;font-size:15px;margin-top:18px">결제하기</button>
+  </section>
+</div>`;
+
+document.getElementById('pay-btn').addEventListener('click', () => {
+  openInicisModal({
+    amount: total,
+    onSuccess: ({ cardCompany, installment }) => {
+      const record = addOrder(checkoutItems.map(i => ({ id: i.id, qty: i.qty })), { expert, cardCompany, installment });
+      removeFromCart(checkoutItems.map(i => i.id));
+      sessionStorage.removeItem(BM_CHECKOUT_KEY);
+      showBmAlert(`주문이 완료되었습니다.\n주문번호: ${record.orderNo}`, () => { window.location.href = `order-detail.html?no=${record.orderNo}`; });
+    },
+  });
+});
+
+renderBmBackHeader('주문/결제');
+</script>
+</body>
+</html>

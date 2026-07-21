@@ -1,0 +1,88 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: 'PretendardVariable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #d1d5db;
+  color: #111827;
+}
+
+.bm-page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #f8f9fb;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  position: relative;
+}
+
+.bm-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+  background: #1a2260; color: #fff; border: none; border-radius: 0.75rem;
+  font-weight: 700; font-size: 0.875rem; cursor: pointer; padding: 0 1rem;
+  text-decoration: none; transition: background 0.15s;
+}
+.bm-btn-primary:hover:not(:disabled) { background: #141b4d; }
+.bm-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bm-btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+  background: #fff; color: #4b5563; border: 1px solid #e5e7eb; border-radius: 0.75rem;
+  font-weight: 700; font-size: 0.875rem; cursor: pointer; padding: 0 1rem;
+  text-decoration: none;
+}
+
+.bm-field {
+  width: 100%; border: 1px solid #e5e7eb; border-radius: 0.625rem;
+  padding: 0 0.875rem; height: 2.75rem; font-size: 0.875rem; color: #1a2260;
+  background: #f9fafb; outline: none;
+}
+.bm-field:focus { border-color: #1a2260; background: #fff; }
+.bm-field::placeholder { color: #9ca3af; }
+
+/* Category tabs */
+.bm-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.bm-tabs::-webkit-scrollbar { display: none; }
+.bm-tab {
+  flex: 0 0 auto; border-radius: 9999px; padding: 8px 13px; font-size: 12.5px; font-weight: 700;
+  border: 1px solid #e5e7eb; background: #fff; color: #6b7280; cursor: pointer; white-space: nowrap;
+}
+.bm-tab.active { background: #1a2260; border-color: #1a2260; color: #fff; }
+
+/* Sort */
+.bm-sort-btn {
+  border: 1px solid #e5e7eb; background: #fff; color: #374151; font-size: 12px; font-weight: 700;
+  border-radius: 9999px; padding: 7px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+}
+.bm-sort-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16); overflow: hidden; z-index: 15; min-width: 108px;
+}
+.bm-sort-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; font-size: 13px; font-weight: 600;
+  color: #374151; background: #fff; border: none; cursor: pointer; }
+.bm-sort-opt.active { background: #1a2260; color: #fff; }
+.bm-sort-opt:hover:not(.active) { background: #f3f4f6; }
+
+/* Product grid */
+.bm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.bm-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; }
+.bm-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.bm-card-name { font-size: 13.5px; font-weight: 700; color: #1f2937; line-height: 1.3; }
+.bm-card-price { font-size: 16px; font-weight: 800; color: #1a2260; }
+.bm-card-rating { font-size: 11.5px; color: #6b7280; display: flex; align-items: center; gap: 3px; }
+.bm-card-footer { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+
+.bm-qty-btn {
+  width: 26px; height: 26px; border-radius: 9999px; border: 1px solid #e5e7eb; background: #fff;
+  color: #4b5563; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.bm-qty-val { min-width: 18px; text-align: center; font-size: 13px; font-weight: 700; color: #1f2937; }
+.bm-add-btn {
+  flex: 1; min-width: 0; background: #1a2260; color: #fff; border: none; border-radius: 9999px;
+  font-size: 12px; font-weight: 700; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.bm-add-btn:active { background: #141b4d; }
+
+@keyframes bm-toast-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes bm-sheet-in { from { transform: translateY(24px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
