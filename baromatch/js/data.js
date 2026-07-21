@@ -42,7 +42,8 @@ const BM_MEMBER = {
 
 const BM_EXPERTS = ['홍길자', '김민준', '이서연', '박도윤', '최지우'];
 
-const BM_CARD_COMPANIES = ['하나카드', '국민카드', '신한카드', '삼성카드', '현대카드', '롯데카드', '우리카드', 'NH농협카드'];
+const BM_CARD_COMPANIES = ['현대카드', '비씨카드', 'KB국민카드', '삼성카드', '신한카드', '롯데카드', 'NH농협카드', '하나카드', '씨티카드', '케이뱅크카드', '하나카드(외환)'];
+const BM_SIMPLE_PAYS = ['카카오페이', 'L.pay', 'PAYCO', 'KPAY', 'INIpay-간편결제'];
 const BM_INSTALLMENTS = ['일시불', '2개월', '3개월', '6개월', '12개월'];
 
 function bmSvc(id) {

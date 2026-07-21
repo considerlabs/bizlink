@@ -176,7 +176,7 @@ function showBmAlert(message, onClose) {
   document.getElementById('bm-alert')?.remove();
   const modal = document.createElement('div');
   modal.id = 'bm-alert';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
   modal.innerHTML = `
     <div style="width:100%;max-width:340px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
       <div style="padding:1.5rem 1.5rem 1rem">
@@ -196,7 +196,7 @@ function showBmConfirm(message, onYes) {
   document.getElementById('bm-confirm')?.remove();
   const modal = document.createElement('div');
   modal.id = 'bm-confirm';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
   modal.innerHTML = `
     <div style="width:100%;max-width:340px;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden">
       <div style="padding:1.5rem 1.5rem 1rem">
@@ -213,32 +213,129 @@ function showBmConfirm(message, onYes) {
   document.getElementById('bm-confirm-yes').addEventListener('click', () => { modal.remove(); onYes?.(); });
 }
 
-// ---------- Inicis card payment module (mock PG popup) ----------
-function openInicisModal({ amount, onSuccess, onCancel }) {
+// ---------- Inicis card payment module (mock KG이니시스 표준결제창) ----------
+function openInicisModal({ amount, productLabel, onSuccess, onCancel }) {
   document.getElementById('bm-inicis-overlay')?.remove();
   const overlay = document.createElement('div');
   overlay.id = 'bm-inicis-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:1rem';
-  overlay.innerHTML = `
-    <div style="width:100%;max-width:400px;max-height:92vh;background:#fff;border-radius:1rem;box-shadow:0 12px 40px rgba(0,0,0,0.35);overflow:hidden;display:flex;flex-direction:column">
-      <div style="background:#101828;padding:14px 18px;display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span style="color:#fff;font-size:14px;font-weight:800;letter-spacing:0.01em">이니시스 안전결제</span>
-        <span style="margin-left:auto;font-size:10px;color:#9ca3af;font-weight:600;border:1px solid #374151;border-radius:9999px;padding:2px 8px">TEST</span>
-        <button id="inicis-close" aria-label="닫기" style="background:none;border:none;color:#9ca3af;font-size:1.1rem;line-height:1;cursor:pointer;padding:0 0 0 8px">×</button>
+  document.body.appendChild(overlay);
+
+  const close = () => { overlay.remove(); onCancel?.(); };
+  let agreed = false;
+  const shell = (innerHtml) => `
+    <div style="width:100%;max-width:400px;max-height:92vh;background:#fff;border-radius:1rem;box-shadow:0 12px 40px rgba(0,0,0,0.35);overflow:hidden;display:flex;flex-direction:column">${innerHtml}</div>`;
+
+  function renderSelectStep() {
+    overlay.innerHTML = shell(`
+      <div style="background:#e11d2e;padding:16px 18px 18px;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
+          <span style="color:#fff;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">▶ 바로매치 - KG이니시스</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+            <span style="color:#fff;font-size:12px;font-weight:800">KG 이니시스</span>
+            <button id="inicis-close-1" aria-label="닫기" style="background:none;border:none;color:#fff;font-size:1.15rem;line-height:1;cursor:pointer">×</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+          <span style="color:rgba(255,255,255,0.85);font-size:12.5px;font-weight:700">금액</span>
+          <span style="color:#fff;font-size:22px;font-weight:800">${comma(amount)}<span style="font-size:14px;font-weight:700">원</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="color:rgba(255,255,255,0.85);font-size:12.5px;font-weight:700">상품명</span>
+          <span style="color:#fff;font-size:13px;font-weight:700;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(productLabel)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:rgba(255,255,255,0.85);font-size:12.5px;font-weight:700">제공기간</span>
+          <span style="color:#fff;font-size:13px;font-weight:700">별도 제공 기간 없음</span>
+        </div>
       </div>
 
-      <div style="overflow-y:auto;padding:18px">
+      <div style="overflow-y:auto;padding:16px 18px;flex:1">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;font-weight:800;color:#1f2937">이용약관</span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#374151;cursor:pointer">
+            전체동의
+            <input type="checkbox" id="inicis-agree-all" ${agreed ? 'checked' : ''} style="width:16px;height:16px;accent-color:#1a2260">
+          </label>
+        </div>
+        <div style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid #f3f4f6">
+          <div style="font-size:12.5px;color:#6b7280;padding:6px 0;text-decoration:underline;text-underline-offset:2px">전자금융거래 이용약관</div>
+          <div style="display:flex;gap:14px">
+            <label style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11.5px;color:#6b7280;padding:6px 0;cursor:pointer">
+              개인정보 수집/이용안내
+              <input type="checkbox" class="inicis-agree-sub" ${agreed ? 'checked' : ''} style="width:15px;height:15px;accent-color:#1a2260;flex-shrink:0">
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11.5px;color:#6b7280;padding:6px 0;cursor:pointer">
+              개인정보 제3자 제공/위탁안내
+              <input type="checkbox" class="inicis-agree-sub" ${agreed ? 'checked' : ''} style="width:15px;height:15px;accent-color:#1a2260;flex-shrink:0">
+            </label>
+          </div>
+        </div>
+
+        <div style="background:#f3f4f6;border-radius:0.5rem;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#6b7280;line-height:1.6">
+          <span style="color:#dc2626;font-weight:800;margin-right:4px">EVENT</span>
+          카카오페이 (신한) 1만원 이상 5% 청구 할인 <span style="color:#9ca3af">(최대 3천원, 1인/1일/1회 한정)</span><br>
+          PAYCO 1만원 이상 3500원 할인! <span style="color:#9ca3af">(생애 첫 결제시)</span>
+        </div>
+
+        <div style="display:flex;border-radius:0.5rem;overflow:hidden;margin-bottom:16px">
+          <span style="background:#e11d2e;color:#fff;font-size:11px;font-weight:800;padding:10px 12px;flex-shrink:0;display:flex;align-items:center">롯데카드</span>
+          <span style="background:#fde8e8;color:#b91c1c;font-size:11.5px;font-weight:700;padding:10px 12px;flex:1;text-align:center;display:flex;align-items:center;justify-content:center">5만원 이상 2~11개월 무이자 혜택</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          ${BM_SIMPLE_PAYS.map((name, i) => `
+            <button type="button" class="inicis-pay-opt" data-pay="${escapeHtml(name)}" style="${i === 4 ? 'grid-column:1/-1;' : ''}border:1px solid #e5e7eb;border-radius:0.5rem;background:#fff;color:#374151;font-size:13px;font-weight:700;padding:14px 0;cursor:pointer">${escapeHtml(name)}</button>
+          `).join('')}
+        </div>
+
+        <div style="height:1px;background:#e5e7eb;margin-bottom:14px"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          ${BM_CARD_COMPANIES.map(name => `
+            <button type="button" class="inicis-cardco-opt" data-card="${escapeHtml(name)}" style="border:1px solid #e5e7eb;border-radius:0.5rem;background:#fff;color:#374151;font-size:11px;font-weight:700;padding:12px 2px;cursor:pointer">${escapeHtml(name.replace('카드', ''))}</button>
+          `).join('')}
+          <button type="button" id="inicis-more-btn" style="border:1px solid #e5e7eb;border-radius:0.5rem;background:#fff;color:#9ca3af;font-size:11px;font-weight:700;padding:12px 2px;cursor:pointer">더보기+</button>
+        </div>
+      </div>`);
+
+    document.getElementById('inicis-close-1').addEventListener('click', close);
+
+    const agreeAll = document.getElementById('inicis-agree-all');
+    const subs = [...overlay.querySelectorAll('.inicis-agree-sub')];
+    agreeAll.addEventListener('change', () => { subs.forEach(s => { s.checked = agreeAll.checked; }); agreed = agreeAll.checked; });
+    subs.forEach(s => s.addEventListener('change', () => { agreeAll.checked = subs.every(x => x.checked); agreed = agreeAll.checked; }));
+
+    function requireAgreement() {
+      if (!subs.every(s => s.checked)) { showBmAlert('이용약관에 동의해 주세요.'); return false; }
+      return true;
+    }
+
+    overlay.querySelectorAll('.inicis-pay-opt').forEach(btn => btn.addEventListener('click', () => {
+      if (!requireAgreement()) return;
+      renderProcessing(btn.dataset.pay, () => onSuccess?.({ cardCompany: btn.dataset.pay, installment: '일시불' }));
+    }));
+    overlay.querySelectorAll('.inicis-cardco-opt').forEach(btn => btn.addEventListener('click', () => {
+      if (!requireAgreement()) return;
+      renderCardStep(btn.dataset.card);
+    }));
+    document.getElementById('inicis-more-btn').addEventListener('click', () => showBmToast('추가 카드사 목록은 준비 중입니다.'));
+  }
+
+  function renderCardStep(cardName) {
+    overlay.innerHTML = shell(`
+      <div style="background:#e11d2e;padding:14px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <button id="inicis-back" aria-label="뒤로" style="background:none;border:none;color:#fff;cursor:pointer;display:flex;padding:0;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <span style="color:#fff;font-size:13.5px;font-weight:800;flex:1">${escapeHtml(cardName)} 카드결제</span>
+        <button id="inicis-close-2" aria-label="닫기" style="background:none;border:none;color:#fff;font-size:1.15rem;line-height:1;cursor:pointer;flex-shrink:0">×</button>
+      </div>
+
+      <div style="overflow-y:auto;padding:18px;flex:1">
         <div style="background:#f9fafb;border-radius:0.75rem;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:12.5px;color:#6b7280;font-weight:600">결제금액</span>
           <span style="font-size:19px;font-weight:800;color:#1a2260">${comma(amount)}원</span>
-        </div>
-
-        <p style="font-size:12px;font-weight:800;color:#374151;margin:0 0 8px">카드사 선택</p>
-        <div id="inicis-card-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px">
-          ${BM_CARD_COMPANIES.map(name => `
-            <button type="button" class="inicis-card-opt" data-card="${escapeHtml(name)}" style="border:1px solid #e5e7eb;border-radius:0.5rem;background:#fff;color:#4b5563;font-size:10.5px;font-weight:700;padding:8px 2px;cursor:pointer">${escapeHtml(name.replace('카드', ''))}</button>
-          `).join('')}
         </div>
 
         <p style="font-size:12px;font-weight:800;color:#374151;margin:0 0 8px">카드 번호</p>
@@ -261,66 +358,56 @@ function openInicisModal({ amount, onSuccess, onCancel }) {
         </div>
 
         <p style="font-size:12px;font-weight:800;color:#374151;margin:0 0 8px">할부 개월</p>
-        <select id="inicis-installment" class="bm-field" style="margin-bottom:16px;height:2.5rem">
+        <select id="inicis-installment" class="bm-field" style="height:2.5rem">
           ${BM_INSTALLMENTS.map(v => `<option value="${v}">${v}</option>`).join('')}
         </select>
-
-        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;margin-bottom:4px;cursor:pointer">
-          <input type="checkbox" id="inicis-agree" style="width:16px;height:16px;accent-color:#1a2260">
-          결제 정보 확인 및 결제 진행에 동의합니다.
-        </label>
       </div>
 
       <div style="padding:14px 18px;border-top:1px solid #f3f4f6;flex-shrink:0">
         <button id="inicis-pay-btn" class="bm-btn-primary" style="width:100%;height:48px;font-size:15px" disabled>${comma(amount)}원 결제하기</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
+      </div>`);
 
-  const close = () => { overlay.remove(); onCancel?.(); };
-  document.getElementById('inicis-close').addEventListener('click', close);
+    document.getElementById('inicis-close-2').addEventListener('click', close);
+    document.getElementById('inicis-back').addEventListener('click', renderSelectStep);
 
-  let selectedCard = null;
-  const cardBtns = overlay.querySelectorAll('.inicis-card-opt');
-  const numInputs = [...overlay.querySelectorAll('.inicis-card-num')];
-  const mmInput = document.getElementById('inicis-exp-mm');
-  const yyInput = document.getElementById('inicis-exp-yy');
-  const pwdInput = document.getElementById('inicis-pwd');
-  const agreeInput = document.getElementById('inicis-agree');
-  const payBtn = document.getElementById('inicis-pay-btn');
+    const numInputs = [...overlay.querySelectorAll('.inicis-card-num')];
+    const mmInput = document.getElementById('inicis-exp-mm');
+    const yyInput = document.getElementById('inicis-exp-yy');
+    const pwdInput = document.getElementById('inicis-pwd');
+    const payBtn = document.getElementById('inicis-pay-btn');
 
-  function refreshValidity() {
-    const numsFilled = numInputs.every(inp => inp.value.length === 4);
-    payBtn.disabled = !(selectedCard && numsFilled && mmInput.value.length === 2 && yyInput.value.length === 2 && pwdInput.value.length === 2 && agreeInput.checked);
+    function refreshValidity() {
+      const numsFilled = numInputs.every(inp => inp.value.length === 4);
+      payBtn.disabled = !(numsFilled && mmInput.value.length === 2 && yyInput.value.length === 2 && pwdInput.value.length === 2);
+    }
+
+    numInputs.forEach((inp, idx) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(0, 4);
+        if (inp.value.length === 4 && numInputs[idx + 1]) numInputs[idx + 1].focus();
+        refreshValidity();
+      });
+    });
+    [mmInput, yyInput, pwdInput].forEach(inp => {
+      inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 2); refreshValidity(); });
+    });
+
+    payBtn.addEventListener('click', () => {
+      const installment = document.getElementById('inicis-installment').value;
+      renderProcessing(cardName, () => onSuccess?.({ cardCompany: cardName, installment }));
+    });
   }
 
-  cardBtns.forEach(btn => btn.addEventListener('click', () => {
-    selectedCard = btn.dataset.card;
-    cardBtns.forEach(b => { b.style.background = b === btn ? '#1a2260' : '#fff'; b.style.color = b === btn ? '#fff' : '#4b5563'; b.style.borderColor = b === btn ? '#1a2260' : '#e5e7eb'; });
-    refreshValidity();
-  }));
+  function renderProcessing(label, onDone) {
+    overlay.innerHTML = shell(`
+      <div style="padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div style="width:34px;height:34px;border:3px solid #f3f4f6;border-top-color:#e11d2e;border-radius:50%;animation:bm-spin 0.7s linear infinite"></div>
+        <p style="font-size:13.5px;color:#4b5563;font-weight:600">${escapeHtml(label)}(으)로 결제 처리 중입니다...</p>
+      </div>`);
+    setTimeout(() => { overlay.remove(); onDone(); }, 900);
+  }
 
-  numInputs.forEach((inp, idx) => {
-    inp.addEventListener('input', () => {
-      inp.value = inp.value.replace(/\D/g, '').slice(0, 4);
-      if (inp.value.length === 4 && numInputs[idx + 1]) numInputs[idx + 1].focus();
-      refreshValidity();
-    });
-  });
-  [mmInput, yyInput, pwdInput].forEach(inp => {
-    inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 2); refreshValidity(); });
-  });
-  agreeInput.addEventListener('change', refreshValidity);
-
-  payBtn.addEventListener('click', () => {
-    payBtn.disabled = true;
-    payBtn.textContent = '결제 처리 중...';
-    const installment = document.getElementById('inicis-installment').value;
-    setTimeout(() => {
-      overlay.remove();
-      onSuccess?.({ cardCompany: selectedCard, installment });
-    }, 900);
-  });
+  renderSelectStep();
 }
 
 // ---------- Bottom sheet ----------

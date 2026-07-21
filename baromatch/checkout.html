@@ -85,8 +85,10 @@ document.getElementById('checkout-content').innerHTML = `
 </div>`;
 
 document.getElementById('pay-btn').addEventListener('click', () => {
+  const productLabel = checkoutItems.length > 1 ? `${checkoutItems[0].svc.name} 외 ${checkoutItems.length - 1}건` : checkoutItems[0].svc.name;
   openInicisModal({
     amount: total,
+    productLabel,
     onSuccess: ({ cardCompany, installment }) => {
       const record = addOrder(checkoutItems.map(i => ({ id: i.id, qty: i.qty })), { expert, cardCompany, installment });
       removeFromCart(checkoutItems.map(i => i.id));

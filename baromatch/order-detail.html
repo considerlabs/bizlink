@@ -45,8 +45,8 @@ function renderDetail() {
         ${infoRow('주문번호', order.orderNo)}
         ${infoRow('주문일시', `${order.date.replace(/-/g, '.')} ${order.time}`)}
         ${infoRow('주문상태', `<span style="background:#eef1fb;color:#1a2260;font-size:11px;font-weight:800;padding:4px 10px;border-radius:9999px">결제완료</span>`)}
-        ${infoRow('결제수단', '카드결제')}
-        ${infoRow('카드사', escapeHtml(order.cardCompany))}
+        ${infoRow('결제수단', BM_SIMPLE_PAYS.includes(order.cardCompany) ? '간편결제' : '카드결제')}
+        ${infoRow(BM_SIMPLE_PAYS.includes(order.cardCompany) ? '결제사' : '카드사', escapeHtml(order.cardCompany))}
         ${infoRow('할부', escapeHtml(order.installment))}
       </div>
     </section>
