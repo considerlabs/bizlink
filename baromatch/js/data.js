@@ -7,28 +7,28 @@ const BM_CATEGORIES = [
 
 const BM_SERVICES = [
   // 배달서비스
-  { id: 'DEL-PREMIUM',  category: 'delivery', name: '배달서비스 프리미엄', price: 300000, rating: 4.9, reviews: 85,  best: true,  icon: '🚢', bg: 'linear-gradient(135deg,#0c4a6e,#0369a1)' },
-  { id: 'DEL-STANDARD', category: 'delivery', name: '배달서비스 스탠다드', price: 200000, rating: 4.7, reviews: 132, best: false, icon: '🚛', bg: 'linear-gradient(135deg,#075985,#0284c7)' },
-  { id: 'DEL-BASIC',    category: 'delivery', name: '배달서비스 베이직',   price: 100000, rating: 4.5, reviews: 210, best: false, icon: '🚚', bg: 'linear-gradient(135deg,#0369a1,#0ea5e9)' },
-  { id: 'DEL-MINI',     category: 'delivery', name: '배달서비스 미니',     price: 10000,  rating: 4.3, reviews: 378, best: false, icon: '📦', bg: 'linear-gradient(135deg,#0284c7,#38bdf8)' },
+  { id: 'DEL-PREMIUM',  category: 'delivery', name: '배달서비스 프리미엄', price: 300000, rating: 4.9, reviews: 85,  stock: 999, best: true,  icon: '🚢', bg: 'linear-gradient(135deg,#0c4a6e,#0369a1)', desc: '프리미엄 배달 서비스입니다. 당일 긴급 대량 배달, 전담 기사 배정, 실시간 위치 추적 서비스를 제공합니다.' },
+  { id: 'DEL-STANDARD', category: 'delivery', name: '배달서비스 스탠다드', price: 200000, rating: 4.7, reviews: 132, stock: 999, best: false, icon: '🚛', bg: 'linear-gradient(135deg,#075985,#0284c7)', desc: '표준 배달 서비스입니다. 당일 배달과 실시간 위치 추적을 제공합니다.' },
+  { id: 'DEL-BASIC',    category: 'delivery', name: '배달서비스 베이직',   price: 100000, rating: 4.5, reviews: 210, stock: 999, best: false, icon: '🚚', bg: 'linear-gradient(135deg,#0369a1,#0ea5e9)', desc: '기본 배달 서비스입니다. 익일 배달을 기본으로 제공합니다.' },
+  { id: 'DEL-MINI',     category: 'delivery', name: '배달서비스 미니',     price: 10000,  rating: 4.3, reviews: 378, stock: 999, best: false, icon: '📦', bg: 'linear-gradient(135deg,#0284c7,#38bdf8)', desc: '소량 배달에 최적화된 서비스입니다. 근거리 소형 화물을 빠르게 배달합니다.' },
 
   // 화물이사서비스
-  { id: 'MOV-PREMIUM',  category: 'moving', name: '화물이사서비스 프리미엄', price: 300000, rating: 4.9, reviews: 67,  best: true,  icon: '🚛', bg: 'linear-gradient(135deg,#78350f,#b45309)' },
-  { id: 'MOV-STANDARD', category: 'moving', name: '화물이사서비스 스탠다드', price: 200000, rating: 4.7, reviews: 94,  best: false, icon: '📦', bg: 'linear-gradient(135deg,#92400e,#d97706)' },
-  { id: 'MOV-BASIC',    category: 'moving', name: '화물이사서비스 베이직',   price: 100000, rating: 4.5, reviews: 156, best: false, icon: '🏠', bg: 'linear-gradient(135deg,#b45309,#f59e0b)' },
-  { id: 'MOV-MINI',     category: 'moving', name: '화물이사서비스 미니',     price: 10000,  rating: 4.2, reviews: 203, best: false, icon: '🧳', bg: 'linear-gradient(135deg,#d97706,#fbbf24)' },
+  { id: 'MOV-PREMIUM',  category: 'moving', name: '화물이사서비스 프리미엄', price: 300000, rating: 4.9, reviews: 67,  stock: 999, best: true,  icon: '🚛', bg: 'linear-gradient(135deg,#78350f,#b45309)', desc: '프리미엄 이사 서비스입니다. 포장·운반·정리까지 전 과정을 전담팀이 책임집니다.' },
+  { id: 'MOV-STANDARD', category: 'moving', name: '화물이사서비스 스탠다드', price: 200000, rating: 4.7, reviews: 94,  stock: 999, best: false, icon: '📦', bg: 'linear-gradient(135deg,#92400e,#d97706)', desc: '표준 이사 서비스입니다. 운반과 기본 포장을 함께 제공합니다.' },
+  { id: 'MOV-BASIC',    category: 'moving', name: '화물이사서비스 베이직',   price: 100000, rating: 4.5, reviews: 156, stock: 999, best: false, icon: '🏠', bg: 'linear-gradient(135deg,#b45309,#f59e0b)', desc: '기본 이사 서비스입니다. 운반 인력과 차량을 제공합니다.' },
+  { id: 'MOV-MINI',     category: 'moving', name: '화물이사서비스 미니',     price: 10000,  rating: 4.2, reviews: 203, stock: 999, best: false, icon: '🧳', bg: 'linear-gradient(135deg,#d97706,#fbbf24)', desc: '소형 이사에 적합한 서비스입니다. 원룸·소형 짐 운반에 최적화되어 있습니다.' },
 
   // 청소서비스
-  { id: 'CLN-PREMIUM',  category: 'cleaning', name: '청소서비스 프리미엄', price: 300000, rating: 4.9, reviews: 143, best: true,  icon: '🪟', bg: 'linear-gradient(135deg,#134e4a,#0f766e)' },
-  { id: 'CLN-STANDARD', category: 'cleaning', name: '청소서비스 스탠다드', price: 200000, rating: 4.8, reviews: 187, best: false, icon: '🧴', bg: 'linear-gradient(135deg,#115e59,#14b8a6)' },
-  { id: 'CLN-BASIC',    category: 'cleaning', name: '청소서비스 베이직',   price: 100000, rating: 4.6, reviews: 265, best: false, icon: '🛏️', bg: 'linear-gradient(135deg,#0f766e,#2dd4bf)' },
-  { id: 'CLN-MINI',     category: 'cleaning', name: '청소서비스 미니',     price: 10000,  rating: 4.4, reviews: 412, best: false, icon: '🛋️', bg: 'linear-gradient(135deg,#0d9488,#5eead4)' },
+  { id: 'CLN-PREMIUM',  category: 'cleaning', name: '청소서비스 프리미엄', price: 300000, rating: 4.9, reviews: 143, stock: 999, best: true,  icon: '🪟', bg: 'linear-gradient(135deg,#134e4a,#0f766e)', desc: '프리미엄 청소 서비스입니다. 전 공간 구석구석 심층 청소와 소독을 진행합니다.' },
+  { id: 'CLN-STANDARD', category: 'cleaning', name: '청소서비스 스탠다드', price: 200000, rating: 4.8, reviews: 187, stock: 999, best: false, icon: '🧴', bg: 'linear-gradient(135deg,#115e59,#14b8a6)', desc: '표준 청소 서비스입니다. 거실·주방·화장실 등 주요 공간을 청소합니다.' },
+  { id: 'CLN-BASIC',    category: 'cleaning', name: '청소서비스 베이직',   price: 100000, rating: 4.6, reviews: 265, stock: 999, best: false, icon: '🛏️', bg: 'linear-gradient(135deg,#0f766e,#2dd4bf)', desc: '기본 청소 서비스입니다. 생활 공간의 정기 청소를 제공합니다.' },
+  { id: 'CLN-MINI',     category: 'cleaning', name: '청소서비스 미니',     price: 10000,  rating: 4.4, reviews: 412, stock: 999, best: false, icon: '🛋️', bg: 'linear-gradient(135deg,#0d9488,#5eead4)', desc: '부분 청소 서비스입니다. 원하는 공간만 빠르게 청소해 드립니다.' },
 
   // 레슨
-  { id: 'LES-PREMIUM',  category: 'lesson', name: '레슨서비스 프리미엄', price: 300000, rating: 4.9, reviews: 52,  best: true,  icon: '👨‍🏫', bg: 'linear-gradient(135deg,#4c1d95,#6d28d9)' },
-  { id: 'LES-STANDARD', category: 'lesson', name: '레슨서비스 스탠다드', price: 200000, rating: 4.7, reviews: 78,  best: false, icon: '📚', bg: 'linear-gradient(135deg,#5b21b6,#7c3aed)' },
-  { id: 'LES-BASIC',    category: 'lesson', name: '레슨서비스 베이직',   price: 100000, rating: 4.6, reviews: 115, best: false, icon: '✍️', bg: 'linear-gradient(135deg,#6d28d9,#8b5cf6)' },
-  { id: 'LES-MINI',     category: 'lesson', name: '레슨서비스 미니',     price: 10000,  rating: 4.5, reviews: 189, best: false, icon: '📖', bg: 'linear-gradient(135deg,#7c3aed,#a78bfa)' },
+  { id: 'LES-PREMIUM',  category: 'lesson', name: '레슨서비스 프리미엄', price: 300000, rating: 4.9, reviews: 52,  stock: 999, best: true,  icon: '👨‍🏫', bg: 'linear-gradient(135deg,#4c1d95,#6d28d9)', desc: '프리미엄 1:1 맞춤 레슨입니다. 전문 강사가 개인 맞춤 커리큘럼으로 지도합니다.' },
+  { id: 'LES-STANDARD', category: 'lesson', name: '레슨서비스 스탠다드', price: 200000, rating: 4.7, reviews: 78,  stock: 999, best: false, icon: '📚', bg: 'linear-gradient(135deg,#5b21b6,#7c3aed)', desc: '표준 그룹 레슨입니다. 체계적인 커리큘럼으로 진행됩니다.' },
+  { id: 'LES-BASIC',    category: 'lesson', name: '레슨서비스 베이직',   price: 100000, rating: 4.6, reviews: 115, stock: 999, best: false, icon: '✍️', bg: 'linear-gradient(135deg,#6d28d9,#8b5cf6)', desc: '기본 레슨입니다. 핵심 개념 위주로 학습을 진행합니다.' },
+  { id: 'LES-MINI',     category: 'lesson', name: '레슨서비스 미니',     price: 10000,  rating: 4.5, reviews: 189, stock: 999, best: false, icon: '📖', bg: 'linear-gradient(135deg,#7c3aed,#a78bfa)', desc: '단기 체험 레슨입니다. 부담 없이 맛보기로 참여할 수 있습니다.' },
 ];
 
 const BM_MEMBER = {

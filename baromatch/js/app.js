@@ -152,12 +152,78 @@ function getCheckoutItems() {
 }
 
 // ---------- Service image ----------
-function svcImageHtml(svc, height) {
+function svcImageHtml(svc, height, radius = '1rem 1rem 0 0') {
   return `
-    <div style="position:relative;width:100%;height:${height}px;border-radius:1rem 1rem 0 0;background:${svc.bg};display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <div style="position:relative;width:100%;height:${height}px;border-radius:${radius};background:${svc.bg};display:flex;align-items:center;justify-content:center;overflow:hidden">
       ${svc.best ? `<span style="position:absolute;top:10px;left:10px;background:#1a2260;color:#fff;font-size:11px;font-weight:800;letter-spacing:0.03em;padding:4px 10px;border-radius:9999px">BEST</span>` : ''}
       <span style="font-size:${Math.round(height * 0.4)}px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25))">${svc.icon}</span>
     </div>`;
+}
+
+// ---------- Product detail sheet ----------
+function openProductDetail(svc) {
+  document.getElementById('bm-detail-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'bm-detail-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:75;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;padding:0';
+  document.body.appendChild(overlay);
+
+  let qty = 1;
+  const categoryLabel = BM_CATEGORIES.find(c => c.key === svc.category)?.label ?? '';
+
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:480px;max-height:92vh;background:#fff;border-radius:1.25rem 1.25rem 0 0;box-shadow:0 -8px 32px rgba(0,0,0,0.18);overflow-y:auto;animation:bm-sheet-in 0.22s ease-out;position:relative">
+      <button id="pd-close" aria-label="닫기" style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:9999px;background:rgba(255,255,255,0.92);border:none;color:#374151;font-size:1.1rem;line-height:1;cursor:pointer;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,0.15)">×</button>
+      ${svcImageHtml(svc, 300, '1.25rem 1.25rem 0 0')}
+      <div style="padding:18px 20px 24px">
+        <p style="font-size:12px;color:#9ca3af;font-weight:600;margin-bottom:4px">${escapeHtml(categoryLabel)}</p>
+        <h2 style="font-size:19px;font-weight:800;color:#1f2937;margin-bottom:8px">${escapeHtml(svc.name)}</h2>
+        <div style="font-size:12.5px;color:#6b7280;margin-bottom:14px;display:flex;align-items:center;gap:4px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>${svc.rating} · 리뷰 ${svc.reviews}개 · 재고 ${svc.stock}개</span>
+        </div>
+        <p style="font-size:22px;font-weight:800;color:#1a2260;margin-bottom:16px">${comma(svc.price)}원</p>
+        <div style="background:#f9fafb;border-radius:0.75rem;padding:14px 16px;font-size:13px;color:#4b5563;line-height:1.6;margin-bottom:22px">${escapeHtml(svc.desc)}</div>
+
+        <p style="font-size:13px;font-weight:800;color:#374151;margin-bottom:10px">수량</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <button id="pd-dec" class="bm-qty-btn" style="width:36px;height:36px;font-size:18px">−</button>
+          <span id="pd-qty" style="min-width:28px;text-align:center;font-size:16px;font-weight:700">1</span>
+          <button id="pd-inc" class="bm-qty-btn" style="width:36px;height:36px;font-size:18px">+</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid #f3f4f6;margin-bottom:18px">
+          <span style="font-size:13.5px;font-weight:700;color:#374151">총 상품금액</span>
+          <span id="pd-total" style="font-size:18px;font-weight:800;color:#1a2260">${comma(svc.price)}원</span>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button id="pd-add-cart" class="bm-btn-secondary" style="flex:1;height:48px;font-size:14.5px;border-color:#1a2260;color:#1a2260">장바구니 담기</button>
+          <button id="pd-buy-now" class="bm-btn-primary" style="flex:1;height:48px;font-size:14.5px">바로 구매</button>
+        </div>
+      </div>
+    </div>`;
+
+  const close = () => overlay.remove();
+  document.getElementById('pd-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  const qtyEl = document.getElementById('pd-qty');
+  const totalEl = document.getElementById('pd-total');
+  const updateQty = () => { qtyEl.textContent = qty; totalEl.textContent = `${comma(svc.price * qty)}원`; };
+
+  document.getElementById('pd-dec').addEventListener('click', () => { qty = Math.max(1, qty - 1); updateQty(); });
+  document.getElementById('pd-inc').addEventListener('click', () => { qty += 1; updateQty(); });
+  document.getElementById('pd-add-cart').addEventListener('click', () => {
+    addToCart(svc.id, qty);
+    close();
+    renderBmNav('index');
+    showBmToast(`${svc.name}을(를) 장바구니에 담았습니다.`);
+  });
+  document.getElementById('pd-buy-now').addEventListener('click', () => {
+    setCheckoutItems([{ id: svc.id, qty }]);
+    window.location.href = 'checkout.html';
+  });
 }
 
 // ---------- Toast ----------

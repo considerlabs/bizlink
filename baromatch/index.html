@@ -71,7 +71,7 @@ function sortedServices() {
 function renderGrid() {
   const list = sortedServices();
   document.getElementById('bm-grid').innerHTML = list.map(svc => `
-    <div class="bm-card">
+    <div class="bm-card" data-id="${svc.id}" style="cursor:pointer">
       ${svcImageHtml(svc, 150)}
       <div class="bm-card-body">
         <div class="bm-card-name">${escapeHtml(svc.name)}</div>
@@ -92,6 +92,11 @@ function renderGrid() {
       </div>
     </div>
   `).join('');
+
+  document.querySelectorAll('.bm-card').forEach(card => card.addEventListener('click', e => {
+    if (e.target.closest('.bm-card-footer')) return;
+    openProductDetail(bmSvc(card.dataset.id));
+  }));
 
   document.querySelectorAll('[data-act="dec"]').forEach(btn => btn.addEventListener('click', () => {
     state.qty[btn.dataset.id] = Math.max(1, qtyOf(btn.dataset.id) - 1);
