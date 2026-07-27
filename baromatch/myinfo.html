@@ -22,7 +22,9 @@ function renderMyInfo() {
   const profile = getProfile();
   const history = getHistory();
   const totalSpent = history.reduce((sum, o) => sum + o.total, 0);
-  const cartCount = getCart().length;
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const monthlyUsage = history.filter(o => o.date.slice(0, 7) === currentMonthKey).reduce((sum, o) => sum + o.total, 0);
+  const remainingLimit = Math.max(0, profile.LIMIT_MONTH - monthlyUsage);
 
   document.getElementById('myinfo-content').innerHTML = `
     <section style="padding:14px 16px;display:flex;align-items:center;gap:14px;border-bottom:8px solid #f3f4f6">
@@ -37,24 +39,34 @@ function renderMyInfo() {
     </section>
 
     <section style="padding:16px;border-bottom:8px solid #f3f4f6">
-      <div style="background:#f9fafb;border-radius:0.875rem;padding:16px;display:flex">
-        ${[['1회한도', comma(profile.LIMIT_ONCE) + '원'], ['월한도', comma(profile.LIMIT_MONTH) + '원'], ['총 구매금액', comma(totalSpent) + '원']].map(([label, value]) => `
-          <div style="flex:1;text-align:center">
-            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px">${label}</div>
-            <div style="font-size:14px;font-weight:800;color:#1f2937">${value}</div>
-          </div>
-        `).join('')}
+      <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">구매한도</h2>
+      <div style="background:#f9fafb;border-radius:0.875rem;padding:16px">
+        <div style="display:flex">
+          ${[['1회한도', comma(profile.LIMIT_ONCE) + '원', '#1a2260'], ['월한도', comma(profile.LIMIT_MONTH) + '원', '#1a2260']].map(([label, value, color], i) => `
+            <div style="flex:1;text-align:center;${i === 0 ? 'border-right:1px solid #e5e7eb' : ''}">
+              <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px">${label}</div>
+              <div style="font-size:15px;font-weight:800;color:${color}">${value}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="height:1px;background:#e5e7eb;margin:14px 0"></div>
+        <div style="display:flex">
+          ${[['월 사용액', comma(monthlyUsage) + '원', '#dc2626'], ['월 잔여한도', comma(remainingLimit) + '원', '#16a34a']].map(([label, value, color], i) => `
+            <div style="flex:1;text-align:center;${i === 0 ? 'border-right:1px solid #e5e7eb' : ''}">
+              <div style="font-size:11.5px;color:#9ca3af;margin-bottom:6px">${label}</div>
+              <div style="font-size:15px;font-weight:800;color:${color}">${value}</div>
+            </div>
+          `).join('')}
+        </div>
       </div>
     </section>
 
     <section style="padding:16px;border-bottom:8px solid #f3f4f6">
       <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:12px">주문 현황</h2>
       <div style="background:#f9fafb;border-radius:0.875rem;padding:16px;display:flex">
-        ${[['결제완료', history.length, 'history.html'], ['배송중', 0, null], ['배송완료', 0, null], ['장바구니', cartCount, 'basket.html']].map(([label, value, href]) => `
-          <div style="flex:1;text-align:center">
-            ${href
-              ? `<a href="${href}" style="font-size:17px;font-weight:800;color:#1a2260;text-decoration:underline">${value}</a>`
-              : `<div style="font-size:17px;font-weight:800;color:#9ca3af">${value}</div>`}
+        ${[[`${history.length}건`, '누적 결제완료'], [comma(totalSpent) + '원', '누적 결제금액']].map(([value, label], i) => `
+          <div style="flex:1;text-align:center;${i === 0 ? 'border-right:1px solid #e5e7eb' : ''}">
+            <a href="history.html" style="font-size:19px;font-weight:800;color:#1a2260;text-decoration:underline">${value}</a>
             <div style="font-size:11.5px;color:#9ca3af;margin-top:4px">${label}</div>
           </div>
         `).join('')}
