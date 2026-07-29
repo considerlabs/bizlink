@@ -174,6 +174,10 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
               return `<div style="display:flex;justify-content:space-between;font-size:0.75rem"><span style="color:#6b7280">${k}</span><span style="font-weight:600;color:#1a2260">${v}</span></div>`;
             }).join('')}
           </div>
+          <label style="display:flex;align-items:center;gap:0.375rem;margin-top:0.5rem;cursor:pointer">
+            <input type="checkbox" id="pm-vendor-confirm" style="width:1rem;height:1rem;accent-color:#2B3990;cursor:pointer">
+            <span style="font-size:0.75rem;color:#374151">공급자 정보를 확인했습니다.</span>
+          </label>
         </div>
 
         <div>
@@ -245,7 +249,7 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
 
       <div style="display:flex;gap:0.625rem;padding:0 1.25rem 1.25rem">
         <button id="pm-cancel" style="flex:1;border-radius:0.75rem;border:1px solid #e5e7eb;padding:0.625rem 0;font-size:0.875rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">닫기</button>
-        <button id="pm-confirm" class="btn-primary" style="flex:1;border-radius:0.75rem;padding:0.625rem 0;font-size:0.875rem">결제하기</button>
+        <button id="pm-confirm" class="btn-primary" style="flex:1;border-radius:0.75rem;padding:0.625rem 0;font-size:0.875rem;opacity:0.4;cursor:not-allowed" disabled>결제하기</button>
       </div>
     </div>
   `;
@@ -286,7 +290,14 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
     refreshCardArrows();
   }
 
-  document.getElementById('pm-confirm').addEventListener('click', () => {
+  const confirmBtn = document.getElementById('pm-confirm');
+  document.getElementById('pm-vendor-confirm').addEventListener('change', e => {
+    confirmBtn.disabled = !e.target.checked;
+    confirmBtn.style.opacity = e.target.checked ? '1' : '0.4';
+    confirmBtn.style.cursor = e.target.checked ? 'pointer' : 'not-allowed';
+  });
+
+  confirmBtn.addEventListener('click', () => {
     const installment = document.getElementById('pm-installment').value;
     const selectedCard = cards[selectedCardIdx] ?? null;
     modal.remove();
