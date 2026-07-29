@@ -1,3 +1,5 @@
+const BM_PLATFORM_FEE_RATE = 0.055;
+
 const BM_CART_KEY    = 'BAROMATCH_CART_V1';
 const BM_ORDERS_KEY   = 'BAROMATCH_ORDERS_V1';
 const BM_ADDRESS_KEY  = 'BAROMATCH_ADDRESS_V1';
@@ -60,6 +62,7 @@ function saveSessionOrders(orders) {
 
 function buildOrderRecord(date, time, items, { expert, cardCompany, installment } = {}) {
   const subtotal = items.reduce((sum, i) => sum + bmSvc(i.id).price * i.qty, 0);
+  const fee = Math.round(subtotal * BM_PLATFORM_FEE_RATE);
   const rand = String(Math.floor(100000 + Math.random() * 900000));
   return {
     date,
@@ -67,7 +70,8 @@ function buildOrderRecord(date, time, items, { expert, cardCompany, installment 
     orderNo: `ORD${date.replace(/-/g, '')}${rand}`,
     items,
     subtotal,
-    total: subtotal,
+    fee,
+    total: subtotal + fee,
     expert: expert ?? BM_EXPERTS[Math.floor(Math.random() * BM_EXPERTS.length)],
     cardCompany: cardCompany ?? BM_CARD_COMPANIES[0],
     installment: installment ?? BM_INSTALLMENTS[0],
@@ -84,6 +88,7 @@ function getHistory() {
 // random suffix.
 function buildSeededOrderRecord(seed) {
   const subtotal = seed.items.reduce((sum, i) => sum + bmSvc(i.id).price * i.qty, 0);
+  const fee = Math.round(subtotal * BM_PLATFORM_FEE_RATE);
   let hash = 0;
   const key = seed.date + seed.items.map(i => i.id + i.qty).join('');
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
@@ -96,7 +101,8 @@ function buildSeededOrderRecord(seed) {
     orderNo: `ORD${seed.date.replace(/-/g, '')}${suffix}`,
     items: seed.items,
     subtotal,
-    total: subtotal,
+    fee,
+    total: subtotal + fee,
     expert: BM_EXPERTS[hash % BM_EXPERTS.length],
     cardCompany: BM_CARD_COMPANIES[hash % BM_CARD_COMPANIES.length],
     installment: BM_INSTALLMENTS[(hash >> 2) % BM_INSTALLMENTS.length],
