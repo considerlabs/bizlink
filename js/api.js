@@ -59,6 +59,27 @@ const api = {
     return Promise.resolve({ success: true });
   },
 
+  addCustomToBasket(vendorCd, amount) {
+    const vendor = MOCK_VENDORS.find(v => v.VENDOR_CD === vendorCd);
+    if (!vendor) return Promise.reject(new Error('공급처를 찾을 수 없습니다.'));
+    if (!Number.isInteger(amount) || amount <= 0) return Promise.reject(new Error('올바른 금액을 입력해주세요.'));
+    const basket = getBasket();
+    basket.push({
+      BASKET_SEQ: 'B' + Date.now(),
+      GOODS_CD: 'CUSTOM' + Date.now(),
+      GOODS_NM: `비즈링크 금액권 ${amount.toLocaleString('ko-KR')}원`,
+      ORDER_QTY: 1,
+      UNIT_PRICE: amount,
+      UNIT_NM: '장',
+      TOTAL_PRICE: amount,
+      CATE_NM: '상품권',
+      VENDOR_CD: vendor.VENDOR_CD,
+      VENDOR_NM: vendor.VENDOR_NM,
+    });
+    saveBasket(basket);
+    return Promise.resolve({ success: true });
+  },
+
   deleteBasketItem(basketSeq) {
     saveBasket(getBasket().filter(it => it.BASKET_SEQ !== basketSeq));
     return Promise.resolve();
