@@ -52,6 +52,9 @@
     </div>
 
     <div class="surface-card">
+      <!-- Statement alert banner -->
+      <div id="statement-alert-banner" style="display:none"></div>
+
       <!-- Filters -->
       <div class="hist-filter-wrap" style="background:#f3f4f6;padding:20px;border-radius:1rem 1rem 0 0">
         <div class="hist-filter-box" style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px 16px;flex-wrap:wrap">
@@ -140,6 +143,7 @@
 if (!requireAuth()) throw new Error();
 
 let allOrders = [], keyword = '', vendorFilter = 'ALL', contractFilter = 'ALL';
+let statementOnly = false;
 let currentPage = 1;
 const PAGE_SIZE = 15;
 
@@ -204,7 +208,7 @@ function isStatementRegistered(o) {
   return o.STATEMENT_YN === 'Y' || getRegisteredStatements().includes(o.ORDER_NO);
 }
 
-function filteredOrders() {
+function baseFilteredOrders() {
   return allOrders.filter(o => {
     const matchV = vendorFilter === 'ALL' || o.STORE_NM === vendorFilter;
     const matchC = contractFilter === 'ALL' || o.CONTRACT_TYPE === contractFilter;
@@ -212,6 +216,37 @@ function filteredOrders() {
     const matchK = !kw || o.ORDER_NO.toLowerCase().includes(kw) || o.STORE_NM.toLowerCase().includes(kw);
     return matchV && matchC && matchK;
   });
+}
+
+function filteredOrders() {
+  return baseFilteredOrders().filter(o => !statementOnly || !isStatementRegistered(o));
+}
+
+function toggleStatementOnly() {
+  statementOnly = !statementOnly;
+  currentPage = 1;
+  renderTable();
+}
+
+function renderStatementBanner() {
+  const banner = document.getElementById('statement-alert-banner');
+  const unregisteredCount = baseFilteredOrders().filter(o => !isStatementRegistered(o)).length;
+
+  if (unregisteredCount === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fef2f2;border-bottom:1px solid #fecaca;padding:12px 20px';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:1rem">⚠️</span>
+      <span style="font-size:0.8125rem;font-weight:700;color:#dc2626">거래명세표 미등록 ${unregisteredCount}건</span>
+      <span style="font-size:0.75rem;color:#9ca3af">증빙자료가 첨부되지 않은 주문입니다.</span>
+    </div>
+    <button id="statement-only-toggle-btn" style="height:32px;border-radius:8px;padding:0 14px;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;background:${statementOnly ? '#dc2626' : '#fff'};color:${statementOnly ? '#fff' : '#dc2626'};border:1px solid #dc2626">${statementOnly ? '전체 보기' : '미등록만 보기'}</button>
+  `;
+  document.getElementById('statement-only-toggle-btn').addEventListener('click', toggleStatementOnly);
 }
 
 function downloadExcel() {
@@ -237,6 +272,7 @@ function downloadExcel() {
 }
 
 function renderTable() {
+  renderStatementBanner();
   const orders = filteredOrders();
   const tbody = document.getElementById('history-tbody');
   const cardsWrap = document.getElementById('history-cards-mobile');
