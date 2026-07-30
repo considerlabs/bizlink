@@ -166,17 +166,17 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
             <span style="display:flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;border-radius:0.25rem;background:#eef0f9;color:#2B3990">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
             </span>
-            <span style="font-size:0.75rem;font-weight:800;color:#374151">공급자 정보</span>
+            <span style="font-size:0.875rem;font-weight:800;color:#374151">공급자 정보</span>
           </div>
-          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;display:flex;flex-direction:column;gap:0.5rem">
+          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.875rem 1rem;display:flex;flex-direction:column;gap:0.625rem">
             ${['공급자명:' + (vendor?.VENDOR_NM ?? '-'), '사업자번호:' + (vendor?.BIZ_NUM ?? '-'), '대표자:' + (vendor?.REP_NAME ?? '-'), '연락처:' + (vendor?.CONTACT ?? '-')].map(r => {
               const [k, v] = r.split(':');
-              return `<div style="display:flex;justify-content:space-between;font-size:0.75rem"><span style="color:#6b7280">${k}</span><span style="font-weight:600;color:#1a2260">${v}</span></div>`;
+              return `<div style="display:flex;justify-content:space-between;font-size:0.9375rem"><span style="color:#6b7280">${k}</span><span style="font-weight:600;color:#1a2260">${v}</span></div>`;
             }).join('')}
           </div>
           <label style="display:flex;align-items:center;gap:0.375rem;margin-top:0.5rem;cursor:pointer">
-            <input type="checkbox" id="pm-vendor-confirm" style="width:1rem;height:1rem;accent-color:#2B3990;cursor:pointer">
-            <span style="font-size:0.75rem;color:#374151">공급자 정보를 확인했습니다.</span>
+            <input type="checkbox" id="pm-vendor-confirm" style="width:1.125rem;height:1.125rem;accent-color:#2B3990;cursor:pointer">
+            <span style="font-size:0.875rem;color:#374151">공급자 정보를 확인했습니다.</span>
           </label>
         </div>
 
