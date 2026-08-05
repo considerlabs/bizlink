@@ -109,7 +109,10 @@ function handleMyInfoAction(action, el) {
   else if (action === 'profile') openProfileSheet();
   else if (action === 'support') showBmToast('고객센터: 1544-0000 (평일 09:00~18:00)');
   else if (action === 'notice') showBmAlert('등록된 공지사항이 없습니다.');
-  else if (action === 'logout') showBmConfirm('로그아웃 하시겠습니까?', () => showBmToast('로그아웃 되었습니다.'));
+  else if (action === 'logout') showBmConfirm('로그아웃 하시겠습니까?', () => {
+    localStorage.removeItem('BAROMATCH_LOGGED_IN_V1');
+    window.location.href = 'login.html';
+  });
 }
 
 function openAddressSheet() {
