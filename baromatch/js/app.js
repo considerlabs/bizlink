@@ -2,7 +2,6 @@ const BM_PLATFORM_FEE_RATE = 0.055;
 
 const BM_CART_KEY    = 'BAROMATCH_CART_V1';
 const BM_ORDERS_KEY   = 'BAROMATCH_ORDERS_V1';
-const BM_ADDRESS_KEY  = 'BAROMATCH_ADDRESS_V1';
 const BM_PROFILE_KEY  = 'BAROMATCH_PROFILE_V1';
 const BM_CHECKOUT_KEY = 'BAROMATCH_CHECKOUT_V1';
 
@@ -122,7 +121,7 @@ function findOrder(orderNo) {
   return getHistory().find(o => o.orderNo === orderNo);
 }
 
-// ---------- Profile / address ----------
+// ---------- Profile ----------
 function getProfile() {
   const stored = localStorage.getItem(BM_PROFILE_KEY);
   return { ...BM_MEMBER, ...(stored ? JSON.parse(stored) : {}) };
@@ -130,15 +129,6 @@ function getProfile() {
 
 function saveProfile(partial) {
   localStorage.setItem(BM_PROFILE_KEY, JSON.stringify({ ...getProfile(), ...partial }));
-}
-
-function getAddress() {
-  const stored = localStorage.getItem(BM_ADDRESS_KEY);
-  return stored ? JSON.parse(stored) : { base: '', detail: '' };
-}
-
-function saveAddress(addr) {
-  localStorage.setItem(BM_ADDRESS_KEY, JSON.stringify(addr));
 }
 
 // ---------- Checkout hand-off ----------

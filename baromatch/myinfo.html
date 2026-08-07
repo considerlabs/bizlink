@@ -77,7 +77,6 @@ function renderMyInfo() {
       <h2 style="font-size:13px;font-weight:800;color:#374151;margin-bottom:6px">나의 쇼핑</h2>
       ${myinfoRow('history.html', null, '결제내역 조회', 'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z;M9 7h6;M9 11h6;M9 15h4')}
       ${myinfoRow('basket.html', null, '장바구니', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z;M3 6h18;M16 10a4 4 0 0 1-8 0')}
-      ${myinfoRow(null, 'address', '배송지 수정', 'M10 17h4V5H2v12h3;M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1;M6 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z;M17 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z')}
       ${myinfoRow(null, 'profile', '개인정보 수정', 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2;M9 2h6v4H9z;M9 12h6;M9 16h4')}
     </section>
 
@@ -105,31 +104,12 @@ function myinfoRow(href, action, label, iconPath) {
 }
 
 function handleMyInfoAction(action, el) {
-  if (action === 'address') openAddressSheet();
-  else if (action === 'profile') openProfileSheet();
+  if (action === 'profile') openProfileSheet();
   else if (action === 'support') showBmToast('고객센터: 1544-0000 (평일 09:00~18:00)');
   else if (action === 'notice') showBmAlert('등록된 공지사항이 없습니다.');
   else if (action === 'logout') showBmConfirm('로그아웃 하시겠습니까?', () => {
     localStorage.removeItem('BAROMATCH_LOGGED_IN_V1');
     window.location.href = 'login.html';
-  });
-}
-
-function openAddressSheet() {
-  const addr = getAddress();
-  const body = `
-    <h2 style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:14px">배송지 수정</h2>
-    <label style="font-size:12.5px;font-weight:700;color:#374151;display:block;margin-bottom:6px">배송지 주소</label>
-    <input id="addr-base" class="bm-field" placeholder="기본주소" value="${escapeHtml(addr.base)}" style="margin-bottom:8px">
-    <input id="addr-detail" class="bm-field" placeholder="상세주소" value="${escapeHtml(addr.detail)}" style="margin-bottom:16px">
-    <button id="addr-save" class="bm-btn-primary" style="width:100%;height:48px;font-size:14.5px">저장하기</button>
-  `;
-  openBmSheet(body, close => {
-    document.getElementById('addr-save').addEventListener('click', () => {
-      saveAddress({ base: document.getElementById('addr-base').value, detail: document.getElementById('addr-detail').value });
-      close();
-      showBmToast('배송지가 저장되었습니다.');
-    });
   });
 }
 
