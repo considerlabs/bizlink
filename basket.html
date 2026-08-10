@@ -55,7 +55,6 @@ const state = {
   activeTab: '',
   ordering: false,
   clearing: false,
-  signedContracts: new Set(),
 };
 
 function vendorMap() {
@@ -293,41 +292,21 @@ function render() {
       showCardModal();
       return;
     }
-
-    const proceedToPayment = () => {
-      showPaymentModal({
-        vendor: activeVendor,
-        subtotal, platformFee, paymentTotal,
-        storeInfo,
-        onClose: () => {},
-        onConfirm: async () => {
-          state.ordering = true;
-          await new Promise(r => setTimeout(r, 800));
-          const res = await api.submitOrder(state.activeTab);
-          state.items = await api.getBasketList();
-          state.signedContracts.delete(state.activeTab);
-          const ids = Object.keys(vendorGroups());
-          state.activeTab = ids[0] ?? '';
-          state.ordering = false;
-          render();
-          showAlert(`주문이 완료되었습니다.\n주문번호: ${res.ORDER_NO}`, () => location.href = 'history.html');
-        },
-      });
-    };
-
-    if (state.signedContracts.has(state.activeTab)) {
-      proceedToPayment();
-      return;
-    }
-
-    showContractModal({
+    showPaymentModal({
       vendor: activeVendor,
-      storeInfo,
-      items: activeItems,
       subtotal, platformFee, paymentTotal,
-      onComplete: () => {
-        state.signedContracts.add(state.activeTab);
-        proceedToPayment();
+      storeInfo,
+      onClose: () => {},
+      onConfirm: async () => {
+        state.ordering = true;
+        await new Promise(r => setTimeout(r, 800));
+        const res = await api.submitOrder(state.activeTab);
+        state.items = await api.getBasketList();
+        const ids = Object.keys(vendorGroups());
+        state.activeTab = ids[0] ?? '';
+        state.ordering = false;
+        render();
+        showAlert(`주문이 완료되었습니다.\n주문번호: ${res.ORDER_NO}`, () => location.href = 'history.html');
       },
     });
   });
