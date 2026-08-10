@@ -269,6 +269,337 @@ function showBmConfirm(message, onYes) {
   document.getElementById('bm-confirm-yes').addEventListener('click', () => { modal.remove(); onYes?.(); });
 }
 
+// ---------- Service contract (계약 확인 → 동의 → 서명 → 완료) ----------
+function showBmContractModal({ items, expert, categoryLabel, subtotal, total, member, onComplete, onCancel }) {
+  document.getElementById('bm-contract-overlay')?.remove();
+
+  const pad = n => String(n).padStart(2, '0');
+  const now = new Date();
+  const contractNo = `CTR-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const contractDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const serviceLabel = items.length > 1 ? `${items[0].svc.name} 외 ${items.length - 1}건` : items[0].svc.name;
+
+  const STEP_LABELS = ['계약 확인', '동의', '서명', '완료'];
+  const CLAUSES = [
+    ['제1조 (계약 목적)', '본 계약은 바로매치 플랫폼을 통해 고객(이하 "이용자")과 서비스 제공자(이하 "전문가") 간에 체결되는 용역서비스 이용에 관한 사항을 정하며, 상호 합의된 서비스임을 확인하기 위해 작성됩니다.'],
+    ['제2조 (서비스 내용 및 금액)', '이용자는 매칭된 전문가로부터 아래 서비스를 제공받으며, 서비스 금액을 확인하고 결제에 동의합니다.\n· 서비스 유형: 배달·이사·청소·레슨 등 생활서비스\n· 서비스 금액은 계약서 상단에 표기된 금액을 기준으로 합니다.\n· 이용자는 서비스 이용 전 매칭된 전문가 정보를 반드시 확인합니다.'],
+    ['제3조 (결제 조건)', '이용자는 본 계약서에 전자서명 완료 후 결제를 진행합니다. 결제 완료 후 서비스 금액은 바로매치 플랫폼을 통해 매칭된 전문가에게 정산됩니다.'],
+    ['제4조 (환불 및 취소 규정)', '1. 서비스 시작 전 취소 시 전액 환불됩니다.\n2. 서비스 진행 중 취소 시 진행 비율에 따른 부분 환불이 적용됩니다.\n3. 전자서명 이후 취소·환불은 전문가 동의가 있는 경우에 한합니다.\n4. 단순 변심에 의한 취소는 플랫폼 운영정책에 따릅니다.'],
+    ['제5조 (개인정보 및 기록 보관)', '전자서명 기록 및 결제 기록은 관련 법령에 따라 보관되며, 분쟁 발생 시 증빙 자료로 활용될 수 있습니다. 이용자의 개인정보는 바로매치 개인정보처리방침에 따라 처리됩니다.'],
+    ['제6조 (플랫폼 중개 서비스)', '바로매치는 배달, 이사, 청소, 레슨 등 생활서비스를 중개하는 플랫폼으로, 서비스 제공의 직접 당사자는 이용자와 전문가입니다. 플랫폼은 서비스 품질 향상을 위해 노력하나, 이용자와 전문가 간 분쟁에 대한 직접적인 책임을 지지 않습니다.'],
+  ];
+  const AGREE_ITEMS = [
+    ['content', '서비스 내용 확인', '위에 명시된 서비스명과 서비스 금액을 직접 확인하였습니다.'],
+    ['expert', '전문가 배정 확인', '매칭된 전문가 정보(전문가명, 서비스 구분)를 확인하였습니다.'],
+    ['payment', '결제 동의', '서비스 금액이 매칭된 전문가에게 지급되는 것에 동의합니다.'],
+    ['refund', '환불 규정 확인', '서비스 취소·환불 규정(제4조)을 확인하고 동의합니다.'],
+    ['privacy', '개인정보 활용 동의', '서비스 이용 목적의 개인정보 수집·활용에 동의합니다.'],
+  ];
+
+  const cState = {
+    step: 1,
+    agreements: { content: false, expert: false, payment: false, refund: false, privacy: false },
+    signatureDataUrl: null,
+    signedAt: null,
+  };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bm-contract-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:85;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:1rem';
+  document.body.appendChild(overlay);
+
+  const close = () => { overlay.remove(); onCancel?.(); };
+
+  const sectionTitle = text => `<div style="font-size:0.8125rem;font-weight:800;color:#374151;margin-bottom:0.5rem">${text}</div>`;
+  const infoRows = rows => `
+    <div style="background:#f9fafb;border-radius:0.75rem;padding:0.875rem 1rem;display:flex;flex-direction:column;gap:0.5rem">
+      ${rows.map(([k, v]) => `<div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">${k}</span><span style="font-weight:700;color:#1a2260">${v}</span></div>`).join('')}
+    </div>`;
+
+  function stepIndicatorHtml() {
+    return `
+      <div style="display:flex;align-items:flex-start;padding:0.75rem 1rem;background:#f9fafb;border-bottom:1px solid #f3f4f6">
+        ${STEP_LABELS.map((label, i) => {
+          const n = i + 1;
+          const done = cState.step > n;
+          const active = cState.step === n;
+          const circleColor = done ? '#16a34a' : active ? '#1a2260' : '#d1d5db';
+          const textColor = done ? '#16a34a' : active ? '#1a2260' : '#9ca3af';
+          const circle = `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:52px">
+              <div style="width:22px;height:22px;border-radius:9999px;background:${circleColor};color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.6875rem;font-weight:800">${done ? '✓' : n}</div>
+              <span style="font-size:0.5938rem;font-weight:700;color:${textColor};white-space:nowrap">${label}</span>
+            </div>`;
+          const line = n < STEP_LABELS.length ? `<div style="flex:1;height:2px;background:${done ? '#16a34a' : '#e5e7eb'};margin-top:11px"></div>` : '';
+          return circle + line;
+        }).join('')}
+      </div>`;
+  }
+
+  function step1Html() {
+    const itemsListHtml = items.map(i => `
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8125rem;padding:6px 0;border-bottom:1px solid #f3f4f6">
+        <span style="color:#374151">${escapeHtml(i.svc.name)} <span style="color:#9ca3af">x ${i.qty}</span></span>
+        <span style="font-weight:700;color:#1a2260">${comma(i.svc.price * i.qty)}원</span>
+      </div>`).join('');
+
+    return `
+      <div>
+        ${sectionTitle('📋 서비스 정보')}
+        ${infoRows([
+          ['계약번호', contractNo],
+          ['계약일시', contractDate],
+          ['서비스 분류', escapeHtml(categoryLabel)],
+        ])}
+        <div style="margin-top:0.5rem;max-height:120px;overflow-y:auto;background:#fff;border:1px solid #f3f4f6;border-radius:0.5rem;padding:0 0.75rem">${itemsListHtml}</div>
+        <div style="margin-top:0.5rem;background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;display:flex;flex-direction:column;gap:0.5rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">서비스 금액</span><span style="font-weight:600;color:#1a2260">${comma(subtotal)}원</span></div>
+          <div style="display:flex;justify-content:space-between;padding-top:0.5rem;border-top:1px solid #e5e7eb">
+            <span style="font-size:0.8125rem;font-weight:700;color:#374151">총 결제금액</span>
+            <span style="font-size:1.0625rem;font-weight:800;color:#1a2260">${comma(total)}원</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        ${sectionTitle('🙋 배정된 전문가 정보')}
+        ${infoRows([
+          ['전문가명', escapeHtml(expert)],
+          ['서비스 구분', `${escapeHtml(categoryLabel)} 전문가`],
+          ['배정 상태', '✅ 배정 완료'],
+        ])}
+      </div>
+
+      <div>
+        ${sectionTitle('👤 서비스 이용 회원 정보')}
+        ${infoRows([
+          ['회원명', escapeHtml(member?.NAME || '회원')],
+          ['휴대폰번호', escapeHtml(member?.PHONE ?? '-')],
+        ])}
+      </div>
+
+      <div>
+        ${sectionTitle('📜 계약 조항')}
+        <div style="display:flex;flex-direction:column;gap:0.625rem">
+          ${CLAUSES.map(([title, body]) => `
+            <div>
+              <p style="font-size:0.8125rem;font-weight:800;color:#1a2260;margin-bottom:0.25rem">${title}</p>
+              <div style="background:#f9fafb;border-radius:0.5rem;padding:0.625rem 0.75rem;font-size:0.75rem;color:#4b5563;line-height:1.6;white-space:pre-line">${body}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function step2Html() {
+    const allChecked = AGREE_ITEMS.every(([key]) => cState.agreements[key]);
+    return `
+      <div>
+        ${sectionTitle('✅ 이용자 최종 확인 및 동의')}
+        <label style="display:flex;align-items:center;gap:0.5rem;background:#eef1fb;border-radius:0.75rem;padding:0.875rem 1rem;cursor:pointer;margin-bottom:0.625rem">
+          <input type="checkbox" id="ctm-agree-all" ${allChecked ? 'checked' : ''} style="width:1.125rem;height:1.125rem;accent-color:#1a2260;cursor:pointer">
+          <span style="font-size:0.875rem;font-weight:800;color:#1a2260">아래 항목에 모두 동의합니다</span>
+        </label>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          ${AGREE_ITEMS.map(([key, title, desc]) => `
+            <label style="display:flex;align-items:flex-start;gap:0.5rem;border:1px solid #e5e7eb;border-radius:0.625rem;padding:0.75rem 0.875rem;cursor:pointer">
+              <input type="checkbox" class="ctm-agree-item" data-key="${key}" ${cState.agreements[key] ? 'checked' : ''} style="width:1.125rem;height:1.125rem;margin-top:0.125rem;accent-color:#1a2260;cursor:pointer">
+              <span>
+                <span style="display:block;font-size:0.8125rem;font-weight:700;color:#1a2260">${title}</span>
+                <span style="display:block;font-size:0.75rem;color:#6b7280;margin-top:0.125rem">${desc}</span>
+              </span>
+            </label>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function step3Html() {
+    return `
+      <div>
+        ${sectionTitle('✍️ 전자서명')}
+        <p style="font-size:0.8125rem;color:#6b7280;line-height:1.6;margin-bottom:0.75rem">아래 서명란에 손가락으로 서명해 주세요.<br>서명 완료 후 계약이 체결됩니다.</p>
+        <div style="display:flex;gap:0.625rem;margin-bottom:0.75rem">
+          <div style="flex:1;border:1px solid #e5e7eb;border-radius:0.625rem;padding:0.75rem;min-width:0">
+            <p style="font-size:0.6875rem;color:#9ca3af;font-weight:700;margin-bottom:0.25rem">이용자 (회원)</p>
+            <p style="font-size:0.9375rem;font-weight:800;color:#1a2260;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(member?.NAME || '회원')}</p>
+            <p style="font-size:0.75rem;color:#6b7280;margin-top:0.125rem">${escapeHtml(member?.PHONE ?? '-')}</p>
+          </div>
+          <div style="flex:1;border:1px solid #e5e7eb;border-radius:0.625rem;padding:0.75rem;min-width:0">
+            <p style="font-size:0.6875rem;color:#9ca3af;font-weight:700;margin-bottom:0.25rem">서비스 전문가</p>
+            <p style="font-size:0.9375rem;font-weight:800;color:#1a2260;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(expert)}</p>
+            <p style="font-size:0.75rem;color:#6b7280;margin-top:0.125rem">배정 완료</p>
+          </div>
+        </div>
+        <div style="position:relative;border:2px dashed #d1d5db;border-radius:0.75rem;overflow:hidden;background:#fafafa">
+          <canvas id="ctm-sig-canvas" style="width:100%;height:160px;display:block;cursor:crosshair"></canvas>
+          <div id="ctm-sig-placeholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.8125rem;color:#9ca3af;pointer-events:none">✍️ 이곳에 서명하세요</div>
+        </div>
+        <button type="button" id="ctm-sig-reset" style="margin-top:0.5rem;background:none;border:none;color:#6b7280;font-size:0.8125rem;font-weight:600;cursor:pointer">↺ 다시 서명</button>
+      </div>`;
+  }
+
+  function step4Html() {
+    const d = cState.signedAt ?? new Date();
+    const signedAtStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} (KST)`;
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:0.5rem 0 0.25rem">
+        <div style="width:52px;height:52px;border-radius:9999px;background:#1a2260;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.625rem;margin-bottom:0.75rem">✓</div>
+        <p style="font-size:1.0625rem;font-weight:800;color:#1a2260;margin-bottom:0.375rem">계약서 작성 완료!</p>
+        <p style="font-size:0.8125rem;color:#6b7280;line-height:1.6">서비스 이용계약서가 성공적으로 작성되었습니다.<br>배정된 전문가가 서비스를 제공할 예정입니다.</p>
+      </div>
+      <div style="background:#f9fafb;border-radius:0.75rem;padding:0.875rem 1rem;display:flex;flex-direction:column;gap:0.625rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">계약번호</span><span style="font-weight:700;color:#1a2260">${contractNo}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">서비스명</span><span style="font-weight:700;color:#1a2260">${escapeHtml(serviceLabel)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">서비스 금액</span><span style="font-weight:700;color:#1a2260">${comma(total)}원</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">배정 전문가</span><span style="font-weight:700;color:#1a2260">${escapeHtml(expert)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.8125rem"><span style="color:#6b7280">계약 일시</span><span style="font-weight:700;color:#1a2260">${signedAtStr}</span></div>
+        <div>
+          <span style="display:block;font-size:0.8125rem;color:#6b7280;margin-bottom:0.375rem">이용자 서명</span>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0.5rem;display:flex;align-items:center;justify-content:center">
+            <img src="${cState.signatureDataUrl}" alt="서명" style="height:56px">
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function footerHtml() {
+    if (cState.step === 1) {
+      return `<button id="ctm-next" class="bm-btn-primary" style="flex:1;height:46px;font-size:0.9375rem">다음 단계</button>`;
+    }
+    if (cState.step === 2) {
+      const allAgreed = AGREE_ITEMS.every(([key]) => cState.agreements[key]);
+      return `
+        <button id="ctm-prev" class="bm-btn-secondary" style="flex:1;height:46px;font-size:0.9375rem">이전</button>
+        <button id="ctm-next" class="bm-btn-primary" style="flex:1;height:46px;font-size:0.9375rem" ${allAgreed ? '' : 'disabled'}>다음 단계</button>`;
+    }
+    if (cState.step === 3) {
+      return `
+        <button id="ctm-prev" class="bm-btn-secondary" style="flex:1;height:46px;font-size:0.9375rem">이전</button>
+        <button id="ctm-sign" class="bm-btn-primary" style="flex:1;height:46px;font-size:0.9375rem" disabled>✍️ 서명 완료 및 계약 체결</button>`;
+    }
+    return `<button id="ctm-complete" class="bm-btn-primary" style="flex:1;height:46px;font-size:0.9375rem">💳 결제화면으로 이동</button>`;
+  }
+
+  function wire() {
+    document.getElementById('ctm-close').addEventListener('click', close);
+    document.getElementById('ctm-prev')?.addEventListener('click', () => { cState.step -= 1; render(); });
+
+    if (cState.step === 1) {
+      document.getElementById('ctm-next').addEventListener('click', () => { cState.step = 2; render(); });
+    } else if (cState.step === 2) {
+      const allBox = document.getElementById('ctm-agree-all');
+      const itemBoxes = [...document.querySelectorAll('.ctm-agree-item')];
+      const nextBtn = document.getElementById('ctm-next');
+      const syncNextBtn = () => {
+        const allAgreed = AGREE_ITEMS.every(([key]) => cState.agreements[key]);
+        nextBtn.disabled = !allAgreed;
+        allBox.checked = allAgreed;
+      };
+      allBox.addEventListener('change', () => {
+        const checked = allBox.checked;
+        AGREE_ITEMS.forEach(([key]) => { cState.agreements[key] = checked; });
+        itemBoxes.forEach(b => { b.checked = checked; });
+        syncNextBtn();
+      });
+      itemBoxes.forEach(box => {
+        box.addEventListener('change', () => {
+          cState.agreements[box.dataset.key] = box.checked;
+          syncNextBtn();
+        });
+      });
+      nextBtn.addEventListener('click', () => {
+        if (!AGREE_ITEMS.every(([key]) => cState.agreements[key])) return;
+        cState.step = 3; render();
+      });
+    } else if (cState.step === 3) {
+      const canvas = document.getElementById('ctm-sig-canvas');
+      const placeholder = document.getElementById('ctm-sig-placeholder');
+      const signBtn = document.getElementById('ctm-sign');
+      const resetBtn = document.getElementById('ctm-sig-reset');
+
+      const ctx = canvas.getContext('2d');
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.scale(ratio, ratio);
+      ctx.strokeStyle = '#1a2260';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      canvas.style.touchAction = 'none';
+
+      let drawing = false, lastX = 0, lastY = 0, hasSig = false;
+      const posOf = e => {
+        const r = canvas.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      };
+      const setSigState = has => {
+        hasSig = has;
+        placeholder.style.display = has ? 'none' : 'flex';
+        signBtn.disabled = !has;
+      };
+      canvas.addEventListener('pointerdown', e => {
+        drawing = true;
+        canvas.setPointerCapture(e.pointerId);
+        const p = posOf(e);
+        lastX = p.x; lastY = p.y;
+        if (!hasSig) setSigState(true);
+      });
+      canvas.addEventListener('pointermove', e => {
+        if (!drawing) return;
+        const p = posOf(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        lastX = p.x; lastY = p.y;
+      });
+      const stopDrawing = () => { drawing = false; };
+      canvas.addEventListener('pointerup', stopDrawing);
+      canvas.addEventListener('pointercancel', stopDrawing);
+
+      resetBtn.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setSigState(false);
+      });
+
+      signBtn.addEventListener('click', () => {
+        if (!hasSig) return;
+        cState.signatureDataUrl = canvas.toDataURL('image/png');
+        cState.signedAt = new Date();
+        cState.step = 4;
+        render();
+      });
+    } else if (cState.step === 4) {
+      document.getElementById('ctm-complete').addEventListener('click', () => {
+        overlay.remove();
+        onComplete?.();
+      });
+    }
+  }
+
+  function render() {
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:420px;max-height:90vh;background:#fff;border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.125rem;background:#1a2260;color:#fff;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span style="font-size:0.9375rem;font-weight:800">서비스 이용계약서</span>
+          </div>
+          <button id="ctm-close" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.85);font-size:1.25rem;line-height:1">×</button>
+        </div>
+        ${stepIndicatorHtml()}
+        <div style="padding:1.125rem;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:1rem">
+          ${cState.step === 1 ? step1Html() : cState.step === 2 ? step2Html() : cState.step === 3 ? step3Html() : step4Html()}
+        </div>
+        <div style="display:flex;gap:0.5rem;padding:0.875rem 1.125rem;border-top:1px solid #f3f4f6;flex-shrink:0">${footerHtml()}</div>
+      </div>`;
+    wire();
+  }
+
+  render();
+}
+
 // ---------- Inicis card payment module (mock KG이니시스 표준결제창) ----------
 function openInicisModal({ amount, productLabel, onSuccess, onCancel }) {
   document.getElementById('bm-inicis-overlay')?.remove();

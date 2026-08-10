@@ -82,7 +82,9 @@ document.getElementById('checkout-content').innerHTML = `
   </section>
 </div>`;
 
-document.getElementById('pay-btn').addEventListener('click', () => {
+let contractSigned = false;
+
+function startPayment() {
   const productLabel = checkoutItems.length > 1 ? `${checkoutItems[0].svc.name} 외 ${checkoutItems.length - 1}건` : checkoutItems[0].svc.name;
   openInicisModal({
     amount: total,
@@ -92,6 +94,24 @@ document.getElementById('pay-btn').addEventListener('click', () => {
       removeFromCart(checkoutItems.map(i => i.id));
       sessionStorage.removeItem(BM_CHECKOUT_KEY);
       showBmAlert(`주문이 완료되었습니다.\n주문번호: ${record.orderNo}`, () => { window.location.href = `order-detail.html?no=${record.orderNo}`; });
+    },
+  });
+}
+
+document.getElementById('pay-btn').addEventListener('click', () => {
+  if (contractSigned) { startPayment(); return; }
+
+  const categoryLabel = BM_CATEGORIES.find(c => c.key === checkoutItems[0].svc.category)?.label ?? '';
+  showBmContractModal({
+    items: checkoutItems,
+    expert,
+    categoryLabel,
+    subtotal,
+    total,
+    member: getProfile(),
+    onComplete: () => {
+      contractSigned = true;
+      startPayment();
     },
   });
 });
