@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>바로매치 | 서비스 이용 계약서</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { background:#f3f4f6; }
+  .ctr-doc { max-width:760px; margin:0 auto; padding:32px 20px 60px; }
+  .ctr-title { text-align:center; font-size:1.375rem; font-weight:800; color:#1a2260; margin-bottom:24px; }
+  .ctr-info-table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:0.875rem; }
+  .ctr-info-table th, .ctr-info-table td { border:1px solid #dbe0ea; padding:10px 14px; text-align:left; }
+  .ctr-info-table th { width:22%; background:#eef1fb; color:#1a2260; font-weight:700; white-space:nowrap; }
+  .ctr-info-table td { width:28%; color:#374151; }
+  .ctr-clause { border-left:3px solid #1a2260; background:#f9fafb; border-radius:0 0.5rem 0.5rem 0; padding:12px 16px; margin-bottom:12px; }
+  .ctr-clause h3 { font-size:0.875rem; font-weight:800; color:#1a2260; margin:0 0 6px; }
+  .ctr-clause p { font-size:0.8125rem; color:#4b5563; line-height:1.7; white-space:pre-line; margin:0; }
+  .ctr-agree-line { text-align:center; font-size:0.9375rem; font-weight:700; color:#1a2260; margin:24px 0 12px; }
+  .ctr-sign-table { width:100%; border-collapse:collapse; font-size:0.875rem; }
+  .ctr-sign-table th { border:1px solid #dbe0ea; background:#eef1fb; color:#1a2260; padding:10px; width:50%; }
+  .ctr-sign-table td { border:1px solid #dbe0ea; padding:16px; height:100px; vertical-align:middle; }
+  #ctr-sig-cell { text-align:center; }
+  #ctr-sig-preview { max-height:70px; max-width:100%; display:none; }
+  #ctr-sig-placeholder { font-size:0.75rem; color:#9ca3af; }
+  .ctr-sig-btn { margin-top:8px; border:1px solid #d1d5db; background:#fff; color:#374151; font-size:0.75rem; font-weight:600; border-radius:0.375rem; padding:5px 10px; cursor:pointer; }
+  .ctr-sig-btn:hover { background:#f9fafb; }
+</style>
+</head>
+<body>
+<div class="ctr-doc">
+  <h1 class="ctr-title">바로매치 서비스 이용 계약서</h1>
+
+  <table class="ctr-info-table">
+    <tr><th>계약번호</th><td id="ctr-contractNo"></td><th>계약일시</th><td id="ctr-contractDate"></td></tr>
+    <tr><th>서비스 분류</th><td id="ctr-serviceGroup"></td><th>서비스명</th><td id="ctr-serviceName"></td></tr>
+    <tr><th>서비스 금액</th><td id="ctr-serviceAmount"></td><th>배정 상태</th><td id="ctr-assignStatus"></td></tr>
+    <tr><th>헬퍼아이디</th><td id="ctr-helperId"></td><th>헬퍼코드</th><td id="ctr-helperCode"></td></tr>
+    <tr><th>회원명</th><td id="ctr-memberName"></td><th>휴대폰번호</th><td id="ctr-memberPhone"></td></tr>
+  </table>
+
+  <div class="ctr-clause">
+    <h3>제 1 조 (계약 목적)</h3>
+    <p>본 계약은 바로매치 플랫폼을 통해 이용자와 헬퍼 간에 체결되는 생활용역서비스 이용에 관한 사항을 정하며, 이용자의 서비스 이용 및 전자서명 의사를 확인하기 위해 작성됩니다.</p>
+  </div>
+  <div class="ctr-clause">
+    <h3>제 2 조 (서비스 내용 및 금액)</h3>
+    <p>이용자는 배정된 헬퍼로부터 아래 서비스를 제공받으며, 서비스 금액을 확인하고 결제에 동의합니다.
+· 서비스 유형: 청소 용역서비스
+· 서비스 금액은 계약서 상단에 표기된 금액을 기준으로 합니다.
+· 이용자는 서비스 이용 전 배정된 헬퍼 정보를 반드시 확인합니다.</p>
+  </div>
+  <div class="ctr-clause">
+    <h3>제 3 조 (결제 조건)</h3>
+    <p>이용자는 본 계약서에 전자서명 완료 후 결제를 진행합니다. 결제 완료 후 서비스 금액은 바로매치 플랫폼을 통해 배정된 헬퍼에게 정산됩니다.</p>
+  </div>
+  <div class="ctr-clause">
+    <h3>제 4 조 (환불 및 취소 규정)</h3>
+    <p>1. 서비스 시작 전 취소 시 전액 환불됩니다.
+2. 서비스 진행 중 취소 시 환불이 불가합니다.
+3. 서비스 완료 후에는 취소·환불이 불가합니다. 단, 서비스 하자가 있는 경우 고객센터를 통해 처리합니다.
+4. 단순 변심에 의한 취소는 서비스 시작 전에만 가능합니다.
+5. 전자서명 후 서비스 시작 전 취소는 바로매치 고객센터에 요청하시기 바랍니다.</p>
+  </div>
+  <div class="ctr-clause">
+    <h3>제 5 조 (개인정보 및 기록 보관)</h3>
+    <p>전자서명 기록 및 결제 기록은 관련 법령에 따라 보관되며, 분쟁 발생 시 증빙 자료로 활용될 수 있습니다. 이용자의 개인정보는 바로매치 개인정보처리방침에 따라 처리됩니다.</p>
+  </div>
+  <div class="ctr-clause">
+    <h3>제 6 조 (플랫폼 중개 서비스)</h3>
+    <p>바로매치는 청소·가사도우미·심부름·레슨 등 생활용역서비스를 중개하는 플랫폼으로, 서비스 제공의 직접 당사자는 이용자와 헬퍼입니다. 플랫폼은 서비스 품질 향상을 위해 노력하나, 이용자와 헬퍼 간 분쟁에 대한 직접적인 책임을 지지 않습니다.</p>
+  </div>
+
+  <p class="ctr-agree-line">위 계약 내용을 확인하고 이에 동의하여 회원 전자서명을 진행합니다.</p>
+
+  <table class="ctr-sign-table">
+    <tr><th>회원 서명</th><th>전자서명</th></tr>
+    <tr>
+      <td id="ctr-memberSignName"></td>
+      <td id="ctr-sig-cell">
+        <img id="ctr-sig-preview" alt="전자서명">
+        <span id="ctr-sig-placeholder">전자서명 이미지를 첨부해 주세요</span>
+        <input type="file" id="ctr-sig-input" accept="image/*" hidden>
+        <div>
+          <button type="button" class="ctr-sig-btn" id="ctr-sig-upload-btn">이미지 첨부</button>
+          <button type="button" class="ctr-sig-btn" id="ctr-sig-reset-btn" style="display:none">다시 첨부</button>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<script>
+// 계약 정보 — 실제 사용 시 이 객체 값을 채워서 렌더링한다.
+const CONTRACT_DATA = {
+  contractNo: '',
+  contractDate: '',
+  serviceGroup: '',
+  serviceName: '',
+  serviceAmount: '', // 숫자(원 단위) 또는 문자열
+  assignStatus: '매칭완료',
+  helperId: '',
+  helperCode: '',
+  memberName: '',
+  memberPhone: '',
+  signatureImage: null, // 업로드된 서명 이미지의 dataURL (자동 채워짐)
+};
+
+function comma(n) {
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toLocaleString('ko-KR') : (n || '-');
+}
+
+function renderContractInfo(data) {
+  document.getElementById('ctr-contractNo').textContent = data.contractNo || '-';
+  document.getElementById('ctr-contractDate').textContent = data.contractDate || '-';
+  document.getElementById('ctr-serviceGroup').textContent = data.serviceGroup || '-';
+  document.getElementById('ctr-serviceName').textContent = data.serviceName || '-';
+  document.getElementById('ctr-serviceAmount').textContent = data.serviceAmount ? `${comma(data.serviceAmount)}원` : '-';
+  document.getElementById('ctr-assignStatus').textContent = data.assignStatus || '-';
+  document.getElementById('ctr-helperId').textContent = data.helperId || '-';
+  document.getElementById('ctr-helperCode').textContent = data.helperCode || '-';
+  document.getElementById('ctr-memberName').textContent = data.memberName || '-';
+  document.getElementById('ctr-memberPhone').textContent = data.memberPhone || '-';
+  document.getElementById('ctr-memberSignName').textContent = data.memberName || '-';
+}
+
+renderContractInfo(CONTRACT_DATA);
+
+// 전자서명 이미지 업로드
+const sigInput = document.getElementById('ctr-sig-input');
+const sigPreview = document.getElementById('ctr-sig-preview');
+const sigPlaceholder = document.getElementById('ctr-sig-placeholder');
+const sigUploadBtn = document.getElementById('ctr-sig-upload-btn');
+const sigResetBtn = document.getElementById('ctr-sig-reset-btn');
+
+sigUploadBtn.addEventListener('click', () => sigInput.click());
+
+sigInput.addEventListener('change', () => {
+  const file = sigInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    CONTRACT_DATA.signatureImage = reader.result;
+    sigPreview.src = reader.result;
+    sigPreview.style.display = 'inline-block';
+    sigPlaceholder.style.display = 'none';
+    sigUploadBtn.style.display = 'none';
+    sigResetBtn.style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+});
+
+sigResetBtn.addEventListener('click', () => {
+  CONTRACT_DATA.signatureImage = null;
+  sigInput.value = '';
+  sigPreview.style.display = 'none';
+  sigPreview.removeAttribute('src');
+  sigPlaceholder.style.display = 'block';
+  sigUploadBtn.style.display = 'inline-block';
+  sigResetBtn.style.display = 'none';
+});
+</script>
+</body>
+</html>
