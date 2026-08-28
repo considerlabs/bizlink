@@ -176,6 +176,7 @@ function renderRegister(content) {
           <div>
             <label style="${LABEL_STYLE}">예금주명</label>
             <input id="reg-holder" type="text" placeholder="예금주명 입력" value="${escapeHtml(d.holder || '')}" class="form-field" style="height:40px">
+            <div id="holder-verify-result" style="display:none;font-size:0.75rem;font-weight:700;margin-top:6px"></div>
           </div>
           <div>
             <label style="${LABEL_STYLE}">&nbsp;</label>
@@ -245,7 +246,13 @@ function verifyAccountHolder() {
   if (!document.getElementById('reg-bank').value) { showAlert('공급자 은행을 선택해주세요.'); return; }
   if (!document.getElementById('reg-account').value.trim()) { showAlert('공급자 계좌번호를 입력해주세요.'); return; }
   if (!holder) { showAlert('예금주명을 입력해주세요.'); return; }
-  showAlert('예금주 확인이 완료되었습니다.');
+
+  const rep = document.getElementById('reg-rep').value.trim();
+  const matched = holder === rep;
+  const resultEl = document.getElementById('holder-verify-result');
+  resultEl.textContent = matched ? '예금주명 일치' : '예금주명 불일치';
+  resultEl.style.color = matched ? '#2563eb' : '#dc2626';
+  resultEl.style.display = 'block';
 }
 
 function submitVendor() {
