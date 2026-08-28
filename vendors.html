@@ -175,10 +175,8 @@ function renderRegister(content) {
           </div>
           <div>
             <label style="${LABEL_STYLE}">예금주명</label>
-            <div style="display:flex;gap:8px">
-              <input id="reg-holder" type="text" placeholder="예금주명 입력" value="${escapeHtml(d.holder || '')}" class="form-field" style="height:40px;flex:1">
-              <button type="button" onclick="verifyAccountHolder()" class="btn-secondary" style="padding:0 16px;height:40px;white-space:nowrap;flex-shrink:0">예금주 확인</button>
-            </div>
+            <input id="reg-holder" type="text" placeholder="예금주명 입력" value="${escapeHtml(d.holder || '')}" class="form-field" style="height:40px">
+            <button type="button" onclick="verifyAccountHolder()" class="btn-secondary" style="margin-top:8px;padding:0 16px;height:36px">예금주 확인</button>
           </div>
         </div>
 
