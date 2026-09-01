@@ -119,9 +119,9 @@
               <th style="text-align:center;padding:12px 20px;width:100px">계약구분</th>
               <th style="text-align:center;padding:12px 20px;width:100px">결제카드</th>
               <th style="text-align:right;padding:12px 20px;width:130px">상품금액</th>
-              <th style="text-align:right;padding:12px 20px;width:130px">결제금액</th>
               <th style="text-align:right;padding:12px 20px;width:110px">PG수수료</th>
               <th style="text-align:center;padding:12px 20px;width:90px">PG수수료율</th>
+              <th style="text-align:right;padding:12px 20px;width:130px">결제금액</th>
               <th style="text-align:center;padding:12px 20px;width:110px">송금방식</th>
               <th style="text-align:left;padding:12px 20px;width:130px">송금일</th>
               <th style="text-align:right;padding:12px 20px;width:130px">송금액</th>
@@ -259,12 +259,12 @@ function renderStatementBanner() {
 }
 
 function downloadExcel() {
-  const header = ['주문일', '주문번호', '공급처', '계약구분', '결제카드', '상품금액', '결제금액', 'PG수수료', 'PG수수료율', '송금방식', '송금일', '송금액', '송금자명', '공급자은행', '공급자계좌번호', '거래명세표'];
+  const header = ['주문일', '주문번호', '공급처', '계약구분', '결제카드', '상품금액', 'PG수수료', 'PG수수료율', '결제금액', '송금방식', '송금일', '송금액', '송금자명', '공급자은행', '공급자계좌번호', '거래명세표'];
   const rows = filteredOrders().map(o => {
     const fee = Math.round(o.TOTAL_PRICE * PLATFORM_FEE_RATE);
     return [
       o.ORDER_DT, o.ORDER_NO, o.STORE_NM, o.CONTRACT_TYPE ?? '-', o.PAY_CARD ?? '-',
-      o.TOTAL_PRICE, o.TOTAL_PRICE + fee, fee, `${(PLATFORM_FEE_RATE * 100).toFixed(1)}%`, o.REMIT_TYPE ?? '-', o.REMIT_DT ?? '-',
+      o.TOTAL_PRICE, fee, `${(PLATFORM_FEE_RATE * 100).toFixed(1)}%`, o.TOTAL_PRICE + fee, o.REMIT_TYPE ?? '-', o.REMIT_DT ?? '-',
       o.REMIT_AMOUNT ?? '', o.REMITTER ?? '-', o.REMIT_BANK ?? '-', o.REMIT_ACCOUNT ?? '-', isStatementRegistered(o) ? 'O' : 'X',
     ];
   });
@@ -317,9 +317,9 @@ function renderTable() {
         <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(o.CONTRACT_TYPE ?? '-')}</td>
         <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(o.PAY_CARD ?? '-')}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(o.TOTAL_PRICE)}</td>
-        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;font-weight:800;color:#1a2260">${comma(total)}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${comma(fee)}</td>
         <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${(PLATFORM_FEE_RATE * 100).toFixed(1)}%</td>
+        <td style="padding:16px 20px;text-align:right;font-size:0.875rem;font-weight:800;color:#1a2260">${comma(total)}</td>
         <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMIT_TYPE ?? '-')}</td>
         <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#6b7280;white-space:nowrap">${escapeHtml(o.REMIT_DT ?? '-')}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${o.REMIT_AMOUNT != null ? comma(o.REMIT_AMOUNT) : '-'}</td>
