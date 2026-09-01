@@ -81,12 +81,18 @@
               <option value="결제대행">결제대행</option>
               <option value="구매대행">구매대행</option>
             </select>
+            <select id="status-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
+              <option value="ALL">주문상태</option>
+              <option value="주문접수">주문접수</option>
+              <option value="배송중">배송중</option>
+              <option value="배송완료">배송완료</option>
+            </select>
             <select id="vendor-filter" style="height:36px;border:1px solid #e5e7eb;border-radius:8px;padding:0 12px;font-size:0.75rem;font-weight:600;color:#4b5563;background:#fff;outline:none">
               <option value="ALL">공급처</option>
             </select>
             <form id="search-form" class="hist-search-form" style="display:flex;align-items:center;gap:4px">
               <div class="form-field" style="width:auto;flex:1;gap:6px;padding:0 10px;height:36px">
-                <input type="text" id="keyword-input" placeholder="주문번호, 공급처" class="hist-keyword-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:200px">
+                <input type="text" id="keyword-input" placeholder="검색어를 입력하세요.(상품명, 공급자)" class="hist-keyword-input" style="border:none;background:transparent;font-size:0.75rem;color:#1a2260;outline:none;width:200px">
               </div>
               <button type="submit" style="display:flex;align-items:center;gap:4px;height:36px;border-radius:8px;padding:0 12px;background:#2B3990;color:#fff;font-size:0.75rem;font-weight:700;border:none;cursor:pointer;flex-shrink:0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -103,7 +109,7 @@
 
       <!-- Desktop table -->
       <div class="hidden md:block" style="overflow-x:auto">
-        <table style="width:100%;min-width:1900px">
+        <table style="width:100%;min-width:2150px">
           <thead>
             <tr style="border-bottom:1px solid #e5e7eb;background:#f1f5f9;font-size:0.75rem;font-weight:800;color:#2B3990">
               <th style="text-align:center;padding:12px 20px;width:70px;white-space:nowrap">순번</th>
@@ -119,12 +125,14 @@
               <th style="text-align:center;padding:12px 20px;width:110px">송금방식</th>
               <th style="text-align:left;padding:12px 20px;width:130px">송금일</th>
               <th style="text-align:right;padding:12px 20px;width:130px">송금액</th>
-              <th style="text-align:left;padding:12px 20px;width:120px">송금은행</th>
+              <th style="text-align:left;padding:12px 20px;width:100px">송금자명</th>
+              <th style="text-align:left;padding:12px 20px;width:120px">공급자은행</th>
+              <th style="text-align:left;padding:12px 20px;width:150px">공급자계좌번호</th>
               <th style="text-align:center;padding:12px 20px;width:100px">거래명세표</th>
             </tr>
           </thead>
           <tbody id="history-tbody">
-            <tr><td colspan="15" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
+            <tr><td colspan="17" style="text-align:center;padding:5rem;color:#9ca3af"><div class="loading-spinner-sm" style="margin:0 auto"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -142,7 +150,7 @@
 <script>
 if (!requireAuth()) throw new Error();
 
-let allOrders = [], keyword = '', vendorFilter = 'ALL', contractFilter = 'ALL';
+let allOrders = [], keyword = '', vendorFilter = 'ALL', contractFilter = 'ALL', statusFilter = 'ALL';
 let statementOnly = false;
 let currentPage = 1;
 const PAGE_SIZE = 15;
@@ -212,9 +220,10 @@ function baseFilteredOrders() {
   return allOrders.filter(o => {
     const matchV = vendorFilter === 'ALL' || o.STORE_NM === vendorFilter;
     const matchC = contractFilter === 'ALL' || o.CONTRACT_TYPE === contractFilter;
+    const matchS = statusFilter === 'ALL' || o.ORDER_STAT_NM === statusFilter;
     const kw = keyword.toLowerCase();
     const matchK = !kw || o.ORDER_NO.toLowerCase().includes(kw) || o.STORE_NM.toLowerCase().includes(kw);
-    return matchV && matchC && matchK;
+    return matchV && matchC && matchS && matchK;
   });
 }
 
@@ -250,13 +259,13 @@ function renderStatementBanner() {
 }
 
 function downloadExcel() {
-  const header = ['주문일', '주문번호', '공급처', '계약구분', '결제카드', '상품금액', '결제금액', 'PG수수료', 'PG수수료율', '송금방식', '송금일', '송금액', '송금은행', '거래명세표'];
+  const header = ['주문일', '주문번호', '공급처', '계약구분', '결제카드', '상품금액', '결제금액', 'PG수수료', 'PG수수료율', '송금방식', '송금일', '송금액', '송금자명', '공급자은행', '공급자계좌번호', '거래명세표'];
   const rows = filteredOrders().map(o => {
     const fee = Math.round(o.TOTAL_PRICE * PLATFORM_FEE_RATE);
     return [
       o.ORDER_DT, o.ORDER_NO, o.STORE_NM, o.CONTRACT_TYPE ?? '-', o.PAY_CARD ?? '-',
       o.TOTAL_PRICE, o.TOTAL_PRICE + fee, fee, `${(PLATFORM_FEE_RATE * 100).toFixed(1)}%`, o.REMIT_TYPE ?? '-', o.REMIT_DT ?? '-',
-      o.REMIT_AMOUNT ?? '', o.REMIT_BANK ?? '-', isStatementRegistered(o) ? 'O' : 'X',
+      o.REMIT_AMOUNT ?? '', o.REMITTER ?? '-', o.REMIT_BANK ?? '-', o.REMIT_ACCOUNT ?? '-', isStatementRegistered(o) ? 'O' : 'X',
     ];
   });
   const csv = [header, ...rows]
@@ -278,7 +287,7 @@ function renderTable() {
   const cardsWrap = document.getElementById('history-cards-mobile');
 
   if (orders.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="15" style="text-align:center;padding:6rem 0;color:#9ca3af">
+    tbody.innerHTML = `<tr><td colspan="17" style="text-align:center;padding:6rem 0;color:#9ca3af">
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
       <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
     </td></tr>`;
@@ -314,7 +323,9 @@ function renderTable() {
         <td style="padding:16px 20px;text-align:center;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMIT_TYPE ?? '-')}</td>
         <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#6b7280;white-space:nowrap">${escapeHtml(o.REMIT_DT ?? '-')}</td>
         <td style="padding:16px 20px;text-align:right;font-size:0.875rem;color:#4b5563">${o.REMIT_AMOUNT != null ? comma(o.REMIT_AMOUNT) : '-'}</td>
+        <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMITTER ?? '-')}</td>
         <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#4b5563">${escapeHtml(o.REMIT_BANK ?? '-')}</td>
+        <td style="padding:16px 20px;text-align:left;font-size:0.875rem;color:#4b5563;font-family:monospace">${escapeHtml(o.REMIT_ACCOUNT ?? '-')}</td>
         <td style="padding:16px 20px;text-align:center">
           <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:9999px;font-size:0.75rem;font-weight:800;${isStatementRegistered(o) ? 'background:#eef0f9;color:#2B3990' : 'background:#fef2f2;color:#dc2626'}">${isStatementRegistered(o) ? 'O' : 'X'}</span>
         </td>
@@ -341,7 +352,9 @@ function renderTable() {
           <div style="font-size:0.6875rem;color:#9ca3af">송금방식 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_TYPE ?? '-')}</span></div>
           <div style="font-size:0.6875rem;color:#9ca3af">송금일 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_DT ?? '-')}</span></div>
           <div style="font-size:0.6875rem;color:#9ca3af">송금액 <span style="color:#4b5563;font-weight:600">${o.REMIT_AMOUNT != null ? comma(o.REMIT_AMOUNT) + '원' : '-'}</span></div>
-          <div style="font-size:0.6875rem;color:#9ca3af">송금은행 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_BANK ?? '-')}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">송금자명 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMITTER ?? '-')}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">공급자은행 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_BANK ?? '-')}</span></div>
+          <div style="font-size:0.6875rem;color:#9ca3af">공급자계좌번호 <span style="color:#4b5563;font-weight:600">${escapeHtml(o.REMIT_ACCOUNT ?? '-')}</span></div>
           <div style="font-size:0.6875rem;color:#9ca3af">거래명세표 <span style="font-weight:800;${isStatementRegistered(o) ? 'color:#2B3990' : 'color:#dc2626'}">${isStatementRegistered(o) ? 'O' : 'X'}</span></div>
         </div>
       </div>`;
@@ -363,6 +376,7 @@ MOCK_VENDORS.forEach(v => {
 
 document.getElementById('vendor-filter').addEventListener('change', e => { vendorFilter = e.target.value; currentPage = 1; renderTable(); });
 document.getElementById('contract-filter').addEventListener('change', e => { contractFilter = e.target.value; currentPage = 1; renderTable(); });
+document.getElementById('status-filter').addEventListener('change', e => { statusFilter = e.target.value; currentPage = 1; renderTable(); });
 document.getElementById('excel-download-btn').addEventListener('click', downloadExcel);
 document.getElementById('search-form').addEventListener('submit', e => {
   e.preventDefault();
