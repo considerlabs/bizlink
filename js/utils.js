@@ -5,6 +5,13 @@ const MOCK_NEW_ORDERS_KEY = 'MOCK_NEW_ORDERS_V1';
 const STATEMENT_REGISTERED_KEY = 'MOCK_STATEMENT_REGISTERED_V1';
 const PLATFORM_FEE_RATE   = 0.055;
 
+// 결제금액 구간별 분할결제 입력칸 수 (9천만원 초과는 11칸으로 고정)
+const SPLIT_TIERS = [[10000000, 3], [30000000, 5], [50000000, 7], [70000000, 9], [90000000, 11]];
+function getSplitCount(amount) {
+  for (const [max, count] of SPLIT_TIERS) if (amount <= max) return count;
+  return 11;
+}
+
 function comma(n) {
   return Number(n).toLocaleString('ko-KR');
 }
@@ -236,13 +243,24 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
             <span style="display:flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;border-radius:0.25rem;background:#eef0f9;color:#2B3990">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
             </span>
-            <span style="font-size:0.75rem;font-weight:800;color:#374151">할부 개월</span>
+            <span style="font-size:0.75rem;font-weight:800;color:#374151">결제 구분</span>
           </div>
-          <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;background:#f3f4f6;border-radius:0.625rem;padding:3px;margin-bottom:0.625rem">
+            <button type="button" class="pm-type-btn" data-type="normal" style="height:2rem;border:none;border-radius:0.5rem;font-size:0.8125rem;font-weight:700;cursor:pointer;background:#fff;color:#1a2260;box-shadow:0 1px 2px rgba(0,0,0,0.08)">일반결제</button>
+            <button type="button" class="pm-type-btn" data-type="split" style="height:2rem;border:none;border-radius:0.5rem;font-size:0.8125rem;font-weight:700;cursor:pointer;background:transparent;color:#6b7280">분할결제</button>
+          </div>
+
+          <div id="pm-normal-block" style="display:flex;align-items:center;gap:0.75rem">
             <span style="font-size:0.75rem;color:#6b7280;width:2.5rem;flex-shrink:0">할부</span>
             <select id="pm-installment" style="flex:1;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0 0.75rem;height:2.25rem;font-size:0.875rem;color:#1a2260;background:#fff;outline:none">
               <option>일시불</option><option>2개월</option><option>3개월</option><option>6개월</option><option>12개월</option>
             </select>
+          </div>
+
+          <div id="pm-split-block" style="display:none;flex-direction:column;gap:0.5rem">
+            <div id="pm-split-rows" style="display:flex;flex-direction:column;gap:0.375rem"></div>
+            <p id="pm-split-warning" style="display:none;font-size:0.75rem;color:#dc2626"></p>
+            <p id="pm-split-hint" style="font-size:0.75rem;color:#9ca3af">모든 회차에 금액을 입력해야 결제하기 버튼이 활성화됩니다.</p>
           </div>
         </div>
       </div>
@@ -291,17 +309,93 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   }
 
   const confirmBtn = document.getElementById('pm-confirm');
-  document.getElementById('pm-vendor-confirm').addEventListener('change', e => {
-    confirmBtn.disabled = !e.target.checked;
-    confirmBtn.style.opacity = e.target.checked ? '1' : '0.4';
-    confirmBtn.style.cursor = e.target.checked ? 'pointer' : 'not-allowed';
+  const vendorConfirmCb = document.getElementById('pm-vendor-confirm');
+  function refreshConfirmState() {
+    const enabled = vendorConfirmCb.checked && (paymentType !== 'split' || splitValid);
+    confirmBtn.disabled = !enabled;
+    confirmBtn.style.opacity = enabled ? '1' : '0.4';
+    confirmBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  }
+  vendorConfirmCb.addEventListener('change', refreshConfirmState);
+
+  // 일반결제 / 분할결제
+  let paymentType = 'normal';
+  let splitValid = false;
+  const splitCount = getSplitCount(paymentTotal);
+  const splitInputs = Array(splitCount - 1).fill('');
+  const normalBlock = document.getElementById('pm-normal-block');
+  const splitBlock = document.getElementById('pm-split-block');
+  const splitRowsEl = document.getElementById('pm-split-rows');
+  const splitWarningEl = document.getElementById('pm-split-warning');
+  const splitHintEl = document.getElementById('pm-split-hint');
+
+  function updateSplitState() {
+    const numeric = splitInputs.map(v => v === '' ? 0 : Number(v));
+    const sumEntered = numeric.reduce((a, b) => a + b, 0);
+    const lastAmount = paymentTotal - sumEntered;
+    const allFilled = numeric.every(v => v > 0) && lastAmount > 0;
+    const filledValues = [...splitInputs.filter(v => v !== '').map(Number), lastAmount];
+    const hasDuplicate = new Set(filledValues).size !== filledValues.length;
+
+    const lastEl = document.getElementById('pm-split-last');
+    if (lastEl) {
+      lastEl.textContent = `${comma(lastAmount)}원`;
+      lastEl.style.color = lastAmount <= 0 ? '#dc2626' : '#1a2260';
+    }
+
+    let warning = '';
+    if (hasDuplicate) warning = '각 회차 금액은 서로 달라야 합니다. (동일 금액 불가)';
+    else if (lastAmount < 0) warning = '입력한 금액의 합이 결제금액을 초과했습니다.';
+    else if (lastAmount === 0) warning = '마지막 회차에 남는 금액이 없습니다. 다른 회차 금액을 줄여주세요.';
+
+    splitWarningEl.style.display = warning ? 'block' : 'none';
+    splitWarningEl.textContent = warning;
+    splitHintEl.style.display = (!warning && !allFilled) ? 'block' : 'none';
+
+    splitValid = allFilled && !hasDuplicate;
+    refreshConfirmState();
+  }
+
+  function renderSplitRows() {
+    splitRowsEl.innerHTML = Array.from({ length: splitCount }).map((_, i) => {
+      const isLast = i === splitCount - 1;
+      if (isLast) {
+        return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>`;
+      }
+      return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>`;
+    }).join('');
+    splitRowsEl.querySelectorAll('.pm-split-input').forEach(input => {
+      input.addEventListener('input', e => {
+        splitInputs[Number(e.target.dataset.idx)] = e.target.value;
+        updateSplitState();
+      });
+    });
+    updateSplitState();
+  }
+  renderSplitRows();
+
+  modal.querySelectorAll('.pm-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      paymentType = btn.dataset.type;
+      modal.querySelectorAll('.pm-type-btn').forEach(b => {
+        const active = b.dataset.type === paymentType;
+        b.style.background = active ? '#fff' : 'transparent';
+        b.style.color = active ? '#1a2260' : '#6b7280';
+        b.style.boxShadow = active ? '0 1px 2px rgba(0,0,0,0.08)' : 'none';
+      });
+      normalBlock.style.display = paymentType === 'normal' ? 'flex' : 'none';
+      splitBlock.style.display = paymentType === 'split' ? 'flex' : 'none';
+      refreshConfirmState();
+    });
   });
 
   confirmBtn.addEventListener('click', () => {
-    const installment = document.getElementById('pm-installment').value;
     const selectedCard = cards[selectedCardIdx] ?? null;
+    const paymentDetail = paymentType === 'split'
+      ? { type: '분할', count: splitCount, amounts: [...splitInputs.map(Number), paymentTotal - splitInputs.reduce((a, b) => a + (Number(b) || 0), 0)] }
+      : { type: '일반', installment: document.getElementById('pm-installment').value };
     modal.remove();
-    onConfirm?.(installment, selectedCard);
+    onConfirm?.(paymentDetail, selectedCard);
   });
 }
 
