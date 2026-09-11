@@ -349,12 +349,29 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
       lastEl.style.color = lastPrincipal <= 0 ? '#dc2626' : '#1a2260';
     }
     const lastFeeEl = document.getElementById(`pm-split-fee-${splitCount - 1}`);
-    if (lastFeeEl) lastFeeEl.textContent = lastPrincipal > 0 ? `${comma(feeFor(lastPrincipal))}원` : '-';
+    const lastTotalEl = document.getElementById(`pm-split-total-${splitCount - 1}`);
+    if (lastPrincipal > 0) {
+      const lastFee = feeFor(lastPrincipal);
+      if (lastFeeEl) lastFeeEl.textContent = `${comma(lastFee)}원`;
+      if (lastTotalEl) lastTotalEl.textContent = `${comma(lastPrincipal + lastFee)}원`;
+    } else {
+      if (lastFeeEl) lastFeeEl.textContent = '-';
+      if (lastTotalEl) lastTotalEl.textContent = '-';
+    }
 
     splitInputs.forEach((v, i) => {
       const feeEl = document.getElementById(`pm-split-fee-${i}`);
-      if (!feeEl) return;
-      feeEl.textContent = v === '' ? '-' : `${comma(feeFor(Number(v)))}원`;
+      const totalEl = document.getElementById(`pm-split-total-${i}`);
+      if (!feeEl || !totalEl) return;
+      if (v === '') {
+        feeEl.textContent = '-';
+        totalEl.textContent = '-';
+      } else {
+        const principal = Number(v);
+        const fee = feeFor(principal);
+        feeEl.textContent = `${comma(fee)}원`;
+        totalEl.textContent = `${comma(principal + fee)}원`;
+      }
     });
 
     let warning = '';
@@ -373,11 +390,17 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   function renderSplitRows() {
     splitRowsEl.innerHTML = Array.from({ length: splitCount }).map((_, i) => {
       const isLast = i === splitCount - 1;
-      const feeRow = `<div style="display:flex;justify-content:flex-end;margin-top:4px"><span style="font-size:11px;color:#6b7280">수수료(5.5%) <b id="pm-split-fee-${i}" style="color:#b45309;font-weight:700">-</b></span></div>`;
+      const feeTotalRows = `
+        <div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px dashed #e5e7eb;font-size:11px">
+          <span style="color:#6b7280">수수료(5.5%)</span><b id="pm-split-fee-${i}" style="color:#b45309">-</b>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:11px">
+          <span style="color:#6b7280">결제금액</span><b id="pm-split-total-${i}" style="color:#2B3990">-</b>
+        </div>`;
       if (isLast) {
-        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 상품금액 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${feeRow}</div>`;
+        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 상품금액 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${feeTotalRows}</div>`;
       }
-      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차 상품금액</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="상품금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${feeRow}</div>`;
+      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차 상품금액</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="상품금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${feeTotalRows}</div>`;
     }).join('');
     splitRowsEl.querySelectorAll('.pm-split-input').forEach(input => {
       input.addEventListener('input', e => {
