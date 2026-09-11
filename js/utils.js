@@ -12,10 +12,9 @@ function getSplitCount(amount) {
   return 11;
 }
 
-// 분할결제 회차 금액(수수료 포함) 안에서 상품금액/수수료 비중을 역산
-function splitFeeBreakdown(amount) {
-  const principal = Math.round(amount / (1 + PLATFORM_FEE_RATE));
-  return { principal, fee: amount - principal };
+// 분할결제 회차에 입력한 상품금액 기준으로 수수료(5.5%)를 계산
+function feeFor(productAmount) {
+  return Math.round(productAmount * PLATFORM_FEE_RATE);
 }
 
 function comma(n) {
@@ -336,45 +335,32 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   const splitHintEl = document.getElementById('pm-split-hint');
 
   function updateSplitState() {
+    // 회차에 입력하는 금액은 상품금액(수수료 미포함) 기준 — 수수료는 상품금액에 따라 별도로 계산해 보여준다.
     const numeric = splitInputs.map(v => v === '' ? 0 : Number(v));
     const sumEntered = numeric.reduce((a, b) => a + b, 0);
-    const lastAmount = paymentTotal - sumEntered;
-    const allFilled = numeric.every(v => v > 0) && lastAmount > 0;
-    const filledValues = [...splitInputs.filter(v => v !== '').map(Number), lastAmount];
+    const lastPrincipal = subtotal - sumEntered;
+    const allFilled = numeric.every(v => v > 0) && lastPrincipal > 0;
+    const filledValues = [...splitInputs.filter(v => v !== '').map(Number), lastPrincipal];
     const hasDuplicate = new Set(filledValues).size !== filledValues.length;
 
     const lastEl = document.getElementById('pm-split-last');
     if (lastEl) {
-      lastEl.textContent = `${comma(lastAmount)}원`;
-      lastEl.style.color = lastAmount <= 0 ? '#dc2626' : '#1a2260';
+      lastEl.textContent = `${comma(lastPrincipal)}원`;
+      lastEl.style.color = lastPrincipal <= 0 ? '#dc2626' : '#1a2260';
     }
+    const lastFeeEl = document.getElementById(`pm-split-fee-${splitCount - 1}`);
+    if (lastFeeEl) lastFeeEl.textContent = lastPrincipal > 0 ? `${comma(feeFor(lastPrincipal))}원` : '-';
 
     splitInputs.forEach((v, i) => {
-      const amount = v === '' ? null : Number(v);
-      const principalEl = document.getElementById(`pm-split-principal-${i}`);
       const feeEl = document.getElementById(`pm-split-fee-${i}`);
-      if (!principalEl || !feeEl) return;
-      if (amount === null) {
-        principalEl.textContent = '-';
-        feeEl.textContent = '-';
-      } else {
-        const { principal, fee } = splitFeeBreakdown(amount);
-        principalEl.textContent = `${comma(principal)}원`;
-        feeEl.textContent = `${comma(fee)}원`;
-      }
+      if (!feeEl) return;
+      feeEl.textContent = v === '' ? '-' : `${comma(feeFor(Number(v)))}원`;
     });
-    const lastPrincipalEl = document.getElementById(`pm-split-principal-${splitCount - 1}`);
-    const lastFeeEl = document.getElementById(`pm-split-fee-${splitCount - 1}`);
-    if (lastPrincipalEl && lastFeeEl) {
-      const { principal, fee } = splitFeeBreakdown(lastAmount);
-      lastPrincipalEl.textContent = `${comma(principal)}원`;
-      lastFeeEl.textContent = `${comma(fee)}원`;
-    }
 
     let warning = '';
-    if (hasDuplicate) warning = '각 회차 금액은 서로 달라야 합니다. (동일 금액 불가)';
-    else if (lastAmount < 0) warning = '입력한 금액의 합이 결제금액을 초과했습니다.';
-    else if (lastAmount === 0) warning = '마지막 회차에 남는 금액이 없습니다. 다른 회차 금액을 줄여주세요.';
+    if (hasDuplicate) warning = '각 회차 상품금액은 서로 달라야 합니다. (동일 금액 불가)';
+    else if (lastPrincipal < 0) warning = '입력한 상품금액의 합이 전체 상품금액을 초과했습니다.';
+    else if (lastPrincipal === 0) warning = '마지막 회차에 남는 상품금액이 없습니다. 다른 회차 금액을 줄여주세요.';
 
     splitWarningEl.style.display = warning ? 'block' : 'none';
     splitWarningEl.textContent = warning;
@@ -387,11 +373,11 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   function renderSplitRows() {
     splitRowsEl.innerHTML = Array.from({ length: splitCount }).map((_, i) => {
       const isLast = i === splitCount - 1;
-      const breakdown = `<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px"><span style="font-size:10px;color:#9ca3af">상품금액 <span id="pm-split-principal-${i}">-</span></span><span style="font-size:10px;color:#9ca3af">· 수수료 <span id="pm-split-fee-${i}">-</span></span></div>`;
+      const feeRow = `<div style="display:flex;justify-content:flex-end;margin-top:4px"><span style="font-size:11px;color:#6b7280">수수료(5.5%) <b id="pm-split-fee-${i}" style="color:#b45309;font-weight:700">-</b></span></div>`;
       if (isLast) {
-        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${breakdown}</div>`;
+        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 상품금액 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${feeRow}</div>`;
       }
-      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${breakdown}</div>`;
+      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차 상품금액</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="상품금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${feeRow}</div>`;
     }).join('');
     splitRowsEl.querySelectorAll('.pm-split-input').forEach(input => {
       input.addEventListener('input', e => {
@@ -420,9 +406,18 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
 
   confirmBtn.addEventListener('click', () => {
     const selectedCard = cards[selectedCardIdx] ?? null;
-    const paymentDetail = paymentType === 'split'
-      ? { type: '분할', count: splitCount, amounts: [...splitInputs.map(Number), paymentTotal - splitInputs.reduce((a, b) => a + (Number(b) || 0), 0)] }
-      : { type: '일반', installment: document.getElementById('pm-installment').value };
+    let paymentDetail;
+    if (paymentType === 'split') {
+      const lastPrincipal = subtotal - splitInputs.reduce((a, b) => a + (Number(b) || 0), 0);
+      const principals = [...splitInputs.map(Number), lastPrincipal];
+      paymentDetail = {
+        type: '분할',
+        count: splitCount,
+        rounds: principals.map(principal => ({ principal, fee: feeFor(principal), amount: principal + feeFor(principal) })),
+      };
+    } else {
+      paymentDetail = { type: '일반', installment: document.getElementById('pm-installment').value };
+    }
     modal.remove();
     onConfirm?.(paymentDetail, selectedCard);
   });
