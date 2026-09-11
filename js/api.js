@@ -92,7 +92,7 @@ const api = {
     return Promise.resolve();
   },
 
-  submitOrder(vendorCd) {
+  submitOrder(vendorCd, paymentDetail) {
     const vendor = MOCK_VENDORS.find(v => v.VENDOR_CD === vendorCd);
     const vendorItems = getBasket().filter(it => it.VENDOR_CD === vendorCd);
     const totalPrice = vendorItems.reduce((s, it) => s + it.TOTAL_PRICE, 0);
@@ -124,6 +124,8 @@ const api = {
         REMIT_BANK: pick(['국민은행', '신한은행', '하나은행']),
         STATEMENT_YN: 'N',
         CARD_TRADE_NO: `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}${String(Math.floor(10000000 + Math.random() * 90000000))}`,
+        PAY_TYPE: paymentDetail?.type === '분할' ? '분할' : '일반',
+        PAY_ROUNDS: paymentDetail?.type === '분할' ? paymentDetail.rounds : null,
       },
       items: vendorItems.map((it, i) => ({
         SEQ: `${no}-${i}`,

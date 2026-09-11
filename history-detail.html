@@ -210,6 +210,21 @@ if (!orderNo) {
         </div>
       </div>
 
+      ${order?.PAY_TYPE === '분할' && order?.PAY_ROUNDS?.length ? `
+      <div class="hd-info-section" style="padding:24px;border-bottom:1px solid #f3f4f6">
+        <h2 style="font-size:0.9375rem;font-weight:800;color:#1a2260;margin-bottom:12px">카드결제 내역 (분할결제 ${order.PAY_ROUNDS.length}회)</h2>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${order.PAY_ROUNDS.map((r, i) => `
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:0.8125rem;color:#9ca3af">${i + 1}회차</span>
+                <span style="font-size:0.9375rem;font-weight:800;color:#2B3990">${comma(r.amount)}원</span>
+              </div>
+              <div style="font-size:0.75rem;color:#9ca3af;text-align:right;margin-top:4px">상품금액 ${comma(r.principal)}원 · 수수료 ${comma(r.fee)}원</div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
       ${items.length === 0 ? `<div style="text-align:center;padding:5rem;color:#9ca3af">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin:0 auto 12px;opacity:0.3"><path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <p style="font-size:0.875rem;font-weight:500">상세 내역이 없습니다.</p>
