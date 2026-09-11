@@ -12,6 +12,12 @@ function getSplitCount(amount) {
   return 11;
 }
 
+// 분할결제 회차 금액(수수료 포함) 안에서 상품금액/수수료 비중을 역산
+function splitFeeBreakdown(amount) {
+  const principal = Math.round(amount / (1 + PLATFORM_FEE_RATE));
+  return { principal, fee: amount - principal };
+}
+
 function comma(n) {
   return Number(n).toLocaleString('ko-KR');
 }
@@ -343,6 +349,28 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
       lastEl.style.color = lastAmount <= 0 ? '#dc2626' : '#1a2260';
     }
 
+    splitInputs.forEach((v, i) => {
+      const amount = v === '' ? null : Number(v);
+      const principalEl = document.getElementById(`pm-split-principal-${i}`);
+      const feeEl = document.getElementById(`pm-split-fee-${i}`);
+      if (!principalEl || !feeEl) return;
+      if (amount === null) {
+        principalEl.textContent = '-';
+        feeEl.textContent = '-';
+      } else {
+        const { principal, fee } = splitFeeBreakdown(amount);
+        principalEl.textContent = `${comma(principal)}원`;
+        feeEl.textContent = `${comma(fee)}원`;
+      }
+    });
+    const lastPrincipalEl = document.getElementById(`pm-split-principal-${splitCount - 1}`);
+    const lastFeeEl = document.getElementById(`pm-split-fee-${splitCount - 1}`);
+    if (lastPrincipalEl && lastFeeEl) {
+      const { principal, fee } = splitFeeBreakdown(lastAmount);
+      lastPrincipalEl.textContent = `${comma(principal)}원`;
+      lastFeeEl.textContent = `${comma(fee)}원`;
+    }
+
     let warning = '';
     if (hasDuplicate) warning = '각 회차 금액은 서로 달라야 합니다. (동일 금액 불가)';
     else if (lastAmount < 0) warning = '입력한 금액의 합이 결제금액을 초과했습니다.';
@@ -359,10 +387,11 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   function renderSplitRows() {
     splitRowsEl.innerHTML = Array.from({ length: splitCount }).map((_, i) => {
       const isLast = i === splitCount - 1;
+      const breakdown = `<div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px"><span style="font-size:10px;color:#9ca3af">상품금액 <span id="pm-split-principal-${i}">-</span></span><span style="font-size:10px;color:#9ca3af">· 수수료 <span id="pm-split-fee-${i}">-</span></span></div>`;
       if (isLast) {
-        return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>`;
+        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${breakdown}</div>`;
       }
-      return `<div style="display:flex;justify-content:space-between;align-items:center;background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>`;
+      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${breakdown}</div>`;
     }).join('');
     splitRowsEl.querySelectorAll('.pm-split-input').forEach(input => {
       input.addEventListener('input', e => {
