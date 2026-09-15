@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>구매내역 - BIZLINK</title>
+  <title>주문내역 - BIZLINK</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -48,7 +48,7 @@
         주문으로
       </a>
       <span style="color:#e5e7eb">/</span>
-      <span style="font-size:1.125rem;font-weight:800;color:#1a2260">구매내역</span>
+      <span style="font-size:1.125rem;font-weight:800;color:#1a2260">주문내역</span>
     </div>
 
     <div class="surface-card">
@@ -275,7 +275,7 @@ function downloadExcel() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `구매내역_${toDateStr(new Date())}.csv`;
+  a.download = `주문내역_${toDateStr(new Date())}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -289,11 +289,11 @@ function renderTable() {
   if (orders.length === 0) {
     tbody.innerHTML = `<tr><td colspan="17" style="text-align:center;padding:6rem 0;color:#9ca3af">
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
-      <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
+      <p style="font-size:0.875rem;font-weight:600">주문내역이 없습니다.</p>
     </td></tr>`;
     cardsWrap.innerHTML = `<div style="text-align:center;padding:4rem 20px;color:#9ca3af">
       <div style="margin:0 auto 12px;width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">▭</div>
-      <p style="font-size:0.875rem;font-weight:600">구매내역이 없습니다.</p>
+      <p style="font-size:0.875rem;font-weight:600">주문내역이 없습니다.</p>
     </div>`;
     renderPagination(0);
     return;
