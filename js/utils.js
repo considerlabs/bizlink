@@ -5,18 +5,6 @@ const MOCK_NEW_ORDERS_KEY = 'MOCK_NEW_ORDERS_V1';
 const STATEMENT_REGISTERED_KEY = 'MOCK_STATEMENT_REGISTERED_V1';
 const PLATFORM_FEE_RATE   = 0.055;
 
-// 결제금액 구간별 분할결제 입력칸 수 (9천만원 초과는 11칸으로 고정)
-const SPLIT_TIERS = [[10000000, 3], [30000000, 5], [50000000, 7], [70000000, 9], [90000000, 11]];
-function getSplitCount(amount) {
-  for (const [max, count] of SPLIT_TIERS) if (amount <= max) return count;
-  return 11;
-}
-
-// 분할결제 회차에 입력한 상품금액 기준으로 수수료(5.5%)를 계산
-function feeFor(productAmount) {
-  return Math.round(productAmount * PLATFORM_FEE_RATE);
-}
-
 function comma(n) {
   return Number(n).toLocaleString('ko-KR');
 }
@@ -158,7 +146,6 @@ function showConfirm(message, onYes) {
 
 function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeInfo, onClose, onConfirm }) {
   document.getElementById('payment-modal')?.remove();
-  const cards = getCards();
   const modal = document.createElement('div');
   modal.id = 'payment-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:1rem';
@@ -209,70 +196,11 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
           </div>
         </div>
 
-        <div>
-          <div style="display:flex;align-items:center;gap:0.375rem;margin-bottom:0.5rem">
-            <span style="display:flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;border-radius:0.25rem;background:#eef0f9;color:#2B3990">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-            </span>
-            <span style="font-size:0.75rem;font-weight:800;color:#374151">결제 카드 선택</span>
-          </div>
-          ${cards.length ? `
-          <style>
-            #pm-card-list::-webkit-scrollbar{display:none}
-            #pm-card-prev:disabled,#pm-card-next:disabled{background:#d1d5db;box-shadow:none;cursor:default}
-          </style>
-          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem;position:relative">
-            <button type="button" id="pm-card-prev" aria-label="이전 카드" style="position:absolute;top:50%;left:2px;transform:translateY(-50%);width:26px;height:26px;border-radius:9999px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(43,57,144,0.35);z-index:2;transition:background 0.15s"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-            <div id="pm-card-list" style="display:flex;gap:0.625rem;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;margin:0 34px">
-              ${cards.map((c, i) => {
-                const [l1, l2] = [c.no.split('-').slice(0, 2).join(' '), c.no.split('-').slice(2).join(' ')];
-                return `
-                <button type="button" class="pm-card-option" data-idx="${i}" style="flex:0 0 auto;border:none;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
-                  <span class="pm-card-visual" style="width:88px;height:54px;border-radius:0.75rem;background:linear-gradient(135deg,#3b82f6,#1e40af);padding:0.5rem 0.75rem;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.15);box-sizing:border-box;outline-offset:2px;transition:filter 0.15s,outline 0.15s">
-                    <span style="font-size:9px;font-weight:700;font-style:italic;color:rgba(255,255,255,0.8);letter-spacing:0.05em">VISA</span>
-                    <span style="font-size:9px;color:#fff;font-family:monospace;letter-spacing:0.05em;line-height:1.3">${escapeHtml(l1)}<br>${escapeHtml(l2)}</span>
-                  </span>
-                  <span style="font-size:10px;color:#6b7280;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.owner || '')}</span>
-                </button>`;
-              }).join('')}
-            </div>
-            <button type="button" id="pm-card-next" aria-label="다음 카드" style="position:absolute;top:50%;right:2px;transform:translateY(-50%);width:26px;height:26px;border-radius:9999px;border:none;background:#2B3990;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(43,57,144,0.35);z-index:2;transition:background 0.15s"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-          </div>` : `
-          <div style="background:#f9fafb;border-radius:0.75rem;padding:0.75rem 1rem">
-            <p style="font-size:0.8125rem;color:#6b7280">등록된 결제카드가 없습니다.</p>
-          </div>`}
-        </div>
-
-        <div>
-          <div style="display:flex;align-items:center;gap:0.375rem;margin-bottom:0.5rem">
-            <span style="display:flex;align-items:center;justify-content:center;width:1.25rem;height:1.25rem;border-radius:0.25rem;background:#eef0f9;color:#2B3990">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-            </span>
-            <span style="font-size:0.75rem;font-weight:800;color:#374151">결제 구분</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;background:#f3f4f6;border-radius:0.625rem;padding:3px;margin-bottom:0.625rem">
-            <button type="button" class="pm-type-btn" data-type="normal" style="height:2rem;border:none;border-radius:0.5rem;font-size:0.8125rem;font-weight:700;cursor:pointer;background:#fff;color:#1a2260;box-shadow:0 1px 2px rgba(0,0,0,0.08)">일반결제</button>
-            <button type="button" class="pm-type-btn" data-type="split" style="height:2rem;border:none;border-radius:0.5rem;font-size:0.8125rem;font-weight:700;cursor:pointer;background:transparent;color:#6b7280">분할결제</button>
-          </div>
-
-          <div id="pm-normal-block" style="display:flex;align-items:center;gap:0.75rem">
-            <span style="font-size:0.75rem;color:#6b7280;width:2.5rem;flex-shrink:0">할부</span>
-            <select id="pm-installment" style="flex:1;border:1px solid #e5e7eb;border-radius:0.5rem;padding:0 0.75rem;height:2.25rem;font-size:0.875rem;color:#1a2260;background:#fff;outline:none">
-              <option>일시불</option><option>2개월</option><option>3개월</option><option>6개월</option><option>12개월</option>
-            </select>
-          </div>
-
-          <div id="pm-split-block" style="display:none;flex-direction:column;gap:0.5rem">
-            <div id="pm-split-rows" style="display:flex;flex-direction:column;gap:0.375rem"></div>
-            <p id="pm-split-warning" style="display:none;font-size:0.75rem;color:#dc2626"></p>
-            <p id="pm-split-hint" style="font-size:0.75rem;color:#9ca3af">모든 회차에 금액을 입력해야 결제하기 버튼이 활성화됩니다.</p>
-          </div>
-        </div>
       </div>
 
       <div style="display:flex;gap:0.625rem;padding:0 1.25rem 1.25rem">
         <button id="pm-cancel" style="flex:1;border-radius:0.75rem;border:1px solid #e5e7eb;padding:0.625rem 0;font-size:0.875rem;font-weight:700;color:#4b5563;background:#fff;cursor:pointer">닫기</button>
-        <button id="pm-confirm" class="btn-primary" style="flex:1;border-radius:0.75rem;padding:0.625rem 0;font-size:0.875rem;opacity:0.4;cursor:not-allowed" disabled>결제하기</button>
+        <button id="pm-confirm" class="btn-primary" style="flex:1;border-radius:0.75rem;padding:0.625rem 0;font-size:0.875rem;opacity:0.4;cursor:not-allowed" disabled>주문하기</button>
       </div>
     </div>
   `;
@@ -281,168 +209,19 @@ function showPaymentModal({ vendor, subtotal, platformFee, paymentTotal, storeIn
   document.getElementById('pm-close').addEventListener('click', close);
   document.getElementById('pm-cancel').addEventListener('click', close);
 
-  let selectedCardIdx = 0;
-  const cardOptionBtns = modal.querySelectorAll('.pm-card-option');
-  const applyCardSelection = idx => {
-    cardOptionBtns.forEach(btn => {
-      const visual = btn.querySelector('.pm-card-visual');
-      const selected = Number(btn.dataset.idx) === idx;
-      visual.style.filter = selected ? 'invert(1)' : 'none';
-      visual.style.outline = selected ? '2px solid #2B3990' : 'none';
-    });
-  };
-  if (cards.length) applyCardSelection(selectedCardIdx);
-  cardOptionBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedCardIdx = Number(btn.dataset.idx);
-      applyCardSelection(selectedCardIdx);
-    });
-  });
-
-  const cardTrack = document.getElementById('pm-card-list');
-  const cardPrevBtn = document.getElementById('pm-card-prev');
-  const cardNextBtn = document.getElementById('pm-card-next');
-  if (cardTrack) {
-    const refreshCardArrows = () => {
-      cardPrevBtn.disabled = cardTrack.scrollLeft <= 4;
-      cardNextBtn.disabled = cardTrack.scrollLeft >= cardTrack.scrollWidth - cardTrack.clientWidth - 4;
-    };
-    cardPrevBtn.addEventListener('click', () => cardTrack.scrollBy({ left: -98, behavior: 'smooth' }));
-    cardNextBtn.addEventListener('click', () => cardTrack.scrollBy({ left: 98, behavior: 'smooth' }));
-    cardTrack.addEventListener('scroll', refreshCardArrows);
-    refreshCardArrows();
-  }
-
   const confirmBtn = document.getElementById('pm-confirm');
   const vendorConfirmCb = document.getElementById('pm-vendor-confirm');
   function refreshConfirmState() {
-    const enabled = vendorConfirmCb.checked && (paymentType !== 'split' || splitValid);
+    const enabled = vendorConfirmCb.checked;
     confirmBtn.disabled = !enabled;
     confirmBtn.style.opacity = enabled ? '1' : '0.4';
     confirmBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
   }
   vendorConfirmCb.addEventListener('change', refreshConfirmState);
 
-  // 일반결제 / 분할결제
-  let paymentType = 'normal';
-  let splitValid = false;
-  const splitCount = getSplitCount(paymentTotal);
-  const splitInputs = Array(splitCount - 1).fill('');
-  const normalBlock = document.getElementById('pm-normal-block');
-  const splitBlock = document.getElementById('pm-split-block');
-  const splitRowsEl = document.getElementById('pm-split-rows');
-  const splitWarningEl = document.getElementById('pm-split-warning');
-  const splitHintEl = document.getElementById('pm-split-hint');
-
-  function updateSplitState() {
-    // 회차에 입력하는 금액은 상품금액(수수료 미포함) 기준 — 수수료는 상품금액에 따라 별도로 계산해 보여준다.
-    const numeric = splitInputs.map(v => v === '' ? 0 : Number(v));
-    const sumEntered = numeric.reduce((a, b) => a + b, 0);
-    const lastPrincipal = subtotal - sumEntered;
-    const allFilled = numeric.every(v => v > 0) && lastPrincipal > 0;
-    const filledValues = [...splitInputs.filter(v => v !== '').map(Number), lastPrincipal];
-    const hasDuplicate = new Set(filledValues).size !== filledValues.length;
-
-    const lastEl = document.getElementById('pm-split-last');
-    if (lastEl) {
-      lastEl.textContent = `${comma(lastPrincipal)}원`;
-      lastEl.style.color = lastPrincipal <= 0 ? '#dc2626' : '#1a2260';
-    }
-    const lastFeeEl = document.getElementById(`pm-split-fee-${splitCount - 1}`);
-    const lastTotalEl = document.getElementById(`pm-split-total-${splitCount - 1}`);
-    if (lastPrincipal > 0) {
-      const lastFee = feeFor(lastPrincipal);
-      if (lastFeeEl) lastFeeEl.textContent = `${comma(lastFee)}원`;
-      if (lastTotalEl) lastTotalEl.textContent = `${comma(lastPrincipal + lastFee)}원`;
-    } else {
-      if (lastFeeEl) lastFeeEl.textContent = '-';
-      if (lastTotalEl) lastTotalEl.textContent = '-';
-    }
-
-    splitInputs.forEach((v, i) => {
-      const feeEl = document.getElementById(`pm-split-fee-${i}`);
-      const totalEl = document.getElementById(`pm-split-total-${i}`);
-      if (!feeEl || !totalEl) return;
-      if (v === '') {
-        feeEl.textContent = '-';
-        totalEl.textContent = '-';
-      } else {
-        const principal = Number(v);
-        const fee = feeFor(principal);
-        feeEl.textContent = `${comma(fee)}원`;
-        totalEl.textContent = `${comma(principal + fee)}원`;
-      }
-    });
-
-    let warning = '';
-    if (hasDuplicate) warning = '각 회차 상품금액은 서로 달라야 합니다. (동일 금액 불가)';
-    else if (lastPrincipal < 0) warning = '입력한 상품금액의 합이 전체 상품금액을 초과했습니다.';
-    else if (lastPrincipal === 0) warning = '마지막 회차에 남는 상품금액이 없습니다. 다른 회차 금액을 줄여주세요.';
-
-    splitWarningEl.style.display = warning ? 'block' : 'none';
-    splitWarningEl.textContent = warning;
-    splitHintEl.style.display = (!warning && !allFilled) ? 'block' : 'none';
-
-    splitValid = allFilled && !hasDuplicate;
-    refreshConfirmState();
-  }
-
-  function renderSplitRows() {
-    splitRowsEl.innerHTML = Array.from({ length: splitCount }).map((_, i) => {
-      const isLast = i === splitCount - 1;
-      const feeTotalRows = `
-        <div style="display:flex;justify-content:space-between;margin-top:4px;padding-top:4px;border-top:1px dashed #e5e7eb;font-size:11px">
-          <span style="color:#6b7280">수수료(5.5%)</span><b id="pm-split-fee-${i}" style="color:#b45309">-</b>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:11px">
-          <span style="color:#6b7280">결제금액</span><b id="pm-split-total-${i}" style="color:#2B3990">-</b>
-        </div>`;
-      if (isLast) {
-        return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280">${i + 1}회차 상품금액 (자동)</span><span id="pm-split-last" style="font-size:0.875rem;font-weight:700;color:#1a2260"></span></div>${feeTotalRows}</div>`;
-      }
-      return `<div style="background:#f9fafb;border-radius:0.625rem;padding:0.625rem 0.75rem"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.75rem;color:#6b7280;flex-shrink:0">${i + 1}회차 상품금액</span><input type="number" class="pm-split-input" data-idx="${i}" placeholder="상품금액 입력" style="flex:1;text-align:right;border:none;background:transparent;font-size:0.875rem;font-weight:600;color:#1a2260;outline:none"></div>${feeTotalRows}</div>`;
-    }).join('');
-    splitRowsEl.querySelectorAll('.pm-split-input').forEach(input => {
-      input.addEventListener('input', e => {
-        splitInputs[Number(e.target.dataset.idx)] = e.target.value;
-        updateSplitState();
-      });
-    });
-    updateSplitState();
-  }
-  renderSplitRows();
-
-  modal.querySelectorAll('.pm-type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      paymentType = btn.dataset.type;
-      modal.querySelectorAll('.pm-type-btn').forEach(b => {
-        const active = b.dataset.type === paymentType;
-        b.style.background = active ? '#fff' : 'transparent';
-        b.style.color = active ? '#1a2260' : '#6b7280';
-        b.style.boxShadow = active ? '0 1px 2px rgba(0,0,0,0.08)' : 'none';
-      });
-      normalBlock.style.display = paymentType === 'normal' ? 'flex' : 'none';
-      splitBlock.style.display = paymentType === 'split' ? 'flex' : 'none';
-      refreshConfirmState();
-    });
-  });
-
   confirmBtn.addEventListener('click', () => {
-    const selectedCard = cards[selectedCardIdx] ?? null;
-    let paymentDetail;
-    if (paymentType === 'split') {
-      const lastPrincipal = subtotal - splitInputs.reduce((a, b) => a + (Number(b) || 0), 0);
-      const principals = [...splitInputs.map(Number), lastPrincipal];
-      paymentDetail = {
-        type: '분할',
-        count: splitCount,
-        rounds: principals.map(principal => ({ principal, fee: feeFor(principal), amount: principal + feeFor(principal) })),
-      };
-    } else {
-      paymentDetail = { type: '일반', installment: document.getElementById('pm-installment').value };
-    }
     modal.remove();
-    onConfirm?.(paymentDetail, selectedCard);
+    onConfirm?.();
   });
 }
 
