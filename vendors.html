@@ -59,7 +59,7 @@ let registerData = {};
 const BANKS = ['국민은행', '신한은행', '하나은행', '우리은행', '농협은행', '기업은행'];
 const LABEL_STYLE = 'font-size:0.75rem;font-weight:700;color:#9ca3af;display:block;margin-bottom:6px';
 
-const CONTRACT_STYLE = { '구매대행': 'background:#f5f3ff;color:#7c3aed', '결제대행': 'background:#eff6ff;color:#2563eb' };
+const CONTRACT_STYLE = { '구매대행': 'background:#f5f3ff;color:#7c3aed', '결제대행': 'background:#eff6ff;color:#2563eb', '결제대행2': 'background:#ecfeff;color:#0891b2' };
 const REMIT_TYPE_STYLE = { '통장지급': 'background:#ecfdf5;color:#059669', '페이지급': 'background:#f5f3ff;color:#7c3aed' };
 const STAT_STYLE = { APPROVED: 'background:#eef0f9;color:#2B3990', REVIEWING: 'background:#fef9c3;color:#a16207', REJECTED: 'background:#fef2f2;color:#dc2626' };
 
@@ -143,7 +143,7 @@ function renderRegister(content) {
           </div>
           <div>
             <label style="${LABEL_STYLE}">계약구분 <span style="color:#ef4444">*</span></label>
-            ${radioBoxHtml('reg-contract', ['구매대행', '결제대행'], d.contractType || '구매대행')}
+            ${radioBoxHtml('reg-contract', ['구매대행', '결제대행', '결제대행2'], d.contractType || '구매대행')}
           </div>
           <div>
             <label style="${LABEL_STYLE}">담당자명</label>
