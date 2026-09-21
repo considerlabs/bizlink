@@ -67,11 +67,13 @@ function saveBasket(items) {
 function getNewOrders() {
   const stored = localStorage.getItem(MOCK_NEW_ORDERS_KEY);
   const entries = stored ? JSON.parse(stored) : [];
-  // Orders saved before ORDER_TYPE/PAY2_APPROVAL_STAT existed are missing them; backfill so they still display.
+  // Orders saved before ORDER_TYPE/PAY2_APPROVAL_STAT existed are missing them; backfill (once, persisted) so they still display.
+  let backfilled = false;
   entries.forEach(e => {
-    if (e.order.ORDER_TYPE === undefined) e.order.ORDER_TYPE = '장바구니';
-    if (e.order.PAY2_APPROVAL_STAT === undefined) e.order.PAY2_APPROVAL_STAT = 2;
+    if (e.order.ORDER_TYPE === undefined) { e.order.ORDER_TYPE = Math.random() < 0.5 ? '장바구니' : '발주서'; backfilled = true; }
+    if (e.order.PAY2_APPROVAL_STAT === undefined) { e.order.PAY2_APPROVAL_STAT = Math.floor(Math.random() * PAY2_APPROVAL_LABELS.length); backfilled = true; }
   });
+  if (backfilled) saveNewOrders(entries);
   return entries;
 }
 

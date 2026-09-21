@@ -126,8 +126,8 @@ const api = {
         CARD_TRADE_NO: `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}${String(Math.floor(10000000 + Math.random() * 90000000))}`,
         PAY_TYPE: paymentDetail?.type === '분할' ? '분할' : '일반',
         PAY_ROUNDS: paymentDetail?.type === '분할' ? paymentDetail.rounds : null,
-        ORDER_TYPE: '장바구니',
-        PAY2_APPROVAL_STAT: 2,
+        ORDER_TYPE: pick(['장바구니', '발주서']),
+        PAY2_APPROVAL_STAT: Math.floor(Math.random() * PAY2_APPROVAL_LABELS.length),
       },
       items: vendorItems.map((it, i) => ({
         SEQ: `${no}-${i}`,
