@@ -66,7 +66,13 @@ function saveBasket(items) {
 // so newly submitted orders are layered on top via localStorage instead).
 function getNewOrders() {
   const stored = localStorage.getItem(MOCK_NEW_ORDERS_KEY);
-  return stored ? JSON.parse(stored) : [];
+  const entries = stored ? JSON.parse(stored) : [];
+  // Orders saved before ORDER_TYPE/PAY2_APPROVAL_STAT existed are missing them; backfill so they still display.
+  entries.forEach(e => {
+    if (e.order.ORDER_TYPE === undefined) e.order.ORDER_TYPE = '장바구니';
+    if (e.order.PAY2_APPROVAL_STAT === undefined) e.order.PAY2_APPROVAL_STAT = 2;
+  });
+  return entries;
 }
 
 function saveNewOrders(entries) {
